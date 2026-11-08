@@ -192,8 +192,10 @@ def smoke(directory, selected, krew=None, kubectl=None):
                 result = subprocess.run([kubectl, "view-storage", flag], env=env, check=True, capture_output=True, text=True, timeout=5)
                 require(not result.stderr, "installed help/version wrote to stderr")
                 require(result.stdout == f"kubectl-view-storage {selected}\n" if flag == "--version" else "--require-metrics" in result.stdout, "installed help/version differs from the package contract")
-            subprocess.run([sys.executable,str(ROOT / "scripts/check-plugin.py"),"--binary",str(installed),"--kubectl",kubectl],env=env,check=True,capture_output=True,text=True,timeout=30)
-            subprocess.run([sys.executable,str(ROOT / "scripts/test-credential-terminal.py"),"--binary",str(installed),"--evidence-directory",str(directory / "installed-authentication")],env=env,check=True,capture_output=True,text=True,timeout=30)
+            # Inherit the controlled fixtures' output so CI retains the last
+            # completed stage on a child failure or watchdog timeout.
+            subprocess.run([sys.executable,str(ROOT / "scripts/check-plugin.py"),"--binary",str(installed),"--kubectl",kubectl],env=env,check=True,text=True,timeout=30)
+            subprocess.run([sys.executable,str(ROOT / "scripts/test-credential-terminal.py"),"--binary",str(installed),"--evidence-directory",str(directory / "installed-authentication")],env=env,check=True,text=True,timeout=30)
         record.write_text(json.dumps({"status": "passed", "version": selected, "artifact": native}, indent=2) + "\n")
     except BaseException as error:
         record.write_text(json.dumps({"status": "failed", "version": selected, "reason": str(error)}) + "\n")

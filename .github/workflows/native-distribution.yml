@@ -58,6 +58,7 @@ jobs:
           version: ${{ steps.kubectl_pin.outputs.version }}
       - name: Actual native target tests and terminal helpers
         run: |
+          python3 scripts/test-smoke-http.py
           cargo test --locked --all-targets --target "$RELEASE_TARGET"
           python3 scripts/test-credential-terminal.py --binary "target/$RELEASE_TARGET/debug/kubectl-view_storage"
           python3 scripts/check-plugin.py --binary "target/$RELEASE_TARGET/debug/kubectl-view_storage"
@@ -145,6 +146,7 @@ jobs:
           version: ${{ steps.kubectl_pin.outputs.version }}
       - name: Actual isolated Krew installation and installed command behavior
         run: |
+          python3 scripts/test-smoke-http.py
           python3 scripts/fetch-krew.py
           python3 scripts/package-release.py smoke --directory artifacts/release --krew .local/tools/bin/kubectl-krew
       - uses: actions/upload-artifact@v7.0.2

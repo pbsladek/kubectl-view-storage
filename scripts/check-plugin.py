@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Required cluster-free kubectl plugin filename/discovery/forwarding smoke."""
 import argparse
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
 import json
 import os
 from pathlib import Path
@@ -11,6 +11,7 @@ import tempfile
 import tomllib
 import threading
 from urllib.parse import parse_qs, urlsplit
+from smoke_http import LoopbackHTTPServer
 
 ROOT = Path(__file__).resolve().parents[1]
 EXECUTABLE = "kubectl-view_storage"
@@ -33,7 +34,8 @@ def configured_queries(binary,kubectl,directory,env):
             self.wfile.write(body)
         def log_message(self,*_):
             pass
-    server=ThreadingHTTPServer(("127.0.0.1",0),Handler)
+    print("CHECK configured plugin loopback fixture", flush=True)
+    server=LoopbackHTTPServer(Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True)
     thread.start()
     config=Path(directory)/"fixture.json"
@@ -42,6 +44,7 @@ def configured_queries(binary,kubectl,directory,env):
     config.chmod(0o600)
     try:
         for scope in (("-n","cluster"),("-A",)):
+            print("CHECK configured direct/plugin scope: " + " ".join(scope), flush=True)
             args=["--kubeconfig",str(config),"--context","other",*scope,"-o","json"]
             outputs=[]
             for command in ([str(binary),*args],[kubectl,"view-storage",*args]):
@@ -82,6 +85,7 @@ def check(binary, kubectl=None):
         # cases finish before configuration/authentication or cluster access.
         env = dict(os.environ, PATH=directory, KUBECONFIG=str(Path(directory) / "absent-config"), NO_COLOR="1")
         for args in cases:
+            print("CHECK plugin discovery: " + " ".join(args), flush=True)
             direct = subprocess.run([str(binary), *args], env=env, capture_output=True, text=True, timeout=5)
             plugin = subprocess.run([kubectl, "view-storage", *args], env=env, capture_output=True, text=True, timeout=5)
             expected = 0 if args[0] in ("--help", "--version") else 2

@@ -9,6 +9,7 @@ check:
 	python3 scripts/test-dev-environment.py
 	python3 scripts/test-csi-environment.py
 	python3 scripts/test-release-packaging.py
+	python3 scripts/test-smoke-http.py
 	cargo fmt --all --check
 	cargo clippy --locked --all-targets -- -D warnings
 	cargo test --locked --all-targets

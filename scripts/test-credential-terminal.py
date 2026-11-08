@@ -3,7 +3,7 @@
 import argparse
 import errno
 import hashlib
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
 import json
 import os
 from pathlib import Path
@@ -16,6 +16,7 @@ import time
 import subprocess
 import sys
 from urllib.parse import urlsplit
+from smoke_http import LoopbackHTTPServer
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN = "fixture-token-not-a-real-credential"
@@ -168,13 +169,16 @@ def main():
     result_path = destination / "terminal-validation.json"
     receipt = {"status":"running","binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"cases":[],"scope":"real PTY, configured SDK helper and authorized mock HTTP; fake credentials only"}
     result_path.write_text(json.dumps(receipt,indent=2)+"\n")
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    print("CHECK credential terminal loopback fixture", flush=True)
+    server = LoopbackHTTPServer(Handler)
     server.fixture_requests = 0
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
         for mode in ("Always","IfAvailable"):
+            print("CHECK terminal authentication: " + mode, flush=True)
             receipt["cases"].append(run_case(binary,server,mode,False))
+        print("CHECK terminal Ctrl-C and helper cleanup", flush=True)
         receipt["cases"].append(run_case(binary,server,"Always",True))
         receipt["status"] = "passed"
     except BaseException as error:
