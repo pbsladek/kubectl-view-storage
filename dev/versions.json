@@ -1,0 +1,88 @@
+{
+  "status": "partial_live_validation",
+  "rust": {
+    "channel": "1.99.1",
+    "cargo": "bundled",
+    "cargo_version": "1.99.1",
+    "edition": "2024",
+    "profile": "minimal",
+    "components": [
+      "rustfmt",
+      "clippy"
+    ],
+    "policy": "latest stable, exact tested pin; recheck weekly and before release",
+    "verified_on": "2026-11-07",
+    "release_source": "https://blog.rust-lang.org/releases/"
+  },
+  "kind": "0.33.0",
+  "baseline_node": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+  "compatibility_nodes": [
+    "kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+    "kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0"
+  ],
+  "csi_hostpath_release": "v1.19.0",
+  "csi_hostpath_image": "registry.k8s.io/sig-storage/hostpathplugin:v1.19.0",
+  "fixture_image_digests": {
+    "registry.k8s.io/pause:3.10": {
+      "index_digest": "sha256:ee6521f290b2168b6e0935a181d4cff9be1ac3f505666ef0e3c98fae8199917a",
+      "platforms": {
+        "linux/amd64": "sha256:7c38f24774e3cbd906d2d33c38354ccf787635581c122965132c9bd309754d4a",
+        "linux/arm64": "sha256:e50b7059b633caf3c1449b8da680d11845cda4506b513ee7a2de00725f0a34a7"
+      },
+      "verified_on": "2026-11-07",
+      "source": "docker buildx imagetools inspect registry.k8s.io/pause:3.10"
+    }
+  },
+  "phase_0_gate": "Locked macOS ARM64 build, inventory/RBAC and fresh CSI byte/inode/write lifecycles pass on all three selected Kubernetes versions; native dependency cost and maintenance checks pass locally. Linux execution/CI, remaining target baselines and distribution provenance remain open.",
+  "cargo_llvm_cov": "0.9.1",
+  "cargo_deny": "0.19.0",
+  "cargo_fuzz": "0.13.2",
+  "fuzz_nightly": "nightly-2026-11-01",
+  "fuzz_toolchain_status": "installed_and_smoke_passed_macos_arm64",
+  "csi_workload_image": "registry.k8s.io/e2e-test-images/busybox:1.37.0-2",
+  "csi_lock_sha256": "620f9c1b0e0893c95fda99565a2c79e8ef84233217bf5fa5de4adca0d676155d",
+  "kubectl": "1.37.2",
+  "linux_validation": {
+    "image": "rust:1.99.1-alpine@sha256:44819b27be4c97b0e4d7203bd2e02c4820f97700211b6a37fb4c246a2de59383",
+    "platforms": {
+      "arm64": {
+        "target": "aarch64-unknown-linux-musl",
+        "manifest_digest": "sha256:0a555e8b51945db91fd7b8411b4272bb5b8bfa04261d31eaeb2ada564bc02632"
+      },
+      "amd64": {
+        "target": "x86_64-unknown-linux-musl",
+        "manifest_digest": "sha256:2c83bf1a38975801abfd05e92387242ab4d5f96fe05131e2a279f3009ad16393"
+      }
+    },
+    "verified_on": "2026-11-07",
+    "source": "https://github.com/rust-lang/docker-rust/tree/f6c59bee4a6e34a154c2122895ecd7833507f705/stable/alpine3.24",
+    "python_apk": "3.14.10-r1"
+  },
+  "krew_validation": {
+    "version": "v0.5.0",
+    "verified_on": "2026-11-07",
+    "source": "https://github.com/kubernetes-sigs/krew/releases/tag/v0.5.0",
+    "assets": {
+      "darwin_amd64": {
+        "url": "https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-darwin_amd64.tar.gz",
+        "sha256": "2d60559126452b57e3df0612f0475a473363f064da35f817290dbbcd877d1ea8",
+        "bytes": 5339254
+      },
+      "darwin_arm64": {
+        "url": "https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-darwin_arm64.tar.gz",
+        "sha256": "cd6e58b4e954e301abd19001d772846997216d696bcaa58f0bcf04708339ece3",
+        "bytes": 4922381
+      },
+      "linux_amd64": {
+        "url": "https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-linux_amd64.tar.gz",
+        "sha256": "5d5a221fffdf331d1c5c68d9917530ecd102e0def5b5a6d62eeed1c404efb28a",
+        "bytes": 5319929
+      },
+      "linux_arm64": {
+        "url": "https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-linux_arm64.tar.gz",
+        "sha256": "ab7a98b992424e76b6c162f8b67fb76c4b1e243598aa2807bdf226752f964548",
+        "bytes": 4782540
+      }
+    }
+  }
+}

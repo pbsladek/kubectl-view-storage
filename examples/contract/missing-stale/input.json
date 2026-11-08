@@ -1,0 +1,283 @@
+{
+  "clock": "2026-11-06T20:00:00Z",
+  "request": {
+    "namespace": "demo",
+    "kind": "pvc",
+    "group_by": [
+      "storageclass",
+      "namespace",
+      "pvc"
+    ],
+    "filters": {
+      "selector": null,
+      "pvc": null,
+      "pv": null,
+      "storage_class": null,
+      "driver": null,
+      "node": null
+    },
+    "utilization": true,
+    "metrics_source": "kubelet",
+    "max_metrics_age_seconds": 300,
+    "warn_used_percent": "80",
+    "critical_used_percent": "90",
+    "require_metrics": false,
+    "fail_on": null,
+    "sort": "name:asc"
+  },
+  "kubernetes": {
+    "pvcs": [
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+          "uid": "missing",
+          "name": "missing",
+          "namespace": "demo",
+          "creationTimestamp": "2026-11-01T00:00:00Z"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "volumeName": "pv-missing",
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "resources": {
+            "requests": {
+              "storage": "100Gi"
+            }
+          }
+        },
+        "status": {
+          "phase": "Bound",
+          "capacity": {
+            "storage": "100Gi"
+          }
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+          "uid": "stale",
+          "name": "stale",
+          "namespace": "demo",
+          "creationTimestamp": "2026-11-01T00:00:00Z"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "volumeName": "pv-stale",
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "resources": {
+            "requests": {
+              "storage": "100Gi"
+            }
+          }
+        },
+        "status": {
+          "phase": "Bound",
+          "capacity": {
+            "storage": "100Gi"
+          }
+        }
+      }
+    ],
+    "pvs": [
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolume",
+        "metadata": {
+          "uid": "uid-pv-missing",
+          "name": "pv-missing"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "capacity": {
+            "storage": "100Gi"
+          },
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "persistentVolumeReclaimPolicy": "Delete",
+          "claimRef": {
+            "namespace": "demo",
+            "name": "missing",
+            "uid": "missing"
+          },
+          "csi": {
+            "driver": "example.csi.test",
+            "volumeHandle": "handle-missing"
+          }
+        },
+        "status": {
+          "phase": "Bound"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolume",
+        "metadata": {
+          "uid": "uid-pv-stale",
+          "name": "pv-stale"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "capacity": {
+            "storage": "100Gi"
+          },
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "persistentVolumeReclaimPolicy": "Delete",
+          "claimRef": {
+            "namespace": "demo",
+            "name": "stale",
+            "uid": "stale"
+          },
+          "csi": {
+            "driver": "example.csi.test",
+            "volumeHandle": "handle-stale"
+          }
+        },
+        "status": {
+          "phase": "Bound"
+        }
+      }
+    ],
+    "pods": [
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "uid": "app-a",
+          "name": "app-a",
+          "namespace": "demo"
+        },
+        "spec": {
+          "nodeName": "worker-a",
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "missing"
+              }
+            }
+          ],
+          "containers": [
+            {
+              "name": "app",
+              "image": "example.invalid/app:test",
+              "volumeMounts": [
+                {
+                  "name": "data",
+                  "mountPath": "/var/lib/data",
+                  "readOnly": false
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "uid": "app-b",
+          "name": "app-b",
+          "namespace": "demo"
+        },
+        "spec": {
+          "nodeName": "worker-a",
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "stale"
+              }
+            }
+          ],
+          "containers": [
+            {
+              "name": "app",
+              "image": "example.invalid/app:test",
+              "volumeMounts": [
+                {
+                  "name": "data",
+                  "mountPath": "/var/lib/data",
+                  "readOnly": false
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      }
+    ],
+    "storage_classes": [
+      {
+        "apiVersion": "storage.k8s.io/v1",
+        "kind": "StorageClass",
+        "metadata": {
+          "name": "fast"
+        },
+        "provisioner": "example.csi.test"
+      }
+    ]
+  },
+  "summary_responses": {
+    "worker-a": {
+      "node": {
+        "nodeName": "worker-a"
+      },
+      "pods": [
+        {
+          "podRef": {
+            "name": "app-a",
+            "namespace": "demo",
+            "uid": "app-a"
+          },
+          "volume": []
+        },
+        {
+          "podRef": {
+            "name": "app-b",
+            "namespace": "demo",
+            "uid": "app-b"
+          },
+          "volume": [
+            {
+              "name": "data",
+              "pvcRef": {
+                "name": "stale",
+                "namespace": "demo"
+              },
+              "time": "2026-11-06T19:40:00Z",
+              "capacityBytes": 107374182400,
+              "usedBytes": 42949672960,
+              "availableBytes": 59055800320,
+              "inodes": 1000,
+              "inodesUsed": 100,
+              "inodesFree": 850
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "failures": [],
+  "resource_versions": {
+    "persistentvolumeclaims/demo": "100",
+    "pods/demo": "101"
+  }
+}

@@ -1,0 +1,30 @@
+name: Parser fuzzing
+on:
+  pull_request:
+    paths: ['src/**', 'fuzz/**', 'Cargo.toml', 'Cargo.lock', 'scripts/fuzz-smoke.sh']
+  schedule:
+    - cron: '43 10 * * 2'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Install isolated fuzz tools
+        working-directory: fuzz
+        run: |
+          rustup show active-toolchain
+          cargo install cargo-fuzz --version 0.13.2 --locked
+      - name: Bounded fuzz runs
+        env:
+          FUZZ_SECONDS: ${{ github.event_name == 'schedule' && '300' || '15' }}
+        run: sh scripts/fuzz-smoke.sh
+      - uses: actions/upload-artifact@v7.0.2
+        if: failure()
+        with:
+          name: fuzz-regressions
+          path: fuzz/artifacts
+          if-no-files-found: warn

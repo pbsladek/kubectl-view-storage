@@ -1,0 +1,13 @@
+CONTEXT example   SCOPE demo   KIND pvc
+SEVERITY OBJECT CODE EVIDENCE
+critical demo/exhausted filesystem_inodes_exhausted inodes_free=0
+  Investigate: Inspect the reported volume and its consumer configuration.
+critical demo/exhausted filesystem_space_exhausted available_bytes=0
+  Investigate: Inspect the reported volume and its consumer configuration.
+critical demo/partial-alert filesystem_usage_high used_percent=95.0
+  Investigate: Inspect the reported volume and its consumer configuration.
+warning demo/exhausted filesystem_usage_high used_percent=80.0
+  Investigate: Inspect the reported volume and its consumer configuration.
+SELECTION complete; matched=2 unknown=0
+METRICS 1/2 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

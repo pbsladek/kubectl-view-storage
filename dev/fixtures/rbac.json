@@ -1,0 +1,242 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "inventory",
+        "namespace": "view-storage-test"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "namespace-only",
+        "namespace": "view-storage-test"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "denied-pv",
+        "namespace": "view-storage-test"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "denied-proxy",
+        "namespace": "view-storage-test"
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "view-storage-claims",
+        "namespace": "view-storage-test"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "persistentvolumeclaims",
+            "pods"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "view-storage-inventory",
+        "namespace": "view-storage-test"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "inventory",
+          "namespace": "view-storage-test"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "view-storage-claims"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "view-storage-namespace-only",
+        "namespace": "view-storage-test"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "namespace-only",
+          "namespace": "view-storage-test"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "view-storage-claims"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "view-storage-denied-pv",
+        "namespace": "view-storage-test"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "denied-pv",
+          "namespace": "view-storage-test"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "view-storage-claims"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "view-storage-denied-proxy",
+        "namespace": "view-storage-test"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "denied-proxy",
+          "namespace": "view-storage-test"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "view-storage-claims"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole",
+      "metadata": {
+        "name": "view-storage-inventory"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "persistentvolumes"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        },
+        {
+          "apiGroups": [
+            "storage.k8s.io"
+          ],
+          "resources": [
+            "storageclasses"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRoleBinding",
+      "metadata": {
+        "name": "view-storage-inventory"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "inventory",
+          "namespace": "view-storage-test"
+        },
+        {
+          "kind": "ServiceAccount",
+          "name": "denied-proxy",
+          "namespace": "view-storage-test"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "ClusterRole",
+        "name": "view-storage-inventory"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole",
+      "metadata": {
+        "name": "view-storage-classes"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            "storage.k8s.io"
+          ],
+          "resources": [
+            "storageclasses"
+          ],
+          "verbs": [
+            "get",
+            "list"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRoleBinding",
+      "metadata": {
+        "name": "view-storage-classes"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "denied-pv",
+          "namespace": "view-storage-test"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "ClusterRole",
+        "name": "view-storage-classes"
+      }
+    }
+  ]
+}

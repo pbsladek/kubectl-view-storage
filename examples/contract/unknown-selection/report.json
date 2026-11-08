@@ -1,0 +1,170 @@
+{
+  "schema_version": "view-storage/v1alpha1",
+  "collection": {
+    "started_at": "2026-11-06T19:59:55Z",
+    "finished_at": "2026-11-06T20:00:00Z",
+    "context": "example",
+    "scope": {
+      "all_namespaces": false,
+      "namespace": "demo"
+    },
+    "sources": [
+      {
+        "resource": "persistentvolumeclaims",
+        "scope": "demo",
+        "verb": "list",
+        "status": "complete",
+        "resource_version": "100"
+      },
+      {
+        "resource": "pods",
+        "scope": "demo",
+        "verb": "list",
+        "status": "forbidden",
+        "resource_version": "101"
+      }
+    ],
+    "cost": {
+      "enrichment_strategy": {
+        "persistentvolumes": "targeted_get",
+        "storageclasses": "targeted_get"
+      },
+      "enrichment_budget": 256,
+      "enrichment_attempts": 1,
+      "base_attempts": 1,
+      "node_targets": 0,
+      "node_requests": 0,
+      "response_bytes": 906,
+      "priority_sequence": [
+        "membership",
+        "utilization_targets",
+        "display"
+      ],
+      "unresolved_prerequisites": [
+        "/api/v1/namespaces/demo/pods"
+      ]
+    }
+  },
+  "query": {
+    "kind": "pvc",
+    "group_by": [
+      "storageclass",
+      "namespace",
+      "pvc"
+    ],
+    "filters": {
+      "selector": null,
+      "pvc": null,
+      "pv": null,
+      "storage_class": null,
+      "driver": null,
+      "node": "worker-a"
+    },
+    "utilization": true,
+    "metrics_source": "kubelet",
+    "max_metrics_age_seconds": 300,
+    "warn_used_percent": "80",
+    "critical_used_percent": "90",
+    "require_metrics": true,
+    "fail_on": null,
+    "sort": "name:asc"
+  },
+  "selection": {
+    "complete": false,
+    "base_count": 1,
+    "matched_count": 0,
+    "excluded_count": 0,
+    "unknown_count": 1,
+    "unknown_records": [
+      {
+        "id": "pvc:data",
+        "namespace": "demo",
+        "name": "data",
+        "unresolved_fields": [
+          "node"
+        ]
+      }
+    ]
+  },
+  "records": [],
+  "consumers": [],
+  "relationships": [],
+  "groups": [],
+  "summary": {
+    "selection_complete": false,
+    "record_count": 0,
+    "phase_counts": {},
+    "requested": {
+      "known_sum_bytes": "0",
+      "known_count": 0,
+      "total_count": 0,
+      "complete": false
+    },
+    "bound": {
+      "known_sum_bytes": "0",
+      "known_count": 0,
+      "total_count": 0,
+      "complete": false
+    },
+    "provisioned": {
+      "known_sum_bytes": "0",
+      "known_count": 0,
+      "total_count": 0,
+      "complete": false
+    },
+    "filesystem": {
+      "status": "unavailable",
+      "reason": "no_usable_samples",
+      "capacity_bytes": null,
+      "used_bytes": null,
+      "available_bytes": null,
+      "used_percent": null,
+      "coverage": {
+        "eligible": 0,
+        "fresh_complete": 0,
+        "not_applicable": 0,
+        "by_reason": {}
+      },
+      "oldest_observed_at": null,
+      "newest_observed_at": null,
+      "physical_total": false
+    },
+    "inodes": {
+      "status": "unavailable",
+      "reason": "no_usable_samples",
+      "inodes_total": null,
+      "inodes_used": null,
+      "inodes_free": null,
+      "used_percent": null,
+      "coverage": {
+        "eligible": 0,
+        "fresh_complete": 0,
+        "not_applicable": 0,
+        "by_reason": {}
+      },
+      "oldest_observed_at": null,
+      "newest_observed_at": null,
+      "physical_total": false
+    },
+    "finding_counts": {
+      "critical": 0,
+      "warning": 0,
+      "info": 0
+    },
+    "overlapping_children": false
+  },
+  "findings": [],
+  "diagnostics": [
+    {
+      "code": "consumers_forbidden",
+      "severity": "info",
+      "subject_id": "pvc:data",
+      "source": "kubernetes",
+      "reason": "consumers_forbidden",
+      "affected_fields": [
+        "node"
+      ],
+      "message": "Pod list denied; node filter membership is unknown."
+    }
+  ]
+}

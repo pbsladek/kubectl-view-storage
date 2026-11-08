@@ -1,0 +1,12 @@
+{
+  "apiVersion": "krew.googlecontainertools.github.com/v1alpha2",
+  "kind": "Plugin",
+  "metadata": {"name": "view-storage"},
+  "spec": {
+    "version": "__VERSION__",
+    "homepage": "__HOMEPAGE__",
+    "shortDescription": "Inspect persistent storage and usage",
+    "description": "Inspect persistent volumes, claims, consumers and reported filesystem usage. Show collection coverage and storage findings in grouped views or machine-readable reports.",
+    "platforms": []
+  }
+}

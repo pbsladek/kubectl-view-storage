@@ -1,0 +1,54 @@
+[package]
+name = "kubectl-view-storage"
+version = "0.1.0-dev"
+edition = "2024"
+autobins = false
+rust-version = "1.99.1"
+license = "Apache-2.0"
+description = "Inspect Kubernetes persistent storage inventory, consumers, and usage"
+readme = "README.md"
+include = [
+    "/Cargo.toml", "/Cargo.lock", "/LICENSE", "/README.md", "/rust-toolchain.toml",
+    "/src/**/*.rs", "/tests/**/*.rs", "/examples/README.md", "/examples/contract/**", "/docs/**",
+]
+
+[[bin]]
+name = "kubectl-view_storage"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+kube = { version = "5.0.0", default-features = false, features = ["client", "config", "rustls-tls", "ring", "http-proxy"] }
+k8s-openapi = { version = "0.29.0", default-features = false, features = ["v1_35"] }
+tokio = { version = "1.54.1", default-features = false, features = ["rt-multi-thread", "macros", "sync", "time", "signal", "io-util"] }
+tokio-util = { version = "0.7.20", default-features = false, features = ["rt"] }
+serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1.0.154", default-features = false, features = ["std", "arbitrary_precision", "unbounded_depth"] }
+thiserror = { version = "2.0.21", default-features = false }
+jiff = { version = "0.2.40", default-features = false, features = ["std"] }
+http = { version = "1.5.0", default-features = false, features = ["std"] }
+http-body-util = { version = "0.1.5", default-features = false }
+csv = { version = "1.4.0", default-features = false }
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.31.3", default-features = false, features = ["fs", "process", "signal", "term", "time"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nix = { version = "0.31.3", default-features = false, features = ["event"] }
+
+[dev-dependencies]
+proptest = { version = "1.12.0", default-features = false, features = ["std"] }
+wiremock = { version = "0.6.5", default-features = false }
+tokio = { version = "1.54.1", default-features = false, features = ["test-util"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"

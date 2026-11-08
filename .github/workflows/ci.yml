@@ -1,0 +1,89 @@
+name: Rust and contracts
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        toolchain: [pinned, stable]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Select toolchain
+        shell: bash
+        run: |
+          selected="${{ matrix.toolchain }}"
+          if [ "$selected" = pinned ]; then
+            selected=$(python3 -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')
+          fi
+          rustup toolchain install "$selected" --profile minimal --component rustfmt,clippy
+          echo "RUSTUP_TOOLCHAIN=$selected" >> "$GITHUB_ENV"
+      - name: Toolchain and dependency policy
+        run: |
+          python3 scripts/check-dependencies.py
+          python3 scripts/test-dependency-check.py
+          if [ '${{ matrix.toolchain }}' = pinned ]; then
+            python3 scripts/check-toolchain.py
+          fi
+      - name: Locked Rust checks
+        env:
+          VIEW_STORAGE_TEST_REPORTS: ${{ github.workspace }}/artifacts/api-reports
+          VIEW_STORAGE_HTTP_REPORTS: ${{ github.workspace }}/artifacts/http-reports
+        run: |
+          test -f Cargo.lock
+          cargo fmt --all --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --all-targets
+          python3 scripts/test-credential-terminal.py
+      - name: Select pinned kubectl
+        id: kubectl_pin
+        run: |
+          python3 - <<'PY'
+          import json, os
+          version = json.load(open('dev/versions.json'))['kubectl']
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('version=v' + version + '\n')
+          PY
+      - uses: azure/setup-kubectl@v5.2.0
+        with:
+          version: ${{ steps.kubectl_pin.outputs.version }}
+      - name: Real kubectl plugin discovery
+        run: python3 scripts/check-plugin.py
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Contract and gate checks
+        run: |
+          python -m pip install jsonschema==4.26.0
+          python scripts/validate-contract.py
+          python scripts/validate-produced-reports.py artifacts/api-reports
+          python scripts/validate-produced-reports.py --http artifacts/http-reports
+          python scripts/test-coverage-check.py
+          python scripts/test-dev-environment.py
+          python scripts/test-csi-environment.py
+          python scripts/test-release-packaging.py
+      - name: Targeted fault detection
+        if: matrix.toolchain == 'pinned' && matrix.os == 'ubuntu-latest'
+        run: python3 scripts/check-mutations.py
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Pinned coverage tools
+        run: |
+          rustup show active-toolchain
+          rustup component add llvm-tools-preview
+          cargo install cargo-llvm-cov --version 0.9.1 --locked
+      - run: sh scripts/coverage.sh
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: coverage
+          path: artifacts/coverage
+          if-no-files-found: error

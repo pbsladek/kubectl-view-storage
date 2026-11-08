@@ -1,0 +1,9 @@
+CONTEXT example   SCOPE demo   KIND pvc
+SEVERITY OBJECT CODE EVIDENCE
+warning demo/shared metrics_disagreement observed_range_percent=90..99
+  Investigate: Inspect the conflicting node samples; the critical usage check is inconclusive.
+SELECTION complete; matched=1 unknown=0
+METRICS 0/1 known-match eligible claims fresh and complete
+Strict critical check inconclusive: conflicting fresh candidates report critical pressure.
+Shared references: sibling group totals cannot be added; root totals use distinct records.
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

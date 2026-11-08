@@ -1,0 +1,7 @@
+CONTEXT example   SCOPE demo   KIND pvc
+SEVERITY OBJECT CODE EVIDENCE
+No observed findings in selected records.
+SELECTION complete; matched=1 unknown=0
+METRICS 1/1 known-match eligible claims fresh and complete
+Shared references: sibling group totals cannot be added; root totals use distinct records.
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

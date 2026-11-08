@@ -1,0 +1,22 @@
+[advisories]
+unmaintained = "all"
+yanked = "deny"
+
+[licenses]
+allow = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Unicode-3.0", "Unlicense", "Zlib", "CDLA-Permissive-2.0"]
+
+# Build-time archive helper pulled in by kube's JSONPath parser stack guard.
+# Reviewed against the crate's bundled LICENSE.txt; keep this approval scoped
+# to the reviewed package/version instead of allowing unrelated exceptions.
+[[licenses.exceptions]]
+name = "ar_archive_writer"
+version = "=0.5.3"
+allow = ["Apache-2.0 WITH LLVM-exception"]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

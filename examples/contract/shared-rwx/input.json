@@ -1,0 +1,303 @@
+{
+  "clock": "2026-11-06T20:00:00Z",
+  "request": {
+    "namespace": "demo",
+    "kind": "pvc",
+    "group_by": [
+      "node",
+      "pvc"
+    ],
+    "filters": {
+      "selector": null,
+      "pvc": null,
+      "pv": null,
+      "storage_class": null,
+      "driver": null,
+      "node": null
+    },
+    "utilization": true,
+    "metrics_source": "kubelet",
+    "max_metrics_age_seconds": 300,
+    "warn_used_percent": "80",
+    "critical_used_percent": "90",
+    "require_metrics": false,
+    "fail_on": null,
+    "sort": "name:asc"
+  },
+  "kubernetes": {
+    "pvcs": [
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+          "uid": "shared",
+          "name": "shared",
+          "namespace": "demo",
+          "creationTimestamp": "2026-11-01T00:00:00Z"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "volumeName": "pv-shared",
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteMany"
+          ],
+          "resources": {
+            "requests": {
+              "storage": "100Gi"
+            }
+          }
+        },
+        "status": {
+          "phase": "Bound",
+          "capacity": {
+            "storage": "100Gi"
+          }
+        }
+      }
+    ],
+    "pvs": [
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolume",
+        "metadata": {
+          "uid": "uid-pv-shared",
+          "name": "pv-shared"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "capacity": {
+            "storage": "100Gi"
+          },
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteMany"
+          ],
+          "persistentVolumeReclaimPolicy": "Delete",
+          "claimRef": {
+            "namespace": "demo",
+            "name": "shared",
+            "uid": "shared"
+          },
+          "csi": {
+            "driver": "example.csi.test",
+            "volumeHandle": "handle-shared"
+          }
+        },
+        "status": {
+          "phase": "Bound"
+        }
+      }
+    ],
+    "pods": [
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "uid": "app-a",
+          "name": "app-a",
+          "namespace": "demo"
+        },
+        "spec": {
+          "nodeName": "worker-a",
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "shared"
+              }
+            }
+          ],
+          "containers": [
+            {
+              "name": "app",
+              "image": "example.invalid/app:test",
+              "volumeMounts": [
+                {
+                  "name": "data",
+                  "mountPath": "/var/lib/data",
+                  "readOnly": false
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "uid": "app-b",
+          "name": "app-b",
+          "namespace": "demo"
+        },
+        "spec": {
+          "nodeName": "worker-b",
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "shared"
+              }
+            }
+          ],
+          "containers": [
+            {
+              "name": "app",
+              "image": "example.invalid/app:test",
+              "volumeMounts": [
+                {
+                  "name": "data",
+                  "mountPath": "/var/lib/data",
+                  "readOnly": false
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      },
+      {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "uid": "app-c",
+          "name": "app-c",
+          "namespace": "demo"
+        },
+        "spec": {
+          "nodeName": "worker-b",
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "shared"
+              }
+            }
+          ],
+          "containers": [
+            {
+              "name": "app",
+              "image": "example.invalid/app:test",
+              "volumeMounts": [
+                {
+                  "name": "data",
+                  "mountPath": "/var/lib/data",
+                  "readOnly": false
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "phase": "Running"
+        }
+      }
+    ],
+    "storage_classes": [
+      {
+        "apiVersion": "storage.k8s.io/v1",
+        "kind": "StorageClass",
+        "metadata": {
+          "name": "fast"
+        },
+        "provisioner": "example.csi.test"
+      }
+    ]
+  },
+  "summary_responses": {
+    "worker-a": {
+      "node": {
+        "nodeName": "worker-a"
+      },
+      "pods": [
+        {
+          "podRef": {
+            "name": "app-a",
+            "namespace": "demo",
+            "uid": "app-a"
+          },
+          "volume": [
+            {
+              "name": "data",
+              "pvcRef": {
+                "name": "shared",
+                "namespace": "demo"
+              },
+              "time": "2026-11-06T19:59:50Z",
+              "capacityBytes": 107374182400,
+              "usedBytes": 42949672960,
+              "availableBytes": 59055800320,
+              "inodes": 1000,
+              "inodesUsed": 100,
+              "inodesFree": 850
+            }
+          ]
+        }
+      ]
+    },
+    "worker-b": {
+      "node": {
+        "nodeName": "worker-b"
+      },
+      "pods": [
+        {
+          "podRef": {
+            "name": "app-b",
+            "namespace": "demo",
+            "uid": "app-b"
+          },
+          "volume": [
+            {
+              "name": "data",
+              "pvcRef": {
+                "name": "shared",
+                "namespace": "demo"
+              },
+              "time": "2026-11-06T19:59:50Z",
+              "capacityBytes": 107374182400,
+              "usedBytes": 42949672960,
+              "availableBytes": 59055800320,
+              "inodes": 1000,
+              "inodesUsed": 100,
+              "inodesFree": 850
+            }
+          ]
+        },
+        {
+          "podRef": {
+            "name": "app-c",
+            "namespace": "demo",
+            "uid": "app-c"
+          },
+          "volume": [
+            {
+              "name": "data",
+              "pvcRef": {
+                "name": "shared",
+                "namespace": "demo"
+              },
+              "time": "2026-11-06T19:59:50Z",
+              "capacityBytes": 107374182400,
+              "usedBytes": 42949672960,
+              "availableBytes": 59055800320,
+              "inodes": 1000,
+              "inodesUsed": 100,
+              "inodesFree": 850
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "failures": [],
+  "resource_versions": {
+    "persistentvolumeclaims/demo": "100",
+    "pods/demo": "101"
+  }
+}

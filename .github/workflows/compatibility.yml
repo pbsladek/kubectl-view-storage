@@ -1,0 +1,100 @@
+name: Disposable Kubernetes compatibility
+on:
+  pull_request:
+    paths: ['src/**', 'tests/**', 'Cargo.*', 'rust-toolchain.toml', 'dev/**', 'scripts/dev*', '.github/workflows/compatibility.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+        kubernetes: ['1.37.0', '1.36.4', '1.35.8']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Select reviewed node and matching client
+        id: selection
+        env:
+          SELECTED_KUBERNETES: ${{ matrix.kubernetes }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          versions = json.load(open('dev/versions.json'))
+          selected = os.environ['SELECTED_KUBERNETES']
+          image = next(pin for pin in [versions['baseline_node'], *versions['compatibility_nodes']]
+                       if pin.split(':v', 1)[1].split('@', 1)[0] == selected)
+          client = versions['kubectl'] if image == versions['baseline_node'] else selected
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'image={image}\nkubectl=v{client}\n')
+          PY
+      - uses: azure/setup-kubectl@v5.2.0
+        with:
+          version: ${{ steps.selection.outputs.kubectl }}
+      - name: Install verified kind binary
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, platform, re, urllib.request
+          from pathlib import Path
+          version = json.load(open('dev/versions.json'))['kind']
+          arch = {'x86_64': 'amd64', 'aarch64': 'arm64'}[platform.machine()]
+          asset = f'kind-linux-{arch}'
+          base = f'https://github.com/kubernetes-sigs/kind/releases/download/v{version}/{asset}'
+          with urllib.request.urlopen(base + '.sha256sum', timeout=60) as response:
+              checksum = response.read(4096).decode().split()[0]
+          if not re.fullmatch('[0-9a-f]{64}', checksum):
+              raise RuntimeError('invalid kind checksum')
+          with urllib.request.urlopen(base, timeout=120) as response:
+              binary = response.read(32 * 1024 * 1024 + 1)
+          if len(binary) > 32 * 1024 * 1024 or hashlib.sha256(binary).hexdigest() != checksum:
+              raise RuntimeError('kind checksum/size mismatch')
+          directory = Path('.local/tools/bin').resolve()
+          directory.mkdir(parents=True, exist_ok=True)
+          path = directory / 'kind'
+          path.write_bytes(binary)
+          path.chmod(0o755)
+          with open(os.environ['GITHUB_PATH'], 'a') as output:
+              output.write(str(directory) + '\n')
+          PY
+      - name: Locked native tests and release binary
+        run: |
+          rustup show active-toolchain
+          python3 scripts/check-toolchain.py
+          python3 scripts/check-dependencies.py
+          cargo test --locked --all-targets
+          cargo build --locked --release
+          python3 scripts/test-credential-terminal.py --binary target/release/kubectl-view_storage
+      - name: Inventory and restricted RBAC
+        env:
+          SELECTED_NODE_IMAGE: ${{ steps.selection.outputs.image }}
+        run: |
+          python3 scripts/dev-cluster.py create inventory --node-image "$SELECTED_NODE_IMAGE" --binary target/release/kubectl-view_storage
+          python3 scripts/dev-cluster.py delete inventory
+      - name: Fresh CSI byte and inode observations
+        env:
+          SELECTED_NODE_IMAGE: ${{ steps.selection.outputs.image }}
+        run: |
+          python3 scripts/dev-cluster.py create csi --node-image "$SELECTED_NODE_IMAGE" --binary target/release/kubectl-view_storage
+          python3 scripts/dev-cluster.py delete csi
+      - name: Remove any remaining owned profiles
+        if: always()
+        run: |
+          failed=0
+          for profile in inventory csi; do
+            if [ -f ".local/clusters/$profile.json" ]; then
+              python3 scripts/dev-cluster.py delete "$profile" || failed=1
+            fi
+          done
+          exit "$failed"
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: compatibility-${{ matrix.os }}-${{ matrix.kubernetes }}
+          path: artifacts/
+          if-no-files-found: warn

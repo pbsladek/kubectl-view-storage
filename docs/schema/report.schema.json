@@ -1,0 +1,2326 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "view-storage/v1alpha1"
+    },
+    "collection": {
+      "$ref": "#/$defs/collection"
+    },
+    "query": {
+      "$ref": "#/$defs/query"
+    },
+    "selection": {
+      "$ref": "#/$defs/selection"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "consumers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/consumer"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relationship"
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "collection",
+    "query",
+    "selection",
+    "records",
+    "consumers",
+    "relationships",
+    "groups",
+    "summary",
+    "findings",
+    "diagnostics"
+  ],
+  "additionalProperties": true,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kubectl-view-storage:report:v1alpha1",
+  "title": "kubectl-view-storage alpha report",
+  "description": "Draft 0.5 structural contract. Exact arithmetic, lifecycle, query planning, and strict uncertainty rules are specified in SPEC.md.",
+  "$defs": {
+    "source": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "enum": [
+            "kubelet",
+            "prometheus"
+          ]
+        },
+        "node": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pod_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^pod:[^:]+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "volume_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "provider",
+        "node",
+        "pod_id",
+        "volume_name"
+      ],
+      "additionalProperties": true
+    },
+    "source_collection": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "verb": {
+          "enum": [
+            "list",
+            "get",
+            "proxy"
+          ]
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "partial",
+            "forbidden",
+            "timeout",
+            "budget_exhausted",
+            "not_requested"
+          ]
+        },
+        "resource_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "resource",
+        "scope",
+        "verb",
+        "status",
+        "resource_version"
+      ],
+      "additionalProperties": true
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "enrichment_strategy": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "none",
+              "targeted_get",
+              "bulk_list",
+              "bulk_list_then_get",
+              "reuse_inventory"
+            ]
+          }
+        },
+        "enrichment_budget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enrichment_attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "base_attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "node_targets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "node_requests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "response_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "priority_sequence": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "membership",
+              "utilization_targets",
+              "display"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "unresolved_prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "enrichment_strategy",
+        "enrichment_budget",
+        "enrichment_attempts",
+        "base_attempts",
+        "node_targets",
+        "node_requests",
+        "response_bytes",
+        "priority_sequence",
+        "unresolved_prerequisites"
+      ],
+      "additionalProperties": true
+    },
+    "collection": {
+      "type": "object",
+      "properties": {
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "context": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "all_namespaces": {
+              "type": "boolean"
+            },
+            "namespace": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "all_namespaces",
+            "namespace"
+          ],
+          "additionalProperties": true
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_collection"
+          }
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        }
+      },
+      "required": [
+        "started_at",
+        "finished_at",
+        "context",
+        "scope",
+        "sources",
+        "cost"
+      ],
+      "additionalProperties": true
+    },
+    "query": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "pvc",
+            "pv"
+          ]
+        },
+        "group_by": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "storageclass",
+              "namespace",
+              "pvc",
+              "pv",
+              "driver",
+              "node",
+              "pod"
+            ]
+          }
+        },
+        "filters": {
+          "type": "object",
+          "properties": {
+            "selector": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "pvc": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "pv": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "storage_class": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "driver": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "node": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "selector",
+            "pvc",
+            "pv",
+            "storage_class",
+            "driver",
+            "node"
+          ],
+          "additionalProperties": true
+        },
+        "utilization": {
+          "type": "boolean"
+        },
+        "metrics_source": {
+          "anyOf": [
+            {
+              "enum": [
+                "kubelet",
+                "prometheus"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_metrics_age_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "warn_used_percent": {
+          "type": "string",
+          "pattern": "^(?:[0-9]|[1-9][0-9])(?:\\.[0-9]{1,6})?$|^100(?:\\.0{1,6})?$"
+        },
+        "critical_used_percent": {
+          "type": "string",
+          "pattern": "^(?:[0-9]|[1-9][0-9])(?:\\.[0-9]{1,6})?$|^100(?:\\.0{1,6})?$"
+        },
+        "require_metrics": {
+          "type": "boolean"
+        },
+        "fail_on": {
+          "anyOf": [
+            {
+              "enum": [
+                "warning",
+                "critical"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sort": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "group_by",
+        "filters",
+        "utilization",
+        "metrics_source",
+        "max_metrics_age_seconds",
+        "warn_used_percent",
+        "critical_used_percent",
+        "require_metrics",
+        "fail_on",
+        "sort"
+      ],
+      "additionalProperties": true
+    },
+    "unknown_record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(pvc|pv):[^:]+$"
+        },
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "unresolved_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "namespace",
+        "name",
+        "unresolved_fields"
+      ],
+      "additionalProperties": true
+    },
+    "selection": {
+      "type": "object",
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "base_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matched_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unknown_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unknown_records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/unknown_record"
+          }
+        }
+      },
+      "required": [
+        "complete",
+        "base_count",
+        "matched_count",
+        "excluded_count",
+        "unknown_count",
+        "unknown_records"
+      ],
+      "additionalProperties": true
+    },
+    "filesystem": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "not_requested",
+            "not_applicable",
+            "missing",
+            "forbidden",
+            "timeout",
+            "stale",
+            "timestamp_unknown",
+            "invalid",
+            "identity_uncertain",
+            "uncertain"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/source"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field_status": {
+          "type": "object",
+          "properties": {
+            "capacity_bytes": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "used_bytes": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "available_bytes": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            }
+          },
+          "required": [
+            "capacity_bytes",
+            "used_bytes",
+            "available_bytes"
+          ],
+          "additionalProperties": true
+        },
+        "capacity_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "available_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_percent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observed_range_percent": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "max": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filesystem_candidate"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "source",
+        "observed_at",
+        "field_status",
+        "capacity_bytes",
+        "used_bytes",
+        "available_bytes",
+        "used_percent",
+        "candidate_count",
+        "observed_range_percent",
+        "candidates"
+      ],
+      "additionalProperties": true
+    },
+    "inodes": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "not_requested",
+            "not_applicable",
+            "missing",
+            "forbidden",
+            "timeout",
+            "stale",
+            "timestamp_unknown",
+            "invalid",
+            "identity_uncertain",
+            "uncertain"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/source"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field_status": {
+          "type": "object",
+          "properties": {
+            "inodes_total": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "inodes_used": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "inodes_free": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            }
+          },
+          "required": [
+            "inodes_total",
+            "inodes_used",
+            "inodes_free"
+          ],
+          "additionalProperties": true
+        },
+        "inodes_total": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_used": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_free": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_percent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observed_range_percent": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "max": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inodes_candidate"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "source",
+        "observed_at",
+        "field_status",
+        "inodes_total",
+        "inodes_used",
+        "inodes_free",
+        "used_percent",
+        "candidate_count",
+        "observed_range_percent",
+        "candidates"
+      ],
+      "additionalProperties": true
+    },
+    "record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(pvc|pv):[^:]+$"
+        },
+        "kind": {
+          "enum": [
+            "pvc",
+            "pv"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        },
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storage_class": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storage_class_state": {
+          "enum": [
+            "known",
+            "classless",
+            "unassigned",
+            "unknown"
+          ]
+        },
+        "driver": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "volume_mode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Known Filesystem/Block or an unfamiliar preserved API string; null denotes an invalid API type. Unsupported modes never imply filesystem metric eligibility or healthy usage."
+        },
+        "overlapping_filesystem": {
+          "type": "boolean",
+          "description": "Known shared CSI/backend filesystem identity; excluded from additive filesystem and inode totals. Absent means no overlap has been established."
+        },
+        "volume_binding_mode": {
+          "type": "string",
+          "description": "StorageClass binding mode when visible; unfamiliar external values are preserved."
+        },
+        "access_modes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "reclaim_policy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pv_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requested_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bound_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provisioned_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "consumer_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^pod:[^:]+$"
+          },
+          "uniqueItems": true
+        },
+        "consumer_visibility": {
+          "enum": [
+            "complete",
+            "partial",
+            "unknown"
+          ]
+        },
+        "active_consumer_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "filesystem": {
+          "$ref": "#/$defs/filesystem"
+        },
+        "inodes": {
+          "$ref": "#/$defs/inodes"
+        },
+        "terminating_consumer_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deletion_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "pod_owner": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^pod:[^:]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "relationship": {
+              "const": "declared_owner"
+            }
+          },
+          "required": [
+            "name",
+            "id",
+            "relationship"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "uid",
+        "namespace",
+        "name",
+        "created_at",
+        "phase",
+        "storage_class",
+        "storage_class_state",
+        "driver",
+        "volume_mode",
+        "access_modes",
+        "reclaim_policy",
+        "pv_name",
+        "requested_bytes",
+        "bound_bytes",
+        "provisioned_bytes",
+        "consumer_ids",
+        "consumer_visibility",
+        "active_consumer_count",
+        "filesystem",
+        "inodes",
+        "terminating_consumer_count"
+      ],
+      "additionalProperties": true
+    },
+    "consumer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^pod:[^:]+$"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deletion_timestamp": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "node": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "active": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Null when pod lifecycle is unfamiliar; false does not stand for unknown."
+        },
+        "reference_state": {
+          "enum": [
+            "active",
+            "terminating",
+            "terminal",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "uid",
+        "namespace",
+        "name",
+        "phase",
+        "deletion_timestamp",
+        "node",
+        "active",
+        "reference_state"
+      ],
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reference_state": {
+                "const": "unknown"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "active": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "active": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "mount": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "type": "string"
+        },
+        "container_kind": {
+          "enum": [
+            "app",
+            "init",
+            "ephemeral"
+          ]
+        },
+        "volume_name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "filesystem",
+            "block"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "read_only": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sub_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sub_path_expr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "container",
+        "container_kind",
+        "volume_name",
+        "kind",
+        "path",
+        "read_only",
+        "sub_path",
+        "sub_path_expr"
+      ],
+      "additionalProperties": true
+    },
+    "relationship": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "record_id": {
+          "type": "string",
+          "pattern": "^(pvc|pv):[^:]+$"
+        },
+        "consumer_id": {
+          "type": "string",
+          "pattern": "^pod:[^:]+$"
+        },
+        "volume_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mount"
+          }
+        },
+        "runtime_state": {
+          "const": "unverified"
+        }
+      },
+      "required": [
+        "id",
+        "record_id",
+        "consumer_id",
+        "volume_names",
+        "mounts",
+        "runtime_state"
+      ],
+      "additionalProperties": true
+    },
+    "quantity_sum": {
+      "type": "object",
+      "properties": {
+        "known_sum_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "known_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "complete": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "known_sum_bytes",
+        "known_count",
+        "total_count",
+        "complete"
+      ],
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "eligible": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fresh_complete": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_applicable": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "by_reason": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "eligible",
+        "fresh_complete",
+        "not_applicable",
+        "by_reason"
+      ],
+      "additionalProperties": true
+    },
+    "filesystem_total": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "unavailable",
+            "not_requested",
+            "not_applicable"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "capacity_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "available_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_percent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "oldest_observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "newest_observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "physical_total": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "capacity_bytes",
+        "used_bytes",
+        "available_bytes",
+        "used_percent",
+        "coverage",
+        "oldest_observed_at",
+        "newest_observed_at",
+        "physical_total"
+      ],
+      "additionalProperties": true
+    },
+    "inode_total": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "unavailable",
+            "not_requested",
+            "not_applicable"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_total": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_used": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_free": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_percent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "oldest_observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "newest_observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "physical_total": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "inodes_total",
+        "inodes_used",
+        "inodes_free",
+        "used_percent",
+        "coverage",
+        "oldest_observed_at",
+        "newest_observed_at",
+        "physical_total"
+      ],
+      "additionalProperties": true
+    },
+    "totals": {
+      "type": "object",
+      "properties": {
+        "selection_complete": {
+          "type": "boolean"
+        },
+        "record_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "requested": {
+          "$ref": "#/$defs/quantity_sum"
+        },
+        "bound": {
+          "$ref": "#/$defs/quantity_sum"
+        },
+        "provisioned": {
+          "$ref": "#/$defs/quantity_sum"
+        },
+        "filesystem": {
+          "$ref": "#/$defs/filesystem_total"
+        },
+        "inodes": {
+          "$ref": "#/$defs/inode_total"
+        },
+        "finding_counts": {
+          "type": "object",
+          "properties": {
+            "critical": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warning": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "info": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "critical",
+            "warning",
+            "info"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "selection_complete",
+        "record_count",
+        "phase_counts",
+        "requested",
+        "bound",
+        "provisioned",
+        "filesystem",
+        "inodes",
+        "finding_counts"
+      ],
+      "additionalProperties": true
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "dimension": {
+          "enum": [
+            "storageclass",
+            "namespace",
+            "pvc",
+            "pv",
+            "driver",
+            "node",
+            "pod"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "value_state": {
+          "enum": [
+            "known",
+            "absent",
+            "unassigned",
+            "unknown"
+          ]
+        },
+        "member_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(pvc|pv):[^:]+$"
+          },
+          "uniqueItems": true
+        },
+        "overlapping_children": {
+          "type": "boolean"
+        },
+        "totals": {
+          "$ref": "#/$defs/totals"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/group"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "dimension",
+        "value",
+        "value_state",
+        "member_ids",
+        "overlapping_children",
+        "totals",
+        "children"
+      ],
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/source"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "field",
+        "value",
+        "unit",
+        "observed_at",
+        "source"
+      ],
+      "additionalProperties": true
+    },
+    "finding": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "warning",
+            "info"
+          ]
+        },
+        "subject_id": {
+          "type": "string",
+          "pattern": "^(pvc|pv):[^:]+$"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "suggested_action": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "subject_id",
+        "evidence",
+        "suggested_action"
+      ],
+      "additionalProperties": true
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "warning",
+            "info"
+          ]
+        },
+        "subject_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "affected_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "subject_id",
+        "source",
+        "reason",
+        "affected_fields",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "selection_complete": {
+          "type": "boolean"
+        },
+        "record_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "requested": {
+          "$ref": "#/$defs/quantity_sum"
+        },
+        "bound": {
+          "$ref": "#/$defs/quantity_sum"
+        },
+        "provisioned": {
+          "$ref": "#/$defs/quantity_sum"
+        },
+        "filesystem": {
+          "$ref": "#/$defs/filesystem_total"
+        },
+        "inodes": {
+          "$ref": "#/$defs/inode_total"
+        },
+        "finding_counts": {
+          "type": "object",
+          "properties": {
+            "critical": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warning": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "info": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "critical",
+            "warning",
+            "info"
+          ],
+          "additionalProperties": true
+        },
+        "overlapping_children": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "selection_complete",
+        "record_count",
+        "phase_counts",
+        "requested",
+        "bound",
+        "provisioned",
+        "filesystem",
+        "inodes",
+        "finding_counts",
+        "overlapping_children"
+      ],
+      "additionalProperties": true
+    },
+    "filesystem_candidate": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "not_requested",
+            "not_applicable",
+            "missing",
+            "forbidden",
+            "timeout",
+            "stale",
+            "timestamp_unknown",
+            "invalid",
+            "identity_uncertain",
+            "uncertain"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/source"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field_status": {
+          "type": "object",
+          "properties": {
+            "capacity_bytes": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "used_bytes": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "available_bytes": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            }
+          },
+          "required": [
+            "capacity_bytes",
+            "used_bytes",
+            "available_bytes"
+          ],
+          "additionalProperties": true
+        },
+        "capacity_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "available_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_percent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "source",
+        "observed_at",
+        "field_status",
+        "capacity_bytes",
+        "used_bytes",
+        "available_bytes",
+        "used_percent"
+      ],
+      "additionalProperties": true
+    },
+    "inodes_candidate": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "not_requested",
+            "not_applicable",
+            "missing",
+            "forbidden",
+            "timeout",
+            "stale",
+            "timestamp_unknown",
+            "invalid",
+            "identity_uncertain",
+            "uncertain"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/source"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field_status": {
+          "type": "object",
+          "properties": {
+            "inodes_total": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "inodes_used": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            },
+            "inodes_free": {
+              "enum": [
+                "ok",
+                "missing",
+                "invalid"
+              ]
+            }
+          },
+          "required": [
+            "inodes_total",
+            "inodes_used",
+            "inodes_free"
+          ],
+          "additionalProperties": true
+        },
+        "inodes_total": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_used": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inodes_free": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$",
+              "maxLength": 20
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_percent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "source",
+        "observed_at",
+        "field_status",
+        "inodes_total",
+        "inodes_used",
+        "inodes_free",
+        "used_percent"
+      ],
+      "additionalProperties": true
+    }
+  }
+}

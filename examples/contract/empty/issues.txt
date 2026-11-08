@@ -1,0 +1,6 @@
+CONTEXT example   SCOPE demo   KIND pvc
+SEVERITY OBJECT CODE EVIDENCE
+No observed findings in selected records.
+SELECTION complete; matched=0 unknown=0
+METRICS 0/0 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

@@ -1,0 +1,6 @@
+/target/
+/.local/
+/artifacts/
+__pycache__/
+/fuzz/target/
+/fuzz/artifacts/

@@ -1,0 +1,10 @@
+CONTEXT example   SCOPE demo   KIND pvc
+PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
+data 100Gi 100Gi 100Gi 40Gi 55Gi 40.0% 10.0% Bound [metrics:ok]
+DECLARED CONSUMERS (runtime unverified)
+  demo/data pv=pv-data driver=example.csi.test mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=app state=active node=worker-a container=app volume=data mount=/var/lib/data readOnly=false subPath=database subPathExpr=--
+    pod=app state=active node=worker-a container=backup volume=data mount=/backup/source readOnly=true subPath=-- subPathExpr=$(POD_NAME)
+SELECTION complete; matched=1 unknown=0
+METRICS 1/1 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

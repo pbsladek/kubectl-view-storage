@@ -1,0 +1,9 @@
+CONTEXT example   SCOPE demo   KIND pvc
+SEVERITY OBJECT CODE EVIDENCE
+info demo/missing metrics_missing metrics_status=missing
+  Investigate: Inspect the reported volume and its consumer configuration.
+info demo/stale metrics_stale metrics_status=stale
+  Investigate: Inspect the reported volume and its consumer configuration.
+SELECTION complete; matched=2 unknown=0
+METRICS 0/2 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

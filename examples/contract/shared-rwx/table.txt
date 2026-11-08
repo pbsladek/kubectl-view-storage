@@ -1,0 +1,14 @@
+CONTEXT example   SCOPE demo   KIND pvc
+PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
+shared 100Gi 100Gi 100Gi 40Gi 55Gi 40.0% 10.0% Bound [metrics:ok]
+DECLARED CONSUMERS (runtime unverified)
+  demo/shared pv=pv-shared driver=example.csi.test mode=Filesystem access=ReadWriteMany reclaim=Delete
+    pod=app-a state=active node=worker-a container=app volume=data mount=/var/lib/data readOnly=false subPath=-- subPathExpr=--
+  demo/shared pv=pv-shared driver=example.csi.test mode=Filesystem access=ReadWriteMany reclaim=Delete
+    pod=app-b state=active node=worker-b container=app volume=data mount=/var/lib/data readOnly=false subPath=-- subPathExpr=--
+  demo/shared pv=pv-shared driver=example.csi.test mode=Filesystem access=ReadWriteMany reclaim=Delete
+    pod=app-c state=active node=worker-b container=app volume=data mount=/var/lib/data readOnly=false subPath=-- subPathExpr=--
+SELECTION complete; matched=1 unknown=0
+METRICS 1/1 known-match eligible claims fresh and complete
+Shared references: sibling group totals cannot be added; root totals use distinct records.
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

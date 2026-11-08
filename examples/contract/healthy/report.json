@@ -1,0 +1,537 @@
+{
+  "schema_version": "view-storage/v1alpha1",
+  "collection": {
+    "started_at": "2026-11-06T19:59:55Z",
+    "finished_at": "2026-11-06T20:00:00Z",
+    "context": "example",
+    "scope": {
+      "all_namespaces": false,
+      "namespace": "demo"
+    },
+    "sources": [
+      {
+        "resource": "persistentvolumeclaims",
+        "scope": "demo",
+        "verb": "list",
+        "status": "complete",
+        "resource_version": "100"
+      },
+      {
+        "resource": "pods",
+        "scope": "demo",
+        "verb": "list",
+        "status": "complete",
+        "resource_version": "101"
+      }
+    ],
+    "cost": {
+      "enrichment_strategy": {
+        "persistentvolumes": "targeted_get",
+        "storageclasses": "targeted_get"
+      },
+      "enrichment_budget": 256,
+      "enrichment_attempts": 3,
+      "base_attempts": 1,
+      "node_targets": 1,
+      "node_requests": 1,
+      "response_bytes": 1780,
+      "priority_sequence": [
+        "membership",
+        "utilization_targets",
+        "display"
+      ],
+      "unresolved_prerequisites": []
+    }
+  },
+  "query": {
+    "kind": "pvc",
+    "group_by": [
+      "storageclass",
+      "namespace",
+      "pvc"
+    ],
+    "filters": {
+      "selector": null,
+      "pvc": null,
+      "pv": null,
+      "storage_class": null,
+      "driver": null,
+      "node": null
+    },
+    "utilization": true,
+    "metrics_source": "kubelet",
+    "max_metrics_age_seconds": 300,
+    "warn_used_percent": "80",
+    "critical_used_percent": "90",
+    "require_metrics": false,
+    "fail_on": null,
+    "sort": "name:asc"
+  },
+  "selection": {
+    "complete": true,
+    "base_count": 1,
+    "matched_count": 1,
+    "excluded_count": 0,
+    "unknown_count": 0,
+    "unknown_records": []
+  },
+  "records": [
+    {
+      "id": "pvc:data",
+      "kind": "pvc",
+      "uid": "data",
+      "namespace": "demo",
+      "name": "data",
+      "created_at": "2026-11-01T00:00:00Z",
+      "phase": "Bound",
+      "storage_class": "fast",
+      "storage_class_state": "known",
+      "driver": "example.csi.test",
+      "volume_mode": "Filesystem",
+      "access_modes": [
+        "ReadWriteOnce"
+      ],
+      "reclaim_policy": "Delete",
+      "pv_name": "pv-data",
+      "requested_bytes": "107374182400",
+      "bound_bytes": "107374182400",
+      "provisioned_bytes": "107374182400",
+      "consumer_ids": [
+        "pod:app"
+      ],
+      "consumer_visibility": "complete",
+      "active_consumer_count": 1,
+      "filesystem": {
+        "status": "ok",
+        "reason": null,
+        "source": {
+          "provider": "kubelet",
+          "node": "worker-a",
+          "pod_id": "pod:app",
+          "volume_name": "data"
+        },
+        "observed_at": "2026-11-06T19:59:50Z",
+        "field_status": {
+          "capacity_bytes": "ok",
+          "used_bytes": "ok",
+          "available_bytes": "ok"
+        },
+        "capacity_bytes": "107374182400",
+        "used_bytes": "42949672960",
+        "available_bytes": "59055800320",
+        "used_percent": 40.0,
+        "candidate_count": 1,
+        "observed_range_percent": null,
+        "candidates": [
+          {
+            "status": "ok",
+            "reason": null,
+            "source": {
+              "provider": "kubelet",
+              "node": "worker-a",
+              "pod_id": "pod:app",
+              "volume_name": "data"
+            },
+            "observed_at": "2026-11-06T19:59:50Z",
+            "field_status": {
+              "capacity_bytes": "ok",
+              "used_bytes": "ok",
+              "available_bytes": "ok"
+            },
+            "capacity_bytes": "107374182400",
+            "used_bytes": "42949672960",
+            "available_bytes": "59055800320",
+            "used_percent": 40.0
+          }
+        ]
+      },
+      "inodes": {
+        "status": "ok",
+        "reason": null,
+        "source": {
+          "provider": "kubelet",
+          "node": "worker-a",
+          "pod_id": "pod:app",
+          "volume_name": "data"
+        },
+        "observed_at": "2026-11-06T19:59:50Z",
+        "field_status": {
+          "inodes_total": "ok",
+          "inodes_used": "ok",
+          "inodes_free": "ok"
+        },
+        "inodes_total": "1000",
+        "inodes_used": "100",
+        "inodes_free": "850",
+        "used_percent": 10.0,
+        "candidate_count": 1,
+        "observed_range_percent": null,
+        "candidates": [
+          {
+            "status": "ok",
+            "reason": null,
+            "source": {
+              "provider": "kubelet",
+              "node": "worker-a",
+              "pod_id": "pod:app",
+              "volume_name": "data"
+            },
+            "observed_at": "2026-11-06T19:59:50Z",
+            "field_status": {
+              "inodes_total": "ok",
+              "inodes_used": "ok",
+              "inodes_free": "ok"
+            },
+            "inodes_total": "1000",
+            "inodes_used": "100",
+            "inodes_free": "850",
+            "used_percent": 10.0
+          }
+        ]
+      },
+      "terminating_consumer_count": 0
+    }
+  ],
+  "consumers": [
+    {
+      "id": "pod:app",
+      "uid": "app",
+      "namespace": "demo",
+      "name": "app",
+      "phase": "Running",
+      "deletion_timestamp": null,
+      "node": "worker-a",
+      "active": true,
+      "reference_state": "active"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "edge:data:app",
+      "record_id": "pvc:data",
+      "consumer_id": "pod:app",
+      "volume_names": [
+        "data"
+      ],
+      "mounts": [
+        {
+          "container": "app",
+          "container_kind": "app",
+          "volume_name": "data",
+          "kind": "filesystem",
+          "path": "/var/lib/data",
+          "read_only": false,
+          "sub_path": "database",
+          "sub_path_expr": null
+        },
+        {
+          "container": "backup",
+          "container_kind": "app",
+          "volume_name": "data",
+          "kind": "filesystem",
+          "path": "/backup/source",
+          "read_only": true,
+          "sub_path": null,
+          "sub_path_expr": "$(POD_NAME)"
+        }
+      ],
+      "runtime_state": "unverified"
+    }
+  ],
+  "groups": [
+    {
+      "id": "group:storageclass=fast",
+      "dimension": "storageclass",
+      "value": "fast",
+      "value_state": "known",
+      "member_ids": [
+        "pvc:data"
+      ],
+      "overlapping_children": false,
+      "totals": {
+        "selection_complete": true,
+        "record_count": 1,
+        "phase_counts": {
+          "Bound": 1
+        },
+        "requested": {
+          "known_sum_bytes": "107374182400",
+          "known_count": 1,
+          "total_count": 1,
+          "complete": true
+        },
+        "bound": {
+          "known_sum_bytes": "107374182400",
+          "known_count": 1,
+          "total_count": 1,
+          "complete": true
+        },
+        "provisioned": {
+          "known_sum_bytes": "107374182400",
+          "known_count": 1,
+          "total_count": 1,
+          "complete": true
+        },
+        "filesystem": {
+          "status": "ok",
+          "reason": null,
+          "capacity_bytes": "107374182400",
+          "used_bytes": "42949672960",
+          "available_bytes": "59055800320",
+          "used_percent": 40.0,
+          "coverage": {
+            "eligible": 1,
+            "fresh_complete": 1,
+            "not_applicable": 0,
+            "by_reason": {}
+          },
+          "oldest_observed_at": "2026-11-06T19:59:50Z",
+          "newest_observed_at": "2026-11-06T19:59:50Z",
+          "physical_total": false
+        },
+        "inodes": {
+          "status": "ok",
+          "reason": null,
+          "inodes_total": "1000",
+          "inodes_used": "100",
+          "inodes_free": "850",
+          "used_percent": 10.0,
+          "coverage": {
+            "eligible": 1,
+            "fresh_complete": 1,
+            "not_applicable": 0,
+            "by_reason": {}
+          },
+          "oldest_observed_at": "2026-11-06T19:59:50Z",
+          "newest_observed_at": "2026-11-06T19:59:50Z",
+          "physical_total": false
+        },
+        "finding_counts": {
+          "critical": 0,
+          "warning": 0,
+          "info": 0
+        }
+      },
+      "children": [
+        {
+          "id": "group:storageclass=fast/namespace=demo",
+          "dimension": "namespace",
+          "value": "demo",
+          "value_state": "known",
+          "member_ids": [
+            "pvc:data"
+          ],
+          "overlapping_children": false,
+          "totals": {
+            "selection_complete": true,
+            "record_count": 1,
+            "phase_counts": {
+              "Bound": 1
+            },
+            "requested": {
+              "known_sum_bytes": "107374182400",
+              "known_count": 1,
+              "total_count": 1,
+              "complete": true
+            },
+            "bound": {
+              "known_sum_bytes": "107374182400",
+              "known_count": 1,
+              "total_count": 1,
+              "complete": true
+            },
+            "provisioned": {
+              "known_sum_bytes": "107374182400",
+              "known_count": 1,
+              "total_count": 1,
+              "complete": true
+            },
+            "filesystem": {
+              "status": "ok",
+              "reason": null,
+              "capacity_bytes": "107374182400",
+              "used_bytes": "42949672960",
+              "available_bytes": "59055800320",
+              "used_percent": 40.0,
+              "coverage": {
+                "eligible": 1,
+                "fresh_complete": 1,
+                "not_applicable": 0,
+                "by_reason": {}
+              },
+              "oldest_observed_at": "2026-11-06T19:59:50Z",
+              "newest_observed_at": "2026-11-06T19:59:50Z",
+              "physical_total": false
+            },
+            "inodes": {
+              "status": "ok",
+              "reason": null,
+              "inodes_total": "1000",
+              "inodes_used": "100",
+              "inodes_free": "850",
+              "used_percent": 10.0,
+              "coverage": {
+                "eligible": 1,
+                "fresh_complete": 1,
+                "not_applicable": 0,
+                "by_reason": {}
+              },
+              "oldest_observed_at": "2026-11-06T19:59:50Z",
+              "newest_observed_at": "2026-11-06T19:59:50Z",
+              "physical_total": false
+            },
+            "finding_counts": {
+              "critical": 0,
+              "warning": 0,
+              "info": 0
+            }
+          },
+          "children": [
+            {
+              "id": "group:storageclass=fast/namespace=demo/pvc=data",
+              "dimension": "pvc",
+              "value": "data",
+              "value_state": "known",
+              "member_ids": [
+                "pvc:data"
+              ],
+              "overlapping_children": false,
+              "totals": {
+                "selection_complete": true,
+                "record_count": 1,
+                "phase_counts": {
+                  "Bound": 1
+                },
+                "requested": {
+                  "known_sum_bytes": "107374182400",
+                  "known_count": 1,
+                  "total_count": 1,
+                  "complete": true
+                },
+                "bound": {
+                  "known_sum_bytes": "107374182400",
+                  "known_count": 1,
+                  "total_count": 1,
+                  "complete": true
+                },
+                "provisioned": {
+                  "known_sum_bytes": "107374182400",
+                  "known_count": 1,
+                  "total_count": 1,
+                  "complete": true
+                },
+                "filesystem": {
+                  "status": "ok",
+                  "reason": null,
+                  "capacity_bytes": "107374182400",
+                  "used_bytes": "42949672960",
+                  "available_bytes": "59055800320",
+                  "used_percent": 40.0,
+                  "coverage": {
+                    "eligible": 1,
+                    "fresh_complete": 1,
+                    "not_applicable": 0,
+                    "by_reason": {}
+                  },
+                  "oldest_observed_at": "2026-11-06T19:59:50Z",
+                  "newest_observed_at": "2026-11-06T19:59:50Z",
+                  "physical_total": false
+                },
+                "inodes": {
+                  "status": "ok",
+                  "reason": null,
+                  "inodes_total": "1000",
+                  "inodes_used": "100",
+                  "inodes_free": "850",
+                  "used_percent": 10.0,
+                  "coverage": {
+                    "eligible": 1,
+                    "fresh_complete": 1,
+                    "not_applicable": 0,
+                    "by_reason": {}
+                  },
+                  "oldest_observed_at": "2026-11-06T19:59:50Z",
+                  "newest_observed_at": "2026-11-06T19:59:50Z",
+                  "physical_total": false
+                },
+                "finding_counts": {
+                  "critical": 0,
+                  "warning": 0,
+                  "info": 0
+                }
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "selection_complete": true,
+    "record_count": 1,
+    "phase_counts": {
+      "Bound": 1
+    },
+    "requested": {
+      "known_sum_bytes": "107374182400",
+      "known_count": 1,
+      "total_count": 1,
+      "complete": true
+    },
+    "bound": {
+      "known_sum_bytes": "107374182400",
+      "known_count": 1,
+      "total_count": 1,
+      "complete": true
+    },
+    "provisioned": {
+      "known_sum_bytes": "107374182400",
+      "known_count": 1,
+      "total_count": 1,
+      "complete": true
+    },
+    "filesystem": {
+      "status": "ok",
+      "reason": null,
+      "capacity_bytes": "107374182400",
+      "used_bytes": "42949672960",
+      "available_bytes": "59055800320",
+      "used_percent": 40.0,
+      "coverage": {
+        "eligible": 1,
+        "fresh_complete": 1,
+        "not_applicable": 0,
+        "by_reason": {}
+      },
+      "oldest_observed_at": "2026-11-06T19:59:50Z",
+      "newest_observed_at": "2026-11-06T19:59:50Z",
+      "physical_total": false
+    },
+    "inodes": {
+      "status": "ok",
+      "reason": null,
+      "inodes_total": "1000",
+      "inodes_used": "100",
+      "inodes_free": "850",
+      "used_percent": 10.0,
+      "coverage": {
+        "eligible": 1,
+        "fresh_complete": 1,
+        "not_applicable": 0,
+        "by_reason": {}
+      },
+      "oldest_observed_at": "2026-11-06T19:59:50Z",
+      "newest_observed_at": "2026-11-06T19:59:50Z",
+      "physical_total": false
+    },
+    "finding_counts": {
+      "critical": 0,
+      "warning": 0,
+      "info": 0
+    },
+    "overlapping_children": false
+  },
+  "findings": [],
+  "diagnostics": []
+}

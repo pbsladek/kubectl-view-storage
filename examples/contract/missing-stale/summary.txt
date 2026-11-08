@@ -1,0 +1,7 @@
+CONTEXT example   SCOPE demo   KIND pvc
+GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
+ROOT 2 200Gi 200Gi -- -- -- -- 0/2 phases={"Bound":2}
+storageclass=fast 2 200Gi 200Gi -- -- -- -- 0/2 phases={"Bound":2}
+SELECTION complete; matched=2 unknown=0
+METRICS 0/2 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

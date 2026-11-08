@@ -1,0 +1,24 @@
+name: Stable and dependency maintenance
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: '31 9 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stable:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: python3 scripts/check-toolchain.py --latest
+  advisories:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: |
+          test -f Cargo.lock
+          cargo install cargo-deny --version 0.19.0 --locked
+          cargo deny --locked check advisories bans licenses sources

@@ -1,0 +1,12 @@
+CONTEXT example   SCOPE demo   KIND pvc
+PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
+exhausted 100Gi 100Gi 100Gi 80Gi 0 80.0% 10.0% Bound [metrics:ok]
+partial-alert 100Gi 100Gi 100Gi 95Gi -- 95.0% 10.0% Bound [metrics:partial]
+DECLARED CONSUMERS (runtime unverified)
+  demo/exhausted pv=pv-exhausted driver=example.csi.test mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=app-a state=active node=worker-a container=app volume=data mount=/var/lib/data readOnly=false subPath=-- subPathExpr=--
+  demo/partial-alert pv=pv-partial-alert driver=example.csi.test mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=app-b state=active node=worker-a container=app volume=data mount=/var/lib/data readOnly=false subPath=-- subPathExpr=--
+SELECTION complete; matched=2 unknown=0
+METRICS 1/2 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

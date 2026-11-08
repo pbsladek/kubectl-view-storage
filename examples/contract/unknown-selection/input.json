@@ -1,0 +1,117 @@
+{
+  "clock": "2026-11-06T20:00:00Z",
+  "request": {
+    "namespace": "demo",
+    "kind": "pvc",
+    "group_by": [
+      "storageclass",
+      "namespace",
+      "pvc"
+    ],
+    "filters": {
+      "selector": null,
+      "pvc": null,
+      "pv": null,
+      "storage_class": null,
+      "driver": null,
+      "node": "worker-a"
+    },
+    "utilization": true,
+    "metrics_source": "kubelet",
+    "max_metrics_age_seconds": 300,
+    "warn_used_percent": "80",
+    "critical_used_percent": "90",
+    "require_metrics": true,
+    "fail_on": null,
+    "sort": "name:asc"
+  },
+  "kubernetes": {
+    "pvcs": [
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+          "uid": "data",
+          "name": "data",
+          "namespace": "demo",
+          "creationTimestamp": "2026-11-01T00:00:00Z"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "volumeName": "pv-data",
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "resources": {
+            "requests": {
+              "storage": "100Gi"
+            }
+          }
+        },
+        "status": {
+          "phase": "Bound",
+          "capacity": {
+            "storage": "100Gi"
+          }
+        }
+      }
+    ],
+    "pvs": [
+      {
+        "apiVersion": "v1",
+        "kind": "PersistentVolume",
+        "metadata": {
+          "uid": "uid-pv-data",
+          "name": "pv-data"
+        },
+        "spec": {
+          "storageClassName": "fast",
+          "capacity": {
+            "storage": "100Gi"
+          },
+          "volumeMode": "Filesystem",
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "persistentVolumeReclaimPolicy": "Delete",
+          "claimRef": {
+            "namespace": "demo",
+            "name": "data",
+            "uid": "data"
+          },
+          "csi": {
+            "driver": "example.csi.test",
+            "volumeHandle": "handle-data"
+          }
+        },
+        "status": {
+          "phase": "Bound"
+        }
+      }
+    ],
+    "pods": [],
+    "storage_classes": [
+      {
+        "apiVersion": "storage.k8s.io/v1",
+        "kind": "StorageClass",
+        "metadata": {
+          "name": "fast"
+        },
+        "provisioner": "example.csi.test"
+      }
+    ]
+  },
+  "summary_responses": {},
+  "failures": [
+    {
+      "method": "GET",
+      "path": "/api/v1/namespaces/demo/pods",
+      "status": 403
+    }
+  ],
+  "resource_versions": {
+    "persistentvolumeclaims/demo": "100",
+    "pods/demo": "101"
+  }
+}

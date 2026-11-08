@@ -1,0 +1,8 @@
+CONTEXT example   SCOPE demo   KIND pvc
+GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
+ROOT 0 0 0 (partial) -- -- -- -- 0/0 phases={}
+SELECTION incomplete; matched=0 unknown=1
+METRICS 0/0 known-match eligible claims fresh and complete
+Counts are lower bounds; strict check inconclusive.
+DIAGNOSTIC consumers_forbidden: Pod list denied; node filter membership is unknown.
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

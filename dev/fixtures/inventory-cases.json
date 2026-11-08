@@ -1,0 +1,248 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "storage.k8s.io/v1",
+      "kind": "StorageClass",
+      "metadata": {
+        "name": "view-storage-static"
+      },
+      "provisioner": "kubernetes.io/no-provisioner",
+      "volumeBindingMode": "Immediate",
+      "reclaimPolicy": "Retain"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "view-storage-available"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "128Mi"
+        },
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "volumeMode": "Filesystem",
+        "storageClassName": "view-storage-static",
+        "persistentVolumeReclaimPolicy": "Retain",
+        "hostPath": {
+          "path": "/tmp/view-storage-fixtures/available",
+          "type": "DirectoryOrCreate"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "view-storage-released"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "128Mi"
+        },
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "volumeMode": "Filesystem",
+        "storageClassName": "view-storage-static",
+        "persistentVolumeReclaimPolicy": "Retain",
+        "hostPath": {
+          "path": "/tmp/view-storage-fixtures/released",
+          "type": "DirectoryOrCreate"
+        },
+        "claimRef": {
+          "namespace": "view-storage-test",
+          "name": "removed-claim",
+          "uid": "11111111-1111-4111-8111-111111111111"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolume",
+      "metadata": {
+        "name": "view-storage-unreferenced"
+      },
+      "spec": {
+        "capacity": {
+          "storage": "128Mi"
+        },
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "volumeMode": "Filesystem",
+        "storageClassName": "view-storage-static",
+        "persistentVolumeReclaimPolicy": "Retain",
+        "hostPath": {
+          "path": "/tmp/view-storage-fixtures/unreferenced",
+          "type": "DirectoryOrCreate"
+        },
+        "claimRef": {
+          "namespace": "view-storage-test",
+          "name": "unreferenced"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "shared-consumer",
+        "namespace": "view-storage-test",
+        "labels": {
+          "app": "different-pod-label"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.k8s.io/pause:3.10@sha256:ee6521f290b2168b6e0935a181d4cff9be1ac3f505666ef0e3c98fae8199917a",
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/data",
+                "readOnly": true
+              },
+              {
+                "name": "alias",
+                "mountPath": "/alias",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "data",
+            "persistentVolumeClaim": {
+              "claimName": "data"
+            }
+          },
+          {
+            "name": "alias",
+            "persistentVolumeClaim": {
+              "claimName": "data"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "unscheduled-consumer",
+        "namespace": "view-storage-test",
+        "labels": {
+          "app": "different-pod-label"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.k8s.io/pause:3.10@sha256:ee6521f290b2168b6e0935a181d4cff9be1ac3f505666ef0e3c98fae8199917a",
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/data",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "data",
+            "persistentVolumeClaim": {
+              "claimName": "data"
+            }
+          }
+        ],
+        "nodeSelector": {
+          "view-storage.test/never-scheduled": "true"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "terminating-consumer",
+        "namespace": "view-storage-test",
+        "labels": {
+          "app": "different-pod-label"
+        },
+        "finalizers": [
+          "view-storage.test/retain"
+        ]
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.k8s.io/pause:3.10@sha256:ee6521f290b2168b6e0935a181d4cff9be1ac3f505666ef0e3c98fae8199917a",
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "cpu": "50m",
+                "memory": "32Mi"
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/data",
+                "readOnly": true
+              }
+            ],
+            "lifecycle": {
+              "preStop": {
+                "sleep": {
+                  "seconds": 3600
+                }
+              }
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "name": "data",
+            "persistentVolumeClaim": {
+              "claimName": "data"
+            }
+          }
+        ],
+        "terminationGracePeriodSeconds": 3600
+      }
+    }
+  ]
+}

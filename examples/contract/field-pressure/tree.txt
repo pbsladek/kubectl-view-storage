@@ -1,0 +1,9 @@
+CONTEXT example   SCOPE demo   KIND pvc
+STORAGE RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE%
+storageclass=fast 2 200Gi 200Gi 100Gi 80Gi 0 80.0% [metrics:partial]
+  namespace=demo 2 200Gi 200Gi 100Gi 80Gi 0 80.0% [metrics:partial]
+    pvc=exhausted 1 100Gi 100Gi 100Gi 80Gi 0 80.0% [metrics:ok]
+    pvc=partial-alert 1 100Gi 100Gi 100Gi 95Gi -- 95.0% [metrics:partial]
+SELECTION complete; matched=2 unknown=0
+METRICS 1/2 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

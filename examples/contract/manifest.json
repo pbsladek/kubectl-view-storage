@@ -1,0 +1,194 @@
+{
+  "contract_version": "0.5",
+  "scenarios": [
+    {
+      "id": "healthy",
+      "description": "Healthy claim, two declared mounts, one consumer",
+      "input": "healthy/input.json",
+      "report": "healthy/report.json",
+      "views": {
+        "tree": "healthy/tree.txt",
+        "table": "healthy/table.txt",
+        "summary": "healthy/summary.txt",
+        "issues": "healthy/issues.txt"
+      },
+      "expected_exit": 0,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "shared-rwx",
+      "description": "One claim across three pods and two node groups",
+      "input": "shared-rwx/input.json",
+      "report": "shared-rwx/report.json",
+      "views": {
+        "tree": "shared-rwx/tree.txt",
+        "table": "shared-rwx/table.txt",
+        "summary": "shared-rwx/summary.txt",
+        "issues": "shared-rwx/issues.txt"
+      },
+      "expected_exit": 0,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "partial-permissions",
+      "description": "PV get denied; complete selection and usable claim telemetry",
+      "input": "partial-permissions/input.json",
+      "report": "partial-permissions/report.json",
+      "views": {
+        "tree": "partial-permissions/tree.txt",
+        "table": "partial-permissions/table.txt",
+        "summary": "partial-permissions/summary.txt",
+        "issues": "partial-permissions/issues.txt"
+      },
+      "expected_exit": 0,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "missing-stale",
+      "description": "Both records retained while aggregate usage is unavailable",
+      "input": "missing-stale/input.json",
+      "report": "missing-stale/report.json",
+      "views": {
+        "tree": "missing-stale/tree.txt",
+        "table": "missing-stale/table.txt",
+        "summary": "missing-stale/summary.txt",
+        "issues": "missing-stale/issues.txt"
+      },
+      "expected_exit": 0,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "empty",
+      "description": "Complete empty selection passes required metrics",
+      "input": "empty/input.json",
+      "report": "empty/report.json",
+      "views": {
+        "tree": "empty/tree.txt",
+        "table": "empty/table.txt",
+        "summary": "empty/summary.txt",
+        "issues": "empty/issues.txt"
+      },
+      "expected_exit": 0,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "unknown-selection",
+      "description": "Unknown node membership must not pass as an empty strict query",
+      "input": "unknown-selection/input.json",
+      "report": "unknown-selection/report.json",
+      "views": {
+        "tree": "unknown-selection/tree.txt",
+        "table": "unknown-selection/table.txt",
+        "summary": "unknown-selection/summary.txt",
+        "issues": "unknown-selection/issues.txt"
+      },
+      "expected_exit": 4,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "field-pressure",
+      "description": "Independent exhaustion and partial-data usage findings",
+      "input": "field-pressure/input.json",
+      "report": "field-pressure/report.json",
+      "views": {
+        "tree": "field-pressure/tree.txt",
+        "table": "field-pressure/table.txt",
+        "summary": "field-pressure/summary.txt",
+        "issues": "field-pressure/issues.txt"
+      },
+      "expected_exit": 4,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "ambiguous-critical",
+      "description": "Conflicting fresh 90%/99% observations cannot pass a critical check",
+      "input": "ambiguous-critical/input.json",
+      "report": "ambiguous-critical/report.json",
+      "views": {
+        "tree": "ambiguous-critical/tree.txt",
+        "table": "ambiguous-critical/table.txt",
+        "summary": "ambiguous-critical/summary.txt",
+        "issues": "ambiguous-critical/issues.txt"
+      },
+      "expected_exit": 4,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    },
+    {
+      "id": "terminating-consumer",
+      "description": "Scheduled terminating consumer remains a node-filter match and metrics target",
+      "input": "terminating-consumer/input.json",
+      "report": "terminating-consumer/report.json",
+      "views": {
+        "tree": "terminating-consumer/tree.txt",
+        "table": "terminating-consumer/table.txt",
+        "summary": "terminating-consumer/summary.txt",
+        "issues": "terminating-consumer/issues.txt"
+      },
+      "expected_exit": 0,
+      "view_options": {
+        "tree": [],
+        "table": [
+          "--wide"
+        ],
+        "summary": [],
+        "issues": []
+      }
+    }
+  ]
+}
