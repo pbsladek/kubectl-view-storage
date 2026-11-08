@@ -1,0 +1,6 @@
+CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
+PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
+data 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 11.211557% Bound [metrics:ok]
+SELECTION complete; matched=1 unknown=0
+METRICS 1/1 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

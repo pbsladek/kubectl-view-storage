@@ -9,7 +9,7 @@ description = "Inspect Kubernetes persistent storage inventory, consumers, and u
 readme = "README.md"
 include = [
     "/Cargo.toml", "/Cargo.lock", "/LICENSE", "/README.md", "/rust-toolchain.toml",
-    "/src/**/*.rs", "/tests/**/*.rs", "/examples/README.md", "/examples/contract/**", "/docs/**",
+    "/src/**/*.rs", "/tests/**/*.rs", "/examples/README.md", "/examples/contract/**", "/examples/live/**", "/docs/**",
 ]
 
 [[bin]]

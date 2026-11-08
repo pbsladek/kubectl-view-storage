@@ -1,0 +1,8 @@
+CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
+STORAGE RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE%
+storageclass=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
+  namespace=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
+    pvc=data 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
+SELECTION complete; matched=1 unknown=0
+METRICS 1/1 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

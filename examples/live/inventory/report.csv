@@ -1,0 +1,5 @@
+kind,namespace,name,uid,phase,storage_class,driver,volume_mode,pv_name,requested_bytes,bound_bytes,provisioned_bytes,filesystem_capacity_bytes,used_bytes,available_bytes,used_percent,inodes_total,inodes_used,inodes_free,inode_percent,metrics_status,metrics_reason,metrics_source,observed_at,active_consumer_count,terminating_consumer_count,severity
+pvc,view-storage-test,classless,d6a9315f-26bc-42a1-be54-02272a52f9c3,Pending,,,Filesystem,,134217728,,,,,,,,,,,not_requested,,,,0,0,info
+pvc,view-storage-test,data,5c022956-2086-4c92-b410-093ad56ce1e4,Bound,view-storage-local,rancher.io/local-path,Filesystem,pvc-5c022956-2086-4c92-b410-093ad56ce1e4,134217728,134217728,134217728,,,,,,,,,not_requested,,,,3,1,
+pvc,view-storage-test,pending,559266f5-b76c-4310-a6ef-64c8028c5fd1,Pending,deliberately-unavailable,,Filesystem,,134217728,,,,,,,,,,,not_requested,,,,0,0,info
+pvc,view-storage-test,unreferenced,df4de0ed-40d9-4aa4-8b0d-7fe8222f096e,Bound,view-storage-static,kubernetes.io/no-provisioner,Filesystem,view-storage-unreferenced,134217728,134217728,134217728,,,,,,,,,not_requested,,,,0,0,info

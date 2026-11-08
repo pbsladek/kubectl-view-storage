@@ -1,0 +1,15 @@
+CONTEXT kind-view-storage-inventory   SCOPE view-storage-test   KIND pvc
+PVC REQUESTED PROVISIONED STATE
+data 128Mi 128Mi Bound
+DECLARED CONSUMERS (runtime unverified)
+  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=consumer state=active node=view-storage-inventory-worker2 container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
+  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=terminating-consumer state=terminating node=view-storage-inventory-worker2 container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
+  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=shared-consumer state=active node=view-storage-inventory-worker2 container=app volume=alias mount=/alias readOnly=true subPath=-- subPathExpr=--
+    pod=shared-consumer state=active node=view-storage-inventory-worker2 container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
+  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
+    pod=unscheduled-consumer state=active node=-- container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
+SELECTION complete; matched=1 unknown=0
+metrics: not requested

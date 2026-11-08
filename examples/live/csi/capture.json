@@ -1,0 +1,125 @@
+{
+  "captured_at": "2026-11-08T02:34:22.538089+00:00",
+  "profile": "csi",
+  "namespace": "view-storage-csi",
+  "cluster_run_id": "0ee6fd3c-c8e6-4423-837f-a867b2d38638",
+  "source_revision": "f799f810f74e061ad82665a16d13c6d69bf0b43e",
+  "binary_sha256": "1d18939fcad8fd5131b1f61ca0271dab40f1c1be9c31811c08371cc17a5e3a51",
+  "plugin_version": "kubectl-view-storage 0.1.0-dev",
+  "host": "macOS-27.2-arm64-arm-64bit-Mach-O",
+  "node_image": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+  "kubeconfig": ".local/kubeconfigs/csi.yaml",
+  "kubectl": {
+    "clientVersion": {
+      "major": "1",
+      "minor": "37",
+      "gitVersion": "v1.37.2",
+      "gitCommit": "c50e5395f1ae2d4a2c05f28fdcc38c0916cc1a32",
+      "gitTreeState": "clean",
+      "buildDate": "2026-10-27T12:01:04Z",
+      "goVersion": "go1.26.10",
+      "compiler": "gc",
+      "platform": "darwin/arm64"
+    },
+    "kustomizeVersion": "v5.8.1",
+    "serverVersion": {
+      "major": "1",
+      "minor": "37",
+      "emulationMajor": "1",
+      "emulationMinor": "37",
+      "minCompatibilityMajor": "1",
+      "minCompatibilityMinor": "36",
+      "gitVersion": "v1.37.0",
+      "gitCommit": "f54c212e3a2f75d674b717a9b29052b20b60aefc",
+      "gitTreeState": "clean",
+      "buildDate": "2026-08-26T10:44:25Z",
+      "goVersion": "go1.26.6",
+      "compiler": "gc",
+      "platform": "linux/arm64"
+    }
+  },
+  "captures": [
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:22.675069+00:00",
+      "finished_at": "2026-11-08T02:34:22.755905+00:00",
+      "stdout": "tree.txt",
+      "stdout_sha256": "be255d9e476363c2e728ce52ee12e50b5c1fb0a5f23db7414384940e288713b0",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u --view table",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:22.755988+00:00",
+      "finished_at": "2026-11-08T02:34:22.822150+00:00",
+      "stdout": "table.txt",
+      "stdout_sha256": "d9086714bbb67f16f2f7daa03a3730e8fd485fe62ccf7c175f2bf19b9f21d167",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u --view summary",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:22.822210+00:00",
+      "finished_at": "2026-11-08T02:34:22.889356+00:00",
+      "stdout": "summary.txt",
+      "stdout_sha256": "ca0039929741d3082f9fc90d5ebaf6a9ac8b51f7250f39918ab88afc7e594545",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u --view issues",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:22.889412+00:00",
+      "finished_at": "2026-11-08T02:34:22.951913+00:00",
+      "stdout": "issues.txt",
+      "stdout_sha256": "01550d25671d084d0f71f49018a52cc133522297c0778b1e2f4612d34e561df5",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u -o json",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:22.951966+00:00",
+      "finished_at": "2026-11-08T02:34:23.016249+00:00",
+      "stdout": "report.json",
+      "stdout_sha256": "640d2c4b88ae458beb4f5b494e97df788f433cfe0bdccd7948228f2abae68597",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u -o csv",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:23.016305+00:00",
+      "finished_at": "2026-11-08T02:34:23.078278+00:00",
+      "stdout": "report.csv",
+      "stdout_sha256": "b2a24a0ec5167f256f408ef2e6f23b4d90af3449b2a50c7bf012e0b10b02ca50",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-csi -u --require-metrics --view summary",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:34:23.078332+00:00",
+      "finished_at": "2026-11-08T02:34:23.141666+00:00",
+      "stdout": "strict.txt",
+      "stdout_sha256": "ca0039929741d3082f9fc90d5ebaf6a9ac8b51f7250f39918ab88afc7e594545",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "projection": {
+    "command": "kubectl view-storage -n view-storage-csi -u -o json | jq -f examples/live/csi/json-summary.jq",
+    "stdin": "report.json",
+    "stdout": "json-summary.json",
+    "stdout_sha256": "838e640e76c7ce4ae369b78da2a62ebc7d8f3d65d3da428671eca2a86cb43a93",
+    "note": "jq projection of the unmodified captured stdout; full document retained"
+  },
+  "cleanup": {
+    "status": "deleted",
+    "command": "python3 scripts/dev-cluster.py delete csi",
+    "verified_at": "2026-11-08T02:35:20.711951+00:00"
+  }
+}

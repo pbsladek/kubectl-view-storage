@@ -1,0 +1,148 @@
+{
+  "captured_at": "2026-11-08T02:31:42.866041+00:00",
+  "profile": "inventory",
+  "namespace": "view-storage-test",
+  "cluster_run_id": "ed3e9ee7-a86d-4161-b2b3-3e91b26ded2a",
+  "source_revision": "f799f810f74e061ad82665a16d13c6d69bf0b43e",
+  "binary_sha256": "1d18939fcad8fd5131b1f61ca0271dab40f1c1be9c31811c08371cc17a5e3a51",
+  "plugin_version": "kubectl-view-storage 0.1.0-dev",
+  "host": "macOS-27.2-arm64-arm-64bit-Mach-O",
+  "node_image": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+  "kubeconfig": ".local/kubeconfigs/inventory.yaml",
+  "kubectl": {
+    "clientVersion": {
+      "major": "1",
+      "minor": "37",
+      "gitVersion": "v1.37.2",
+      "gitCommit": "c50e5395f1ae2d4a2c05f28fdcc38c0916cc1a32",
+      "gitTreeState": "clean",
+      "buildDate": "2026-10-27T12:01:04Z",
+      "goVersion": "go1.26.10",
+      "compiler": "gc",
+      "platform": "darwin/arm64"
+    },
+    "kustomizeVersion": "v5.8.1",
+    "serverVersion": {
+      "major": "1",
+      "minor": "37",
+      "emulationMajor": "1",
+      "emulationMinor": "37",
+      "minCompatibilityMajor": "1",
+      "minCompatibilityMinor": "36",
+      "gitVersion": "v1.37.0",
+      "gitCommit": "f54c212e3a2f75d674b717a9b29052b20b60aefc",
+      "gitTreeState": "clean",
+      "buildDate": "2026-08-26T10:44:25Z",
+      "goVersion": "go1.26.6",
+      "compiler": "gc",
+      "platform": "linux/arm64"
+    }
+  },
+  "captures": [
+    {
+      "command": "kubectl view-storage -n view-storage-test",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.127101+00:00",
+      "finished_at": "2026-11-08T02:31:43.184966+00:00",
+      "stdout": "tree.txt",
+      "stdout_sha256": "659a9872814d72b62f2c87ddf4108c87ec31a280b935656dcc02db549b760492",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test --view table",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.185049+00:00",
+      "finished_at": "2026-11-08T02:31:43.237224+00:00",
+      "stdout": "table.txt",
+      "stdout_sha256": "4237fd04ff198a71ae90a3f01f0efaa61d595e2bd043e864e85fea83db3629df",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test --view summary",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.237285+00:00",
+      "finished_at": "2026-11-08T02:31:43.288035+00:00",
+      "stdout": "summary.txt",
+      "stdout_sha256": "8c36710b1063bd2e0a3d76834ced0d7cdfbcaa93ace84aaaa8eb624ec47ef5a6",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test --view issues",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.288092+00:00",
+      "finished_at": "2026-11-08T02:31:43.340032+00:00",
+      "stdout": "issues.txt",
+      "stdout_sha256": "205d651f6b755460eb0ed8e05ef06967f2e3f447b6f58c7807cc70fd08d79602",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test -o json",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.340093+00:00",
+      "finished_at": "2026-11-08T02:31:43.393578+00:00",
+      "stdout": "report.json",
+      "stdout_sha256": "c1d64c883802943a80c47509c6996bde73a5b0e8b0495d0e4ff4754f36f6d7be",
+      "stderr": "json.stderr.txt",
+      "stderr_sha256": "32bb604e62acb380bf4950eee7f1f85b4f7417a05ef6eb356a2bb35a2787d545"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test -o csv",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.393648+00:00",
+      "finished_at": "2026-11-08T02:31:43.447020+00:00",
+      "stdout": "report.csv",
+      "stdout_sha256": "45f85d834ef6177a8dd1e3b9533aff73b34f393eaffa8e243d99e94d4ff0e126",
+      "stderr": "csv.stderr.txt",
+      "stderr_sha256": "32bb604e62acb380bf4950eee7f1f85b4f7417a05ef6eb356a2bb35a2787d545"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test --pvc data --view table --wide",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.447078+00:00",
+      "finished_at": "2026-11-08T02:31:43.497201+00:00",
+      "stdout": "wide.txt",
+      "stdout_sha256": "925cdfbecae8ceee33fd929a2f635ced28f1b6f61a087531b7ecd7e12c6d148c",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -A --kind pv --view table",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.497275+00:00",
+      "finished_at": "2026-11-08T02:31:43.560438+00:00",
+      "stdout": "pv.txt",
+      "stdout_sha256": "741b62d18b000284a274335864d770dcb5439ea688b07945e9ef171488954d00",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test --pvc data -g node,pod,pvc",
+      "exit_code": 0,
+      "started_at": "2026-11-08T02:31:43.560497+00:00",
+      "finished_at": "2026-11-08T02:31:43.608443+00:00",
+      "stdout": "grouped.txt",
+      "stdout_sha256": "1abe2536e5730c42a657edd256853ce29ed10b8efe38383aff5243b3c4918193",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "kubectl view-storage -n view-storage-test --require-metrics --view issues",
+      "exit_code": 4,
+      "started_at": "2026-11-08T02:31:43.608504+00:00",
+      "finished_at": "2026-11-08T02:31:43.669122+00:00",
+      "stdout": "strict.txt",
+      "stdout_sha256": "6e68c48a5b65a619298e3deed7c14b5372190efadfb38b7aaa4ec316dccada34",
+      "stderr": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "cleanup": {
+    "status": "deleted",
+    "command": "python3 scripts/dev-cluster.py delete inventory",
+    "verified_at": "2026-11-08T02:35:20.711663+00:00"
+  }
+}

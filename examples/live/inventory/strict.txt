@@ -1,0 +1,24 @@
+CONTEXT kind-view-storage-inventory   SCOPE view-storage-test   KIND pvc
+SEVERITY OBJECT CODE EVIDENCE
+info view-storage-test/classless claim_pending phase=Pending age_seconds=65
+  Investigate: Inspect provisioning and delayed binding conditions.
+info view-storage-test/classless metrics_missing filesystem.status=missing filesystem.reason=no_live_consumer inodes.status=missing inodes.reason=no_live_consumer
+  Investigate: Inspect observation provenance, freshness, visibility, and collector diagnostics.
+info view-storage-test/classless no_active_consumer active_consumer_count=0 terminating_consumer_count=0
+  Investigate: Review visible pod references and ownership; this does not establish deletion safety.
+info view-storage-test/data metrics_missing filesystem.status=missing filesystem.reason=no_sample inodes.status=missing inodes.reason=no_sample
+  Investigate: Inspect observation provenance, freshness, visibility, and collector diagnostics.
+info view-storage-test/pending claim_pending phase=Pending age_seconds=65
+  Investigate: Inspect provisioning and delayed binding conditions.
+info view-storage-test/pending metrics_missing filesystem.status=missing filesystem.reason=no_live_consumer inodes.status=missing inodes.reason=no_live_consumer
+  Investigate: Inspect observation provenance, freshness, visibility, and collector diagnostics.
+info view-storage-test/pending no_active_consumer active_consumer_count=0 terminating_consumer_count=0
+  Investigate: Review visible pod references and ownership; this does not establish deletion safety.
+info view-storage-test/unreferenced metrics_missing filesystem.status=missing filesystem.reason=no_live_consumer inodes.status=missing inodes.reason=no_live_consumer
+  Investigate: Inspect observation provenance, freshness, visibility, and collector diagnostics.
+info view-storage-test/unreferenced no_active_consumer active_consumer_count=0 terminating_consumer_count=0
+  Investigate: Review visible pod references and ownership; this does not establish deletion safety.
+SELECTION complete; matched=4 unknown=0
+METRICS 0/4 known-match eligible claims fresh and complete
+DIAGNOSTIC not_found: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false

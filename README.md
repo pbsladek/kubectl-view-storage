@@ -28,15 +28,23 @@ See [development](docs/DEVELOPMENT.md) for disposable kind clusters and testing,
 ## Usage
 
 ```sh
-kubectl view-storage                       # PVCs in the current namespace
-kubectl view-storage -A -u                 # All namespaces with live usage
-kubectl view-storage -A -u --view issues   # Storage findings
-kubectl view-storage -A -o json            # Structured report
+kubectl view-storage -n view-storage-csi -u --view table
+```
+
+Captured from a real disposable CSI hostpath cluster:
+
+```text
+CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
+PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
+data 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 11.211557% Bound [metrics:ok]
+SELECTION complete; matched=1 unknown=0
+METRICS 1/1 known-match eligible claims fresh and complete
+FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
 ```
 
 By default, inventory is grouped by storage class → namespace → PVC. Usage collection requires `-u`; available metrics depend on the storage driver and permissions.
 
-See [more commands and sample reports](examples/README.md) and the [CLI specification](docs/SPEC.md).
+See [real command output in all views, JSON, and CSV](examples/README.md) and the [CLI specification](docs/SPEC.md).
 
 ## Documentation
 

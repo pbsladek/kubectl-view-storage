@@ -1,0 +1,31 @@
+{
+  "schema_version": "view-storage/v1alpha1",
+  "selection": {
+    "base_count": 1,
+    "complete": true,
+    "excluded_count": 0,
+    "matched_count": 1,
+    "unknown_count": 0,
+    "unknown_records": []
+  },
+  "records": [
+    {
+      "name": "data",
+      "phase": "Bound",
+      "requested_bytes": "1073741824",
+      "provisioned_bytes": "1073741824",
+      "filesystem": {
+        "status": "ok",
+        "capacity_bytes": "62671097856",
+        "used_bytes": "37685460992",
+        "available_bytes": "21768921088"
+      },
+      "inodes": {
+        "status": "ok",
+        "inodes_total": "3907584",
+        "inodes_used": "438101",
+        "inodes_free": "3469483"
+      }
+    }
+  ]
+}

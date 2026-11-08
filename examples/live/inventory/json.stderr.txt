@@ -1,0 +1,1 @@
+diagnostic not_found: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.
