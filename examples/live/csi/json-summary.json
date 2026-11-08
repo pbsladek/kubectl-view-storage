@@ -17,8 +17,8 @@
       "filesystem": {
         "status": "ok",
         "capacity_bytes": "62671097856",
-        "used_bytes": "37685460992",
-        "available_bytes": "21768921088"
+        "used_bytes": "37685436416",
+        "available_bytes": "21768945664"
       },
       "inodes": {
         "status": "ok",

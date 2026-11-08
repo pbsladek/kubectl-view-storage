@@ -1,10 +1,23 @@
-CONTEXT example   SCOPE demo   KIND pvc
-PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
-data 100Gi 100Gi 100Gi 40Gi 55Gi 40.0% 10.0% Bound [metrics:ok]
-DECLARED CONSUMERS (runtime unverified)
-  demo/data pv=pv-data driver=example.csi.test mode=Filesystem access=ReadWriteOnce reclaim=Delete
-    pod=app state=active node=worker-a container=app volume=data mount=/var/lib/data readOnly=false subPath=database subPathExpr=--
-    pod=app state=active node=worker-a container=backup volume=data mount=/backup/source readOnly=true subPath=-- subPathExpr=$(POD_NAME)
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+PVC   PHASE  PODS  REQUESTED  PROVISIONED  FS SIZE    USED  AVAILABLE   USE%  INODE%  FS SAMPLE
+----  -----  ----  ---------  -----------  -------  ------  ---------  -----  ------  ---------
+data  Bound     1    100 GiB      100 GiB  100 GiB  40 GiB     55 GiB  40.0%   10.0%  Fresh
+
+Declared consumers (runtime unverified)
+  demo/data
+    PV: pv-data  |  Driver: example.csi.test
+    Mode: Filesystem  |  Access: ReadWriteOnce  |  Reclaim: Delete
+    Pod: demo/app  |  Node: worker-a  |  State: active
+      Container: app  |  Volume: data
+      Mount: /var/lib/data  |  Read-only: no
+      Subpath: database
+      Container: backup  |  Volume: data
+      Mount: /backup/source  |  Read-only: yes
+      Subpath expression: $(POD_NAME)
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-06T19:59:50Z
+Filesystem totals are per claim, not physical storage totals.

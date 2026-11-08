@@ -1,15 +1,19 @@
-CONTEXT kind-view-storage-inventory   SCOPE view-storage-test   KIND pvc
-STORAGE RECORDS REQUESTED PROVISIONED
-node=view-storage-inventory-worker2 1 128Mi 128Mi
-  pod=view-storage-test/consumer@12c4bcce-1d2d-422d-8973-653348e2b9ce 1 128Mi 128Mi
-    pvc=data 1 128Mi 128Mi
-  pod=view-storage-test/shared-consumer@71b2a844-308f-49cf-b73b-994a80f5f61e 1 128Mi 128Mi
-    pvc=data 1 128Mi 128Mi
-  pod=view-storage-test/terminating-consumer@23a69dcf-c0f9-418c-a197-daab0c6444bc 1 128Mi 128Mi
-    pvc=data 1 128Mi 128Mi
-node=(no live consumer) 1 128Mi 128Mi
-  pod=view-storage-test/unscheduled-consumer@76fcbe34-7676-4acc-a789-1f5eb86c8a3a 1 128Mi 128Mi
-    pvc=data 1 128Mi 128Mi
-SELECTION complete; matched=1 unknown=0
-metrics: not requested
-Shared references: sibling group totals cannot be added; root totals use distinct records.
+Persistent volume claims
+Context: kind-view-storage-inventory  |  Namespace: view-storage-test
+
+STORAGE                                         COUNT  REQUESTED  PROVISIONED
+----------------------------------------------  -----  ---------  -----------
+Node: view-storage-inventory-worker                 1    128 MiB      128 MiB
+|- Pod: view-storage-test/consumer                  1    128 MiB      128 MiB
+|  `- PVC: data                                     1    128 MiB      128 MiB
+|- Pod: view-storage-test/shared-consumer           1    128 MiB      128 MiB
+|  `- PVC: data                                     1    128 MiB      128 MiB
+`- Pod: view-storage-test/terminating-consumer      1    128 MiB      128 MiB
+   `- PVC: data                                     1    128 MiB      128 MiB
+Node: (no live consumer)                            1    128 MiB      128 MiB
+`- Pod: view-storage-test/unscheduled-consumer      1    128 MiB      128 MiB
+   `- PVC: data                                     1    128 MiB      128 MiB
+
+Selection: complete (1 matched)
+Metrics: not requested (use -u to collect usage).
+Shared references: do not add sibling totals; the root counts each volume once.

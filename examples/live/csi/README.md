@@ -4,7 +4,7 @@ These outputs come from actual kubectl plugin queries against the disposable CSI
 
 ## Environment
 
-Captured 2026-11-08T02:34:22.538089+00:00 using Kubernetes v1.37.0, kubectl v1.37.2, and kubectl-view-storage 0.1.0-dev on macOS ARM64. The driver is hostpath 1.19.0 with snapshot-controller 8.7.0. [Capture metadata](capture.json) records the source revision, binary hash, commands, exit codes, and stdout hashes. Each command performs a fresh collection; counters and timestamps can change between commands or runs.
+Captured 2026-11-08T02:57:02.427206+00:00 using Kubernetes v1.37.0, kubectl v1.37.2, and kubectl-view-storage 0.1.0-dev on macOS ARM64. The driver is hostpath 1.19.0 with snapshot-controller 8.7.0. [Capture metadata](capture.json) records the base revision, exact production-source fingerprint, binary hash, commands, exit codes, and stdout hashes. The capture records the uncommitted presentation revision through its production-source fingerprint. Each command performs a fresh collection; counters and timestamps can change between commands or runs.
 
 To reproduce from the repository root, build the plugin as described in the [README](../../../README.md#build-from-source), then create the owned fixture:
 
@@ -22,14 +22,20 @@ kubectl view-storage -n view-storage-csi -u
 ```
 
 ```text
-CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
-STORAGE RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE%
-storageclass=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
-  namespace=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
-    pvc=data 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+STORAGE                         COUNT  REQUESTED  PROVISIONED   FS SIZE      USED  AVAILABLE   USE%  METRICS
+------------------------------  -----  ---------  -----------  --------  --------  ---------  -----  -------
+Class: view-storage-csi             1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  Fresh
+`- Namespace: view-storage-csi      1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  Fresh
+   `- PVC: data                     1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  Fresh
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-08T02:56:43Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.
 ```
 
 Exit code: `0`.
@@ -41,17 +47,23 @@ kubectl view-storage -n view-storage-csi -u --view table
 ```
 
 ```text
-CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
-PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
-data 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 11.211557% Bound [metrics:ok]
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+PVC   PHASE  PODS  REQUESTED  PROVISIONED   FS SIZE      USED  AVAILABLE   USE%  INODE%  FS SAMPLE
+----  -----  ----  ---------  -----------  --------  --------  ---------  -----  ------  ---------
+data  Bound     2      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%   11.2%  Fresh
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-08T02:56:43Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.
 ```
 
 Exit code: `0`.
 
-The claim requests 1 GiB and has 1 GiB provisioned, while the driver reports about 58.37 GiB of filesystem capacity. This demo driver exposes its backing filesystem. These are different measurements; the reported 20.27 GiB available is neither PVC headroom nor a physical backend free-space total.
+The claim requests 1 GiB and has 1 GiB provisioned, while the driver reports about 58.4 GiB of filesystem capacity. This demo driver exposes its backing filesystem. These are different measurements; the available bytes is neither PVC headroom nor a physical backend free-space total.
 
 ## Summary
 
@@ -60,13 +72,19 @@ kubectl view-storage -n view-storage-csi -u --view summary
 ```
 
 ```text
-CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
-GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
-ROOT 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 1/1 phases={"Bound":1}
-storageclass=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 1/1 phases={"Bound":1}
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+GROUP                    COUNT  REQUESTED  PROVISIONED   FS SIZE      USED  AVAILABLE   USE%  METRICS    PHASES
+-----------------------  -----  ---------  -----------  --------  --------  ---------  -----  ---------  -------
+TOTAL                        1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  1/1 Fresh  1 Bound
+Class: view-storage-csi      1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  1/1 Fresh  1 Bound
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-08T02:56:43Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.
 ```
 
 Exit code: `0`.
@@ -80,12 +98,16 @@ kubectl view-storage -n view-storage-csi -u --view issues
 ```
 
 ```text
-CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
-SEVERITY OBJECT CODE EVIDENCE
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
 No observed findings in selected records.
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-08T02:56:43Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.
 ```
 
 Exit code: `0`.
@@ -124,8 +146,8 @@ kubectl view-storage -n view-storage-csi -u -o json | jq -f examples/live/csi/js
       "filesystem": {
         "status": "ok",
         "capacity_bytes": "62671097856",
-        "used_bytes": "37685460992",
-        "available_bytes": "21768921088"
+        "used_bytes": "37685436416",
+        "available_bytes": "21768945664"
       },
       "inodes": {
         "status": "ok",
@@ -150,7 +172,7 @@ kubectl view-storage -n view-storage-csi -u -o csv
 
 ```csv
 kind,namespace,name,uid,phase,storage_class,driver,volume_mode,pv_name,requested_bytes,bound_bytes,provisioned_bytes,filesystem_capacity_bytes,used_bytes,available_bytes,used_percent,inodes_total,inodes_used,inodes_free,inode_percent,metrics_status,metrics_reason,metrics_source,observed_at,active_consumer_count,terminating_consumer_count,severity
-pvc,view-storage-csi,data,942112cf-5edc-4053-bb51-60df4ac424af,Bound,view-storage-csi,hostpath.csi.k8s.io,Filesystem,pvc-942112cf-5edc-4053-bb51-60df4ac424af,1073741824,1073741824,1073741824,62671097856,37685460992,21768921088,60.132122,3907584,438101,3469483,11.211557,ok,,kubelet,2026-11-08T02:34:11Z,2,0,
+pvc,view-storage-csi,data,efdc6b09-e967-4799-9025-be3cb18546bd,Bound,view-storage-csi,hostpath.csi.k8s.io,Filesystem,pvc-efdc6b09-e967-4799-9025-be3cb18546bd,1073741824,1073741824,1073741824,62671097856,37685436416,21768945664,60.132083,3907584,438101,3469483,11.211557,ok,,kubelet,2026-11-08T02:56:43Z,2,0,
 ```
 
 Exit code: `0`.
@@ -164,13 +186,19 @@ kubectl view-storage -n view-storage-csi -u --require-metrics --view summary
 ```
 
 ```text
-CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
-GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
-ROOT 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 1/1 phases={"Bound":1}
-storageclass=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% 1/1 phases={"Bound":1}
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+GROUP                    COUNT  REQUESTED  PROVISIONED   FS SIZE      USED  AVAILABLE   USE%  METRICS    PHASES
+-----------------------  -----  ---------  -----------  --------  --------  ---------  -----  ---------  -------
+TOTAL                        1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  1/1 Fresh  1 Bound
+Class: view-storage-csi      1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  1/1 Fresh  1 Bound
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-08T02:56:43Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.
 ```
 
 Exit code: `0`.

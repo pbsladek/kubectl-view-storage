@@ -127,11 +127,11 @@ fn no_usage_columns_and_declared_block_init_details() {
     report.document["relationships"][0]["mounts"][0]["kind"] = "block".into();
     let rendered = text(&report, View::Table, true, false);
     assert!(!rendered.contains("FS-CAP"));
-    assert!(rendered.contains("metrics: not requested"));
-    assert!(rendered.contains("init-container=app"));
-    assert!(rendered.contains("device=/var/lib/data"));
-    assert_eq!(iec(&Value::from("1536")), "1.5Ki");
-    assert_eq!(iec(&Value::from("18446744073709551615")), "16Ei");
+    assert!(rendered.contains("Metrics: not requested"));
+    assert!(rendered.contains("Init container: app"));
+    assert!(rendered.contains("Device: /var/lib/data"));
+    assert_eq!(iec(&Value::from("1536")), "1.5 KiB");
+    assert_eq!(iec(&Value::from("18446744073709551615")), "16 EiB");
 }
 
 struct Budget {
@@ -212,9 +212,10 @@ fn large_and_nested_rendering_work_is_interruptible() {
     );
     assert!(
         tree(
-            &mut out,
+            &mut group_table("STORAGE", true),
             &group,
-            0,
+            "",
+            "",
             &BTreeMap::new(),
             true,
             &mut Budget {
@@ -232,7 +233,7 @@ fn large_and_nested_rendering_work_is_interruptible() {
     );
     assert!(
         summary_row(
-            &mut out,
+            &mut group_table("GROUP", true),
             "ROOT",
             &totals,
             true,
@@ -275,8 +276,8 @@ fn wide_rendering_indexes_relationships_and_scales_with_records_and_edges() {
         "relationship scanning grew beyond a linear pass: {}",
         control.steps
     );
-    assert_eq!(rendered.matches("pv=").count(), 1000);
-    assert_eq!(rendered.matches("pod=").count(), 2000); // two declared mounts per edge
+    assert_eq!(rendered.matches("PV:").count(), 1000);
+    assert_eq!(rendered.matches("Pod:").count(), 1000); // two declared mounts per edge
     assert!(rendered.contains("demo/claim-999"));
 }
 
@@ -317,4 +318,86 @@ fn csv_rows_stream_and_stop_on_callback_failure_or_cancellation() {
         .is_err()
     );
     assert_eq!(after, 0);
+}
+
+#[test]
+fn human_tables_align_numbers_keep_namespace_identity_and_round_only_display() {
+    let mut report = Report {
+        document: serde_json::from_str(include_str!("../../examples/contract/healthy/report.json"))
+            .unwrap(),
+        exit: Exit::Success,
+        strict_conflict: None,
+    };
+    report.document["collection"]["scope"]["all_namespaces"] = true.into();
+    let mut second = report.document["records"][0].clone();
+    second["namespace"] = "production".into();
+    second["provisioned_bytes"] = "1073741824".into();
+    report.document["records"]
+        .as_array_mut()
+        .unwrap()
+        .push(second);
+    let rendered = text(&report, View::Table, false, false);
+    assert!(rendered.contains("demo/data") && rendered.contains("production/data"));
+    let header = rendered.lines().find(|l| l.starts_with("PVC")).unwrap();
+    let first = rendered
+        .lines()
+        .find(|l| l.starts_with("demo/data "))
+        .unwrap();
+    let second = rendered
+        .lines()
+        .find(|l| l.starts_with("production/data "))
+        .unwrap();
+    let start = header.find("PROVISIONED").unwrap();
+    let end = start + "PROVISIONED".len();
+    assert_eq!(
+        first[..end].trim_end().rsplit("  ").next().unwrap().trim(),
+        "100 GiB"
+    );
+    assert_eq!(
+        second[..end].trim_end().rsplit("  ").next().unwrap().trim(),
+        "1 GiB"
+    );
+    assert!(rendered.contains("Fresh"));
+    assert!(!rendered.contains("physical_total=") && !rendered.contains("[metrics:"));
+    assert_eq!(percent(&serde_json::json!(60.132122)), "60.1%");
+    assert_eq!(iec(&Value::from("62671097856")), "58.4 GiB");
+    assert_eq!(iec(&Value::from("0")), "0 B");
+    assert_eq!(iec(&Value::Null), "--");
+    assert_eq!(
+        report.document["records"][0]["filesystem"]["used_percent"],
+        40.0
+    );
+}
+
+#[test]
+fn terminal_metric_labels_preserve_partial_stale_block_and_conflicting_states() {
+    let base: Value =
+        serde_json::from_str(include_str!("../../examples/contract/healthy/report.json")).unwrap();
+    let mut metric = base["records"][0]["inodes"].clone();
+    for (state, expected) in [
+        ("stale", "10.0% (stale)"),
+        ("uncertain", "10.0% (conflicting)"),
+        ("ok", "10.0%"),
+        ("not_applicable", "n/a"),
+    ] {
+        metric["status"] = state.into();
+        assert_eq!(inode_percent(&metric), expected);
+    }
+    metric["used_percent"] = Value::Null;
+    metric["status"] = "invalid".into();
+    assert_eq!(inode_percent(&metric), "--");
+    for (state, reason, expected) in [
+        ("partial", "missing_field", "Partial"),
+        ("forbidden", "forbidden", "Access denied"),
+        ("timeout", "timeout", "Timed out"),
+        ("missing", "no_live_consumer", "No consumer"),
+        ("unavailable", "time_skew", "Time skew"),
+        ("unavailable", "overlapping_filesystem", "Shared storage"),
+        ("timestamp_unknown", "no_timestamp", "No timestamp"),
+        ("identity_uncertain", "identity_uncertain", "Unverified"),
+    ] {
+        metric["status"] = state.into();
+        metric["reason"] = reason.into();
+        assert_eq!(metric_status(&metric), expected);
+    }
 }

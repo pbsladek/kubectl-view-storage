@@ -1,15 +1,29 @@
-CONTEXT kind-view-storage-inventory   SCOPE view-storage-test   KIND pvc
-PVC REQUESTED PROVISIONED STATE
-data 128Mi 128Mi Bound
-DECLARED CONSUMERS (runtime unverified)
-  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
-    pod=consumer state=active node=view-storage-inventory-worker2 container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
-  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
-    pod=terminating-consumer state=terminating node=view-storage-inventory-worker2 container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
-  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
-    pod=shared-consumer state=active node=view-storage-inventory-worker2 container=app volume=alias mount=/alias readOnly=true subPath=-- subPathExpr=--
-    pod=shared-consumer state=active node=view-storage-inventory-worker2 container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
-  view-storage-test/data pv=pvc-5c022956-2086-4c92-b410-093ad56ce1e4 driver=rancher.io/local-path mode=Filesystem access=ReadWriteOnce reclaim=Delete
-    pod=unscheduled-consumer state=active node=-- container=app volume=data mount=/data readOnly=true subPath=-- subPathExpr=--
-SELECTION complete; matched=1 unknown=0
-metrics: not requested
+Persistent volume claims
+Context: kind-view-storage-inventory  |  Namespace: view-storage-test
+
+PVC   PHASE  PODS  REQUESTED  PROVISIONED
+----  -----  ----  ---------  -----------
+data  Bound  3+1d    128 MiB      128 MiB
+Pods: active + deleting (d); references do not multiply volume capacity.
+
+Declared consumers (runtime unverified)
+  view-storage-test/data
+    PV: pvc-5c33af42-0f0f-417a-b054-bd4d98eadd41  |  Driver: rancher.io/local-path
+    Mode: Filesystem  |  Access: ReadWriteOnce  |  Reclaim: Delete
+    Pod: view-storage-test/shared-consumer  |  Node: view-storage-inventory-worker  |  State: active
+      Container: app  |  Volume: alias
+      Mount: /alias  |  Read-only: yes
+      Container: app  |  Volume: data
+      Mount: /data  |  Read-only: yes
+    Pod: view-storage-test/terminating-consumer  |  Node: view-storage-inventory-worker  |  State: terminating
+      Container: app  |  Volume: data
+      Mount: /data  |  Read-only: yes
+    Pod: view-storage-test/unscheduled-consumer  |  Node: --  |  State: active
+      Container: app  |  Volume: data
+      Mount: /data  |  Read-only: yes
+    Pod: view-storage-test/consumer  |  Node: view-storage-inventory-worker  |  State: active
+      Container: app  |  Volume: data
+      Mount: /data  |  Read-only: yes
+
+Selection: complete (1 matched)
+Metrics: not requested (use -u to collect usage).

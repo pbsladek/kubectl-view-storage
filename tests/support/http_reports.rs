@@ -235,15 +235,24 @@ async fn every_contract_scenario_runs_through_real_http_and_all_six_outputs() {
             );
             let expected = std::fs::read_to_string(directory.join(relative.as_str().unwrap()))
                 .unwrap()
-                .replacen("CONTEXT example", "CONTEXT fixture", 1);
+                .replacen("Context: example", "Context: fixture", 1);
             let actual = String::from_utf8(output.stdout).unwrap();
             assert!(actual.ends_with('\n'));
+            if let Some(timestamp) =
+                document["summary"]["filesystem"]["newest_observed_at"].as_str()
+            {
+                assert!(
+                    actual.contains(&format!("Latest sample: {timestamp}")),
+                    "{name}/{view}: actual observation timestamp must be displayed"
+                );
+            }
+
             if view == "issues" {
                 let displayed: Vec<_> = actual
                     .lines()
                     .filter_map(|line| {
-                        line.strip_prefix("DIAGNOSTIC ")
-                            .and_then(|text| text.split_once(':'))
+                        line.strip_prefix("Collection note [")
+                            .and_then(|text| text.split_once(']'))
                             .map(|(reason, _)| reason)
                     })
                     .collect();
@@ -264,18 +273,11 @@ async fn every_contract_scenario_runs_through_real_http_and_all_six_outputs() {
             // illustrative diagnostic/evidence prose is not an exact API.
             let normalize = |text: &str| {
                 text.lines()
-                    .filter(|line| !line.starts_with("DIAGNOSTIC "))
+                    .filter(|line| !line.starts_with("Collection note ["))
+                    .filter(|line| view != "issues" || !line.starts_with("  "))
                     .map(|line| {
-                        if line.trim_start().starts_with("Investigate:") {
-                            "Investigate:".to_owned()
-                        } else if matches!(
-                            line.split_whitespace().next(),
-                            Some("info" | "warning" | "critical")
-                        ) {
-                            line.split_whitespace()
-                                .take(3)
-                                .collect::<Vec<_>>()
-                                .join(" ")
+                        if line.starts_with("Latest sample:") {
+                            "Latest sample:".to_owned()
                         } else {
                             line.to_owned()
                         }

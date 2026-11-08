@@ -1,9 +1,15 @@
-CONTEXT example   SCOPE demo   KIND pvc
-PVC REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+PVC  PHASE  PODS  REQUESTED  PROVISIONED  FS SIZE  USED  AVAILABLE  USE%  INODE%  FS SAMPLE
+---  -----  ----  ---------  -----------  -------  ----  ---------  ----  ------  ---------
 No confirmed matches; query membership is unresolved.
-DECLARED CONSUMERS (runtime unverified)
-SELECTION incomplete; matched=0 unknown=1
-METRICS 0/0 known-match eligible claims fresh and complete
+
+Declared consumers (runtime unverified)
+
+Selection: incomplete (0 matched, 1 unresolved)
+Metrics: 0/0 claims fresh and complete; inodes: 0/0 (confirmed matches only)
 Counts are lower bounds; strict check inconclusive.
-DIAGNOSTIC consumers_forbidden: Pod list denied; node filter membership is unknown.
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+* Partial capacity: sum of known values; unknown values are excluded.
+Collection note [consumers_forbidden]: Pod list denied; node filter membership is unknown.
+Filesystem totals are per claim, not physical storage totals.

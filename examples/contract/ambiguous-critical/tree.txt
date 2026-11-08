@@ -1,11 +1,17 @@
-CONTEXT example   SCOPE demo   KIND pvc
-STORAGE RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE%
-node=worker-a 1 100Gi 100Gi -- -- -- -- [metrics:unavailable]
-  pvc=shared 1 100Gi 100Gi 100Gi 99Gi 1Gi 99.0% [metrics:uncertain]
-node=worker-b 1 100Gi 100Gi -- -- -- -- [metrics:unavailable]
-  pvc=shared 1 100Gi 100Gi 100Gi 99Gi 1Gi 99.0% [metrics:uncertain]
-SELECTION complete; matched=1 unknown=0
-METRICS 0/1 known-match eligible claims fresh and complete
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+STORAGE         COUNT  REQUESTED  PROVISIONED  FS SIZE    USED  AVAILABLE   USE%  METRICS
+--------------  -----  ---------  -----------  -------  ------  ---------  -----  -----------
+Node: worker-a      1    100 GiB      100 GiB       --      --         --     --  Unavailable
+`- PVC: shared      1    100 GiB      100 GiB  100 GiB  99 GiB      1 GiB  99.0%  Conflicting
+Node: worker-b      1    100 GiB      100 GiB       --      --         --     --  Unavailable
+`- PVC: shared      1    100 GiB      100 GiB  100 GiB  99 GiB      1 GiB  99.0%  Conflicting
+
+Selection: complete (1 matched)
+Metrics: 0/1 claims fresh and complete; inodes: 1/1
+Bytes unavailable: 1 metrics disagreement
 Strict critical check inconclusive: conflicting fresh candidates report critical pressure.
-Shared references: sibling group totals cannot be added; root totals use distinct records.
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Findings: 1 warning (details: --view issues)
+Shared references: do not add sibling totals; the root counts each volume once.
+Filesystem totals are per claim, not physical storage totals.

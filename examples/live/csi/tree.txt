@@ -1,8 +1,14 @@
-CONTEXT kind-view-storage-csi   SCOPE view-storage-csi   KIND pvc
-STORAGE RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE%
-storageclass=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
-  namespace=view-storage-csi 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
-    pvc=data 1 1Gi 1Gi 58.37Gi 35.1Gi 20.27Gi 60.132122% [metrics:ok]
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+STORAGE                         COUNT  REQUESTED  PROVISIONED   FS SIZE      USED  AVAILABLE   USE%  METRICS
+------------------------------  -----  ---------  -----------  --------  --------  ---------  -----  -------
+Class: view-storage-csi             1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  Fresh
+`- Namespace: view-storage-csi      1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  Fresh
+   `- PVC: data                     1      1 GiB        1 GiB  58.4 GiB  35.1 GiB   20.3 GiB  60.1%  Fresh
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-08T02:56:43Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.

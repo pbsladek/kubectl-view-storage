@@ -1,9 +1,16 @@
-CONTEXT kind-view-storage-inventory   SCOPE view-storage-test   KIND pvc
-PVC REQUESTED PROVISIONED STATE
-classless 128Mi -- Pending
-data 128Mi 128Mi Bound
-pending 128Mi -- Pending
-unreferenced 128Mi 128Mi Bound
-SELECTION complete; matched=4 unknown=0
-metrics: not requested
-DIAGNOSTIC not_found: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.
+Persistent volume claims
+Context: kind-view-storage-inventory  |  Namespace: view-storage-test
+
+PVC           PHASE    PODS  REQUESTED  PROVISIONED
+------------  -------  ----  ---------  -----------
+classless     Pending     0    128 MiB           --
+data          Bound    3+1d    128 MiB      128 MiB
+pending       Pending     0    128 MiB           --
+unreferenced  Bound       0    128 MiB      128 MiB
+Pods: active + deleting (d); references do not multiply volume capacity.
+
+Selection: complete (4 matched)
+Metrics: not requested (use -u to collect usage).
+* Partial capacity: sum of known values; unknown values are excluded.
+Findings: 5 info (details: --view issues)
+Collection note [not_found]: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.

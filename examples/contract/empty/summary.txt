@@ -1,6 +1,10 @@
-CONTEXT example   SCOPE demo   KIND pvc
-GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
-ROOT 0 0 0 -- -- -- -- 0/0 phases={}
-SELECTION complete; matched=0 unknown=0
-METRICS 0/0 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+GROUP  COUNT  REQUESTED  PROVISIONED  FS SIZE  USED  AVAILABLE  USE%  METRICS          PHASES
+-----  -----  ---------  -----------  -------  ----  ---------  ----  ---------------  ------
+TOTAL      0        0 B          0 B       --    --         --    --  0/0 Unavailable
+
+Selection: complete (0 matched)
+Metrics: 0/0 claims fresh and complete; inodes: 0/0
+Filesystem totals are per claim, not physical storage totals.

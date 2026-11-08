@@ -1,9 +1,16 @@
-CONTEXT kind-view-storage-inventory   SCOPE all namespaces   KIND pv
-PV REQUESTED PROVISIONED STATE
-pvc-5c022956-2086-4c92-b410-093ad56ce1e4 128Mi 128Mi Bound
-view-storage-available -- 128Mi Available
-view-storage-released -- 128Mi Released
-view-storage-unreferenced 128Mi 128Mi Bound
-SELECTION complete; matched=4 unknown=0
-metrics: not requested
-DIAGNOSTIC not_found: persistentvolumeclaims collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.
+Persistent volumes
+Context: kind-view-storage-inventory  |  Namespaces: all
+
+PV                                                          PHASE      PODS  REQUESTED  PROVISIONED
+----------------------------------------------------------  ---------  ----  ---------  -----------
+view-storage-test/pvc-5c33af42-0f0f-417a-b054-bd4d98eadd41  Bound      3+1d    128 MiB      128 MiB
+view-storage-available                                      Available     0         --      128 MiB
+view-storage-test/view-storage-released                     Released      0         --      128 MiB
+view-storage-test/view-storage-unreferenced                 Bound         0    128 MiB      128 MiB
+Pods: active + deleting (d); references do not multiply volume capacity.
+
+Selection: complete (4 matched)
+Metrics: not requested (use -u to collect usage).
+* Partial capacity: sum of known values; unknown values are excluded.
+Findings: 4 info (details: --view issues)
+Collection note [not_found]: persistentvolumeclaims collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.

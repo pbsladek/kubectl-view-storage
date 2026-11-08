@@ -360,9 +360,9 @@ def check_views(scenario, report):
     check(set(scenario["views"]) == {"tree","table","summary","issues"}, "missing text view")
     for view, path in scenario["views"].items():
         text = (BASE/path).read_text()
-        check("CONTEXT example" in text and "SELECTION " in text and "METRICS " in text, "scope/completeness absent")
+        check("Context: example" in text and "Selection: " in text and "Metrics: " in text, "scope/completeness absent")
         if not report["selection"]["complete"]:
-            check("SELECTION incomplete" in text and "lower bounds" in text, "incomplete selection hidden")
+            check("Selection: incomplete" in text and "lower bounds" in text, "incomplete selection hidden")
             check("No matching resources." not in text, "false empty-success message")
         if view == "issues":
             check(all(f["code"] in text for f in report["findings"]), "issue view lost a finding")

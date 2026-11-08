@@ -1,15 +1,36 @@
-CONTEXT kind-view-storage-inventory   SCOPE view-storage-test   KIND pvc
-SEVERITY OBJECT CODE EVIDENCE
-info view-storage-test/classless claim_pending phase=Pending age_seconds=65
-  Investigate: Inspect provisioning and delayed binding conditions.
-info view-storage-test/classless no_active_consumer active_consumer_count=0 terminating_consumer_count=0
-  Investigate: Review visible pod references and ownership; this does not establish deletion safety.
-info view-storage-test/pending claim_pending phase=Pending age_seconds=65
-  Investigate: Inspect provisioning and delayed binding conditions.
-info view-storage-test/pending no_active_consumer active_consumer_count=0 terminating_consumer_count=0
-  Investigate: Review visible pod references and ownership; this does not establish deletion safety.
-info view-storage-test/unreferenced no_active_consumer active_consumer_count=0 terminating_consumer_count=0
-  Investigate: Review visible pod references and ownership; this does not establish deletion safety.
-SELECTION complete; matched=4 unknown=0
-metrics: not requested
-DIAGNOSTIC not_found: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.
+Persistent volume claims
+Context: kind-view-storage-inventory  |  Namespace: view-storage-test
+
+info  view-storage-test/classless: Claim pending [claim_pending]
+  Phase: Pending
+  Age seconds: 37
+  Observed: 2026-11-08T02:58:12.915534Z via -- on --
+  Next: Inspect provisioning and delayed binding conditions.
+
+info  view-storage-test/classless: No active consumer [no_active_consumer]
+  Active consumer count: 0
+  Terminating consumer count: 0
+  Next: Review visible pod references and ownership; this does not establish deletion safety.
+
+info  view-storage-test/pending: Claim pending [claim_pending]
+  Phase: Pending
+  Age seconds: 37
+  Observed: 2026-11-08T02:58:12.915534Z via -- on --
+  Next: Inspect provisioning and delayed binding conditions.
+
+info  view-storage-test/pending: No active consumer [no_active_consumer]
+  Active consumer count: 0
+  Terminating consumer count: 0
+  Next: Review visible pod references and ownership; this does not establish deletion safety.
+
+info  view-storage-test/unreferenced: No active consumer [no_active_consumer]
+  Active consumer count: 0
+  Terminating consumer count: 0
+  Next: Review visible pod references and ownership; this does not establish deletion safety.
+
+
+Selection: complete (4 matched)
+Metrics: not requested (use -u to collect usage).
+* Partial capacity: sum of known values; unknown values are excluded.
+Findings: 5 info (details: --view issues)
+Collection note [not_found]: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.

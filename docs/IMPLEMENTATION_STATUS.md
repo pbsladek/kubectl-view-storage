@@ -13,7 +13,9 @@ Updated 2026-11-07. The phases 0–5 objective remains in final validation. The 
 
 ## Locked production checks
 
-Native macOS ARM64 passes 169 Rust tests: 124 library, six executable-module, eleven randomized Proptest laws, two CLI and 26 real HTTP/executable tests. Formatting, Clippy with warnings denied, toolchain/dependency guards and Python harness checks pass. ARM64 Linux passes the same 169 tests; AMD64 Linux passes 168 under ARM-hosted user-mode emulation, before one test-only addition. Both Linux runs include actual terminal-helper checks and release musl builds. Emulation is not native AMD64 certification.
+The human terminal presentation now uses aligned columns, explicit units, short percentages, per-family validity, readable findings, and plain-language collection notes. The latest local coverage and test counts below include that change; earlier platform/build receipts retain their original source scope. No runtime dependency was added.
+
+Native macOS ARM64 passes 171 Rust tests: 126 library, six executable-module, eleven randomized Proptest laws, two CLI and 26 real HTTP/executable tests. Formatting, Clippy with warnings denied, toolchain/dependency guards and Python harness checks pass. At the earlier presentation checkpoint, ARM64 Linux passes 169 tests; AMD64 Linux passes 168 under ARM-hosted user-mode emulation, before one test-only addition. Both Linux runs include actual terminal-helper checks and release musl builds. Emulation is not native AMD64 certification.
 
 All nine contract scenarios run through the real SDK, HTTP server and binary in JSON, CSV and four text views. Their nine captured HTTP reports pass the independent verifier, as do nineteen reports from the compiled collector/finalization pipeline. Original examples/schema, 36 text goldens and seven semantic rejection checks also pass. Real HTTP text checks cover semantic fields and ordering; they do not claim byte-for-byte identity with older illustrative diagnostic prose.
 
@@ -29,7 +31,7 @@ cargo-llvm-cov 0.9.1 with LLVM 23 instruments every production module, including
 
 | Scope | Covered lines |
 | --- | --- |
-| All production source | 5854/6265, 93.44% |
+| All production source | 6097/6504, 93.74% |
 | qty | 285/295, 96.61% |
 | join | 636/654, 97.25% |
 | group | 403/411, 98.05% |
@@ -42,7 +44,7 @@ Ignored `artifacts/coverage` contains LCOV, HTML and JSON. Controlled fault chec
 
 Cargo.lock contains 216 package entries. Thirteen direct runtime dependencies remain the enforced budget. Nix 0.31.3 supplies safe process/signal/terminal/monotonic APIs, with event support scoped to macOS; Jiff is 0.2.40. [The maintenance review](DEPENDENCY_REVIEW.md) records upstream ownership/activity, features, security-policy evidence and costs. cargo-deny 0.19.0 passes advisories, bans, licenses and sources; duplicate-version warnings remain documented. The reviewed ar_archive_writer license exception is package/version scoped.
 
-Four genuine release binaries and deterministic binary/LICENSE archives exist under ignored `artifacts/release-final`; the complete checksummed manifest passes verification. Production-source fingerprint: `66610aed31f91c837769e3eb9b98020a6daff6aec0073acc4e534db321c9ba4b`.
+Four genuine release binaries and deterministic binary/LICENSE archives exist under ignored `artifacts/release-final`; the complete checksummed manifest passes verification. Earlier packaging-checkpoint production-source fingerprint: `66610aed31f91c837769e3eb9b98020a6daff6aec0073acc4e534db321c9ba4b`.
 
 | Target | Actual evidence | Runtime scope |
 | --- | --- | --- |

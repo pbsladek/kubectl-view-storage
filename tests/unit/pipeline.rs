@@ -259,7 +259,7 @@ async fn requested_bound_provisioned_and_filesystem_capacities_remain_distinct()
             crate::cli::View::Summary,
             crate::cli::View::Issues,
         ] {
-            assert!(crate::output::text(&report, view, true, false).contains("CONTEXT example"));
+            assert!(crate::output::text(&report, view, true, false).contains("Context: example"));
         }
         export_case(&format!("distinct-capacity-{kind}"), &input, &report);
     }
@@ -371,7 +371,7 @@ async fn raw_block_inventory_and_required_metrics_never_infer_filesystem_observa
                 crate::cli::View::Issues,
             ] {
                 assert!(
-                    crate::output::text(&report, view, true, false).contains("CONTEXT example")
+                    crate::output::text(&report, view, true, false).contains("Context: example")
                 );
             }
             if mode == "required" {
@@ -553,7 +553,7 @@ async fn unfamiliar_api_classifications_preserve_inventory_and_known_siblings() 
                 crate::cli::View::Issues,
             ] {
                 assert!(
-                    crate::output::text(&report, view, true, false).contains("CONTEXT example")
+                    crate::output::text(&report, view, true, false).contains("Context: example")
                 );
             }
             assert_eq!(

@@ -78,36 +78,15 @@ The four main controls are `-g` for grouping, `-u` for live usage, `--view` for 
 
 Selected defaults: current kubeconfig namespace, PVC inventory, tree view grouped by `storageclass,namespace,pvc`, and no metrics requests. `-A` explicitly expands to all namespaces. Namespace scope makes the first run useful with namespace permissions. The tree exposes storage relationships immediately, and explicit `-u` keeps privileged collection and its latency predictable.
 
-### Example views
+### Operator-facing terminal views
 
-Illustrative output only; spacing and colors are not part of the compatibility contract.
+Text output uses aligned columns with right-aligned numbers, explicit IEC units, and one decimal place for percentages. PVC binding phase, consumer counts, provisioned capacity, filesystem size, available bytes, inode pressure, and sample validity remain separate concepts. Human display rounding never participates in accounting or alert decisions.
 
-```text
-$ kubectl view-storage -n payments
-CONTEXT prod-eu   SCOPE payments   KIND pvc
-STORAGE                         CLAIMS   REQUESTED   PROVISIONED   STATE
-fast-ssd                             2       120Gi         120Gi
-└─ payments                          2       120Gi         120Gi
-   ├─ data-postgres-0                 1       100Gi         100Gi   Bound
-   └─ cache                          1        20Gi          20Gi   Bound
-```
+The renderer measures column widths before writing rows and observes cancellation in both passes. It uses a small private table type and the existing dependencies. Cluster-wide claim identities include namespaces. Tree connectors preserve grouping and shared-reference warnings; internal pod UID suffixes stay out of the ordinary view. Summary rows carry readable phase counts and coverage. Issue cards give evidence, source/timestamp, and the next action; wide blocks show volume metadata once and nest consumer/mount declarations below it.
 
-```text
-$ kubectl view-storage -n payments -u --view table
-PVC                 REQUESTED PROVISIONED FS-CAP USED AVAIL USE% INODE% STATE
-data-postgres-0          100Gi       100Gi   98Gi 88Gi   7Gi  89.8%  12.0% Bound
-cache                    20Gi        20Gi     --   --    --     --     -- Bound
-METRICS 1/2 eligible claims fresh; cache: no sample returned
-```
+[Captured real output](../examples/live/README.md) shows all four views, strict checks, and machine formats. The independently specified [contract views](../examples/contract/README.md) cover partial, stale, conflicting, and unavailable observations. Text footers explain missing values and backing-filesystem semantics without exposing report-schema assignments.
 
 Used plus available need not equal filesystem capacity. Report the values independently; filesystem reservations and provider semantics matter.
-
-```text
-$ kubectl view-storage -n payments -u --view issues
-SEVERITY OBJECT                       CODE                   EVIDENCE
-warning  payments/data-postgres-0      filesystem_usage_high  89.8% >= 80%
-info     payments/cache               metrics_missing        no sample returned
-```
 
 Summary view shows distinct claim counts, phases, requested and provisioned totals, and metrics coverage by the requested groups. It must label partial sums. Issues view shows evidence and suggested investigation steps without implying that the plugin can repair resources.
 

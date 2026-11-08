@@ -1,7 +1,14 @@
-CONTEXT example   SCOPE demo   KIND pvc
-GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
-ROOT 2 200Gi 200Gi 100Gi 80Gi 0 80.0% 1/2 phases={"Bound":2}
-storageclass=fast 2 200Gi 200Gi 100Gi 80Gi 0 80.0% 1/2 phases={"Bound":2}
-SELECTION complete; matched=2 unknown=0
-METRICS 1/2 known-match eligible claims fresh and complete
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+GROUP        COUNT  REQUESTED  PROVISIONED  FS SIZE    USED  AVAILABLE   USE%  METRICS      PHASES
+-----------  -----  ---------  -----------  -------  ------  ---------  -----  -----------  -------
+TOTAL            2    200 GiB      200 GiB  100 GiB  80 GiB        0 B  80.0%  1/2 Partial  2 Bound
+Class: fast      2    200 GiB      200 GiB  100 GiB  80 GiB        0 B  80.0%  1/2 Partial  2 Bound
+
+Selection: complete (2 matched)
+Metrics: 1/2 claims fresh and complete; inodes: 2/2
+Latest sample: 2026-11-06T19:59:50Z
+Bytes unavailable: 1 available bytes missing
+Findings: 3 critical, 1 warning (details: --view issues)
+Filesystem totals are per claim, not physical storage totals.

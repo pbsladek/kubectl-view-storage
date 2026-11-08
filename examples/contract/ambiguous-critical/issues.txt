@@ -1,9 +1,16 @@
-CONTEXT example   SCOPE demo   KIND pvc
-SEVERITY OBJECT CODE EVIDENCE
-warning demo/shared metrics_disagreement observed_range_percent=90..99
-  Investigate: Inspect the conflicting node samples; the critical usage check is inconclusive.
-SELECTION complete; matched=1 unknown=0
-METRICS 0/1 known-match eligible claims fresh and complete
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+warning  demo/shared: Metrics disagreement [metrics_disagreement]
+  Observed range percent: 90..99%
+  Observed: 2026-11-06T19:59:50Z via kubelet on worker-a
+  Next: Inspect the conflicting node samples; the critical usage check is inconclusive.
+
+
+Selection: complete (1 matched)
+Metrics: 0/1 claims fresh and complete; inodes: 1/1
+Bytes unavailable: 1 metrics disagreement
 Strict critical check inconclusive: conflicting fresh candidates report critical pressure.
-Shared references: sibling group totals cannot be added; root totals use distinct records.
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Findings: 1 warning (details: --view issues)
+Shared references: do not add sibling totals; the root counts each volume once.
+Filesystem totals are per claim, not physical storage totals.

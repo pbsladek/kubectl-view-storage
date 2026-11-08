@@ -1,8 +1,14 @@
-CONTEXT example   SCOPE demo   KIND pvc
-GROUP RECORDS REQUESTED PROVISIONED FS-CAP USED AVAIL USE% METRICS
-ROOT 1 100Gi -- (partial) 100Gi 40Gi 55Gi 40.0% 1/1 phases={"Bound":1}
-storageclass=fast 1 100Gi -- (partial) 100Gi 40Gi 55Gi 40.0% 1/1 phases={"Bound":1}
-SELECTION complete; matched=1 unknown=0
-METRICS 1/1 known-match eligible claims fresh and complete
-DIAGNOSTIC forbidden: PV get denied; claim and telemetry remain visible.
-FILESYSTEM TOTALS per-claim reported filesystem totals; physical_total=false
+Persistent volume claims
+Context: example  |  Namespace: demo
+
+GROUP        COUNT  REQUESTED  PROVISIONED  FS SIZE    USED  AVAILABLE   USE%  METRICS    PHASES
+-----------  -----  ---------  -----------  -------  ------  ---------  -----  ---------  -------
+TOTAL            1    100 GiB          --*  100 GiB  40 GiB     55 GiB  40.0%  1/1 Fresh  1 Bound
+Class: fast      1    100 GiB          --*  100 GiB  40 GiB     55 GiB  40.0%  1/1 Fresh  1 Bound
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-06T19:59:50Z
+* Partial capacity: sum of known values; unknown values are excluded.
+Collection note [forbidden]: PV get denied; claim and telemetry remain visible.
+Filesystem totals are per claim, not physical storage totals.

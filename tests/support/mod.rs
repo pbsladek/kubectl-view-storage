@@ -401,7 +401,7 @@ pub fn incomplete_selection_law(capacities: &[u64], driver: bool, pv: bool) {
             report.document["selection"]["unknown_count"],
             if driver { 1 } else { capacities.len() }
         );
-        assert!(output::text(&report, View::Tree, false, false).contains("SELECTION incomplete"));
+        assert!(output::text(&report, View::Tree, false, false).contains("Selection: incomplete"));
         q.filters.storage_class = Some("definite-nonmatch".into());
         let empty = finish(&input, &q, driver, &BTreeMap::new());
         assert_eq!(
