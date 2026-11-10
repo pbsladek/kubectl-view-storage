@@ -27,6 +27,30 @@ def inline_python(workflow, job, step_name):
 
 
 class WorkflowProtocols(unittest.TestCase):
+    def test_cached_cargo_tools_receive_the_cargo_subcommand_and_verify_versions(self):
+        action = yaml.safe_load((ROOT / '.github/actions/cargo-tool/action.yml').read_text())
+        code = next(step['run'] for step in action['runs']['steps'] if step.get('name') == 'Verify version and expose tool')
+        for tool, version in [('cargo-llvm-cov', '0.9.1'), ('cargo-deny', '0.19.0'), ('cargo-fuzz', '0.13.2')]:
+            for fault in (False, True):
+                with self.subTest(tool=tool, wrong_version=fault), tempfile.TemporaryDirectory(prefix='cargo tool ') as temporary:
+                    root = Path(temporary)
+                    directory = root / '.local/ci-tools' / tool / 'bin'
+                    directory.mkdir(parents=True)
+                    executable = directory / tool
+                    # Cargo passes its external subcommand as argv[1]. The
+                    # llvm-cov binary rejects direct --version without it.
+                    executable.write_text('#!' + sys.executable + '\nimport os,sys\nassert sys.argv[1:]==[os.environ["CI_TOOL"].removeprefix("cargo-"),"--version"]\nprint(os.environ["CI_TOOL"], "0.0.0" if os.environ["WRONG_VERSION"]=="true" else os.environ["CI_VERSION"])\n')
+                    executable.chmod(0o755)
+                    output = root / 'github-path'
+                    env = dict(os.environ, CI_TOOL=tool, CI_VERSION=version, GITHUB_WORKSPACE=str(root), GITHUB_PATH=str(output), WRONG_VERSION=str(fault).lower())
+                    result = subprocess.run(['bash', '-eo', 'pipefail', '-c', code], env=env, text=True, capture_output=True)
+                    if fault:
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertFalse(output.exists())
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(output.read_text(), str(directory) + '\n')
+
     def test_matching_clients_emit_two_distinct_github_outputs(self):
         code = inline_python('compatibility.yml', 'live', 'Select reviewed node and matching client')
         for version in ('1.37.0', '1.36.4', '1.35.8'):

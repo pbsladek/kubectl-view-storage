@@ -29,5 +29,5 @@ runs:
         CI_VERSION: ${{ inputs.version }}
       run: |
         tool_directory="$GITHUB_WORKSPACE/.local/ci-tools/$CI_TOOL/bin"
-        "$tool_directory/$CI_TOOL" --version | python3 -c 'import os,sys; v=sys.stdin.read().split(); assert v[:2]==[os.environ["CI_TOOL"],os.environ["CI_VERSION"]], v; print(" ".join(v))'
+        "$tool_directory/$CI_TOOL" "${CI_TOOL#cargo-}" --version | python3 -c 'import os,sys; v=sys.stdin.read().split(); assert v[:2]==[os.environ["CI_TOOL"],os.environ["CI_VERSION"]], v; print(" ".join(v))'
         echo "$tool_directory" >> "$GITHUB_PATH"
