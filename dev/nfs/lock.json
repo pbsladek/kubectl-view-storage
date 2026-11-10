@@ -1,0 +1,105 @@
+{
+  "status": "reviewed",
+  "driver_release": "v4.13.6",
+  "source_revision": "ef097104fe8d06ee3f8a81cb04be39f6eba0ff6f",
+  "sources": {
+    "csi-driver-nfs": {
+      "repository": "https://github.com/kubernetes-csi/csi-driver-nfs",
+      "revision": "ef097104fe8d06ee3f8a81cb04be39f6eba0ff6f",
+      "files": [
+        {
+          "file": "deploy/v4.13.6/rbac-csi-nfs.yaml",
+          "sha256": "312de689d07627330d8280e50d7b51357e0b5f5ca0d8aa75794aec460ee4cff0"
+        },
+        {
+          "file": "deploy/v4.13.6/csi-nfs-driverinfo.yaml",
+          "sha256": "fa2bba4674821b3317d1e016f3c9d54abe04fcdc6fed3fce9e58994c8311c4a0"
+        },
+        {
+          "file": "deploy/v4.13.6/csi-nfs-controller.yaml",
+          "sha256": "706bf8e69ac03e810cec806bed11050850588cab615aa65d12a6101cecfd3871"
+        },
+        {
+          "file": "deploy/v4.13.6/csi-nfs-node.yaml",
+          "sha256": "26a9ee1c9de6608598ac9083927a922a77323f8933ba2834d61a665b6d23f692"
+        }
+      ]
+    }
+  },
+  "driver_image": "registry.k8s.io/sig-storage/nfsplugin:v4.13.6@sha256:40663419bac36836b8e4ef6929199e35920e28f6a74a46892e1c125ea5f0ce0b",
+  "server_image": "quay.io/piraeusdatastore/piraeus-csi-nfs-server:v1.13.0@sha256:5cdc7d8f635e14ce9550ce2b354d859eeff32cdce7ec99a04b4de9278d27b78a",
+  "workload_image": "registry.k8s.io/e2e-test-images/busybox:1.37.0-2@sha256:690925c6f3493b235eb590113f8c481564dcd4f1962cf7d5b321f185980721ef",
+  "server_recipe_reference": {
+    "url": "https://raw.githubusercontent.com/piraeusdatastore/linstor-csi/dc0fe692f42b88fd2f32beac66565fc8cfb1b6e3/nfs/Dockerfile",
+    "revision": "dc0fe692f42b88fd2f32beac66565fc8cfb1b6e3",
+    "file": "ganesha.Dockerfile.reference",
+    "sha256": "05d3ca2c77edf7d90d146abf8e7febdcc3a9c261e699121be23379ac75cc7772",
+    "scope": "reviewed build recipe; not a verified image build attestation"
+  },
+  "images": [
+    {
+      "image": "quay.io/piraeusdatastore/piraeus-csi-nfs-server:v1.13.0@sha256:5cdc7d8f635e14ce9550ce2b354d859eeff32cdce7ec99a04b4de9278d27b78a",
+      "platform_digests": {
+        "amd64": "sha256:ec9730036d7768c5e54667c3e797eb3d40b6b003522e1c7c9dab65927f0d5e80",
+        "arm64": "sha256:8d84abfe01b71e3e7f8f59f498bad5eda2de4245557aa4a1b430b3dfccdd71e2"
+      }
+    },
+    {
+      "image": "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.17.0@sha256:f9de845b170155199f2a2a3f9531cf13d78e31235e9db6b6582a8b0db0a50dad",
+      "platform_digests": {
+        "amd64": "sha256:0fc05c749072bea889beffc97499f6836f74aebe351c78ff8d90d671c35f04da",
+        "arm64": "sha256:a2e2060fca736107daafe4958910143bd08af3f456efb1fdc8dc54a9da582b83"
+      }
+    },
+    {
+      "image": "registry.k8s.io/sig-storage/csi-provisioner:v6.3.0@sha256:a4b0b1a37605b7b04a293e136edf7006ec1786a8eb3f4e5a945f81d667dcc371",
+      "platform_digests": {
+        "amd64": "sha256:54de28a6565647405647b34d092eefb4a51c7be14f29bdafc721773a5ec0600c",
+        "arm64": "sha256:6e755c658dff4f5270a9d0214b41d031b64c3df94d0086c0042287cc46cc0862"
+      }
+    },
+    {
+      "image": "registry.k8s.io/sig-storage/livenessprobe:v2.19.0@sha256:06da0d5b8908072f2e4522692aee8dc119fba7247a9658497e1153992cd777e9",
+      "platform_digests": {
+        "amd64": "sha256:c966d36f5353f71033c1a7b0321a9a670f8929af8740f714e455902b312a82a6",
+        "arm64": "sha256:94de3d3bf21334ac646e942b2411100bb38f66ea98bfb9cf43b27dd5c1fb921e"
+      }
+    },
+    {
+      "image": "registry.k8s.io/sig-storage/nfsplugin:v4.13.6@sha256:40663419bac36836b8e4ef6929199e35920e28f6a74a46892e1c125ea5f0ce0b",
+      "platform_digests": {
+        "amd64": "sha256:3584ff253e5745aa36690e94979c67c627906324cde14069fae56b9d59e90785",
+        "arm64": "sha256:637f045bf06b44e34580e34218ba2c23d061fc1b45b72a14d3a27b45570c78fc"
+      }
+    },
+    {
+      "image": "registry.k8s.io/e2e-test-images/busybox:1.37.0-2@sha256:690925c6f3493b235eb590113f8c481564dcd4f1962cf7d5b321f185980721ef",
+      "platform_digests": {
+        "amd64": "sha256:eab3ee62c603bc019c50dd892319ef0dac8b70febcb78a314218be48a1ca9e61",
+        "arm64": "sha256:ab06da67222b483428ae6f6c48ba213a76b09f988e9544a8c07cbb766e87fa03"
+      }
+    }
+  ],
+  "manifests": [
+    {
+      "file": "vendor/driver.json",
+      "sha256": "d27b492fdb190ff2d8ea95ef1e487531669bfeebe4d96a17017cb4c297e61b91"
+    }
+  ],
+  "licenses": [
+    {
+      "file": "licenses/csi-driver-nfs.txt",
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "file": "licenses/server-recipe.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ],
+  "transforms": [
+    "omit snapshotter/resizer containers; no snapshot or resize coverage claimed",
+    "bound provisioner operation timeout to 60s",
+    "replace all image tags with immutable index digests"
+  ],
+  "reviewed_on": "2026-11-10"
+}

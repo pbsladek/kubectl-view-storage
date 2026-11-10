@@ -1,5 +1,8 @@
 name: Parser fuzzing
 on:
+  push:
+    branches: [main]
+    paths: ['src/qty.rs', 'src/transport.rs', 'src/metrics.rs', 'src/model.rs', 'src/work.rs', 'fuzz/**', 'Cargo.toml', 'Cargo.lock', 'scripts/fuzz-smoke.sh', '.github/workflows/fuzz.yml']
   pull_request:
     paths: ['src/**', 'fuzz/**', 'Cargo.toml', 'Cargo.lock', 'scripts/fuzz-smoke.sh']
   schedule:
@@ -7,17 +10,35 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: fuzz-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   fuzz:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7.0.1
-      - name: Install isolated fuzz tools
-        working-directory: fuzz
+      - name: Select pinned isolated fuzz compiler
         run: |
+          python3 - <<'PY'
+          import os, tomllib
+          nightly = tomllib.load(open('fuzz/rust-toolchain.toml', 'rb'))['toolchain']['channel']
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('RUSTUP_TOOLCHAIN=' + nightly + '\n')
+          PY
+      - name: Install pinned nightly
+        run: |
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
           rustup show active-toolchain
-          cargo install cargo-fuzz --version 0.13.2 --locked
+      - uses: ./.github/actions/rust-cache
+        with:
+          group: fuzz-asan
+          workspaces: 'fuzz -> target'
+      - uses: ./.github/actions/cargo-tool
+        with:
+          tool: cargo-fuzz
+          version: '0.13.2'
       - name: Bounded fuzz runs
         env:
           FUZZ_SECONDS: ${{ github.event_name == 'schedule' && '300' || '15' }}
@@ -27,4 +48,5 @@ jobs:
         with:
           name: fuzz-regressions
           path: fuzz/artifacts
+          retention-days: 7
           if-no-files-found: warn

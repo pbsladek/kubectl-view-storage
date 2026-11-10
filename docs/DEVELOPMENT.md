@@ -189,3 +189,12 @@ The Linux compatibility workflow runs inventory and CSI serially on native amd64
 `python3 scripts/check-linux-container.py --arch arm64` runs actual locked Rust tests and a static musl release build inside the digest-pinned official Rust image recorded in dev/versions.json. `--arch amd64` selects that actual platform; Docker Desktop may emulate it, so record the host and avoid claiming native amd64 certification. The source bind is read-only, writable build/registry/evidence directories stay in this workspace, and a named/labeled container is removed on completion. The command limits build jobs, CPUs and memory; run it separately from kind profiles on the current Docker VM. It supplements the native CI matrix.
 
 The quantity/statistics fuzz targets pass actual AddressSanitizer smoke on pinned nightly-2026-11-01 with cargo-fuzz 0.13.2. `scripts/fuzz-smoke.sh` uses a separate checked-in fuzz/Cargo.lock, locked Cargo prefetch, offline fuzz builds and an unchanged-lock check because cargo-fuzz has no `--locked` flag. Generated inputs go under ignored artifacts/fuzz-corpus; named checked-in seeds remain unchanged. The workspace-local Rustup/Cargo homes do not change the Homebrew production Rust/Cargo 1.99.1 bundle. Bounded smoke is not exhaustive fuzz coverage.
+
+
+## CI performance
+
+[CI performance](CI_PERFORMANCE.md) records measured build/test and runner costs. CI now uses compiler/target/profile-specific dependency caches, exact-version tool caches, a cumulative change selector, parallel lint/coverage/fault/native jobs, and once-per-architecture compatibility binaries. Source compiler verification, native Cargo/Krew installations, coverage floors, parser fuzzing, and actual CSI gates remain required in their selected workflows. Pure documentation changes skip native compilation; unknown paths/history run full checks. Use the final `required` aggregate as the branch-protection check when configuring protection. Local Docker CPU/memory limits are unchanged.
+
+## Shared storage E2E suite
+
+See [disposable storage tests](STORAGE_E2E.md) for `python3 scripts/e2e-storage.py`, backend coverage, CI scheduling, cleanup and NFS cache limitations. The suite runs the same three backend gates locally and on GitHub Linux runners.

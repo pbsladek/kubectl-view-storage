@@ -1,13 +1,17 @@
-.PHONY: check test contract coverage plugin-smoke release-verify release-smoke preflight inventory-create inventory-verify inventory-delete csi-create csi-verify csi-delete
+.PHONY: check test contract coverage plugin-smoke release-verify release-smoke preflight inventory-create inventory-verify inventory-delete csi-create csi-verify csi-delete nfs-create nfs-verify nfs-delete storage-e2e
 
 RELEASE_DIRECTORY ?= artifacts/release
 
 check:
+	python3 scripts/test-ci-scope.py
+	python3 scripts/test-toolchain-check.py
+	python3 scripts/test-ci-timings.py
 	python3 scripts/check-toolchain.py
 	python3 scripts/check-dependencies.py
 	python3 scripts/test-dependency-check.py
 	python3 scripts/test-dev-environment.py
 	python3 scripts/test-csi-environment.py
+	python3 scripts/test-storage-e2e.py
 	python3 scripts/test-release-packaging.py
 	python3 scripts/test-smoke-http.py
 	cargo fmt --all --check
@@ -54,3 +58,15 @@ csi-verify:
 
 csi-delete:
 	python3 scripts/dev-cluster.py delete csi
+
+nfs-create:
+	python3 scripts/dev-cluster.py create nfs
+
+nfs-verify:
+	python3 scripts/dev-cluster.py verify nfs
+
+nfs-delete:
+	python3 scripts/dev-cluster.py delete nfs
+
+storage-e2e:
+	python3 scripts/e2e-storage.py

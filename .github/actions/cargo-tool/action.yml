@@ -1,0 +1,33 @@
+name: Pinned Cargo tool
+description: Restore one exact-version CI tool, installing it only on a cache miss.
+inputs:
+  tool:
+    description: Cargo package and executable name.
+    required: true
+  version:
+    description: Exact release version.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      id: binary
+      with:
+        path: .local/ci-tools/${{ inputs.tool }}
+        key: cargo-tool-v1-${{ runner.os }}-${{ runner.arch }}-${{ inputs.tool }}-${{ inputs.version }}-${{ hashFiles('rust-toolchain.toml', 'fuzz/rust-toolchain.toml') }}
+    - name: Install missing tool
+      if: steps.binary.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        CI_TOOL: ${{ inputs.tool }}
+        CI_VERSION: ${{ inputs.version }}
+      run: cargo install "$CI_TOOL" --version "$CI_VERSION" --locked --root ".local/ci-tools/$CI_TOOL"
+    - name: Verify version and expose tool
+      shell: bash
+      env:
+        CI_TOOL: ${{ inputs.tool }}
+        CI_VERSION: ${{ inputs.version }}
+      run: |
+        tool_directory="$GITHUB_WORKSPACE/.local/ci-tools/$CI_TOOL/bin"
+        "$tool_directory/$CI_TOOL" --version | python3 -c 'import os,sys; v=sys.stdin.read().split(); assert v[:2]==[os.environ["CI_TOOL"],os.environ["CI_VERSION"]], v; print(" ".join(v))'
+        echo "$tool_directory" >> "$GITHUB_PATH"

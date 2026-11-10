@@ -1,0 +1,2969 @@
+[
+  {
+    "run_id": 42437299699,
+    "revision": "f799f810f74e061ad82665a16d13c6d69bf0b43e",
+    "workflow": "Native distribution validation",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 29.7,
+    "rounded_job_minutes": 36,
+    "job_queue_seconds": 27.0,
+    "jobs": [
+      {
+        "name": "native (ubuntu-24.04, x86_64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128598792300",
+        "conclusion": "success",
+        "seconds": 314.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 22.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 111.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 99.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 71.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (macos-15, aarch64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128598792364",
+        "conclusion": "success",
+        "seconds": 340.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 9.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 131.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 115.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 72.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (macos-15-intel, x86_64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128598792461",
+        "conclusion": "success",
+        "seconds": 673.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 16.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 217.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 255.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 167.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (ubuntu-24.04-arm, aarch64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128598792483",
+        "conclusion": "success",
+        "seconds": 371.0,
+        "queue_seconds": 4.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 24.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 136.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 119.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 84.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "manifest",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128601308668",
+        "conclusion": "success",
+        "seconds": 7.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Generate only from all four actual archives",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (ubuntu-24.04, x86_64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128601341893",
+        "conclusion": "success",
+        "seconds": 15.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (ubuntu-24.04-arm, aarch64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128601341930",
+        "conclusion": "success",
+        "seconds": 15.0,
+        "queue_seconds": 5.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 6.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (macos-15-intel, x86_64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128601341934",
+        "conclusion": "success",
+        "seconds": 27.0,
+        "queue_seconds": 4.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 7.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (macos-15, aarch64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299699/job/128601341960",
+        "conclusion": "success",
+        "seconds": 20.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42437299770,
+    "revision": "f799f810f74e061ad82665a16d13c6d69bf0b43e",
+    "workflow": "Rust and contracts",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299770",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 15.067,
+    "rounded_job_minutes": 17,
+    "job_queue_seconds": 10.0,
+    "jobs": [
+      {
+        "name": "coverage",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299770/job/128598792425",
+        "conclusion": "success",
+        "seconds": 166.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned coverage tools",
+            "seconds": 74.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run sh scripts/coverage.sh",
+            "seconds": 83.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (macos-latest, pinned)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299770/job/128598792528",
+        "conclusion": "success",
+        "seconds": 167.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 8.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 142.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (macos-latest, stable)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299770/job/128598792546",
+        "conclusion": "success",
+        "seconds": 170.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 149.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 6.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (ubuntu-latest, stable)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299770/job/128598792636",
+        "conclusion": "success",
+        "seconds": 147.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 129.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 7.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (ubuntu-latest, pinned)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299770/job/128598792761",
+        "conclusion": "success",
+        "seconds": 254.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 9.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 110.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 8.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 120.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42437299725,
+    "revision": "f799f810f74e061ad82665a16d13c6d69bf0b43e",
+    "workflow": "Stable and dependency maintenance",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299725",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 3.767,
+    "rounded_job_minutes": 4,
+    "job_queue_seconds": 2.0,
+    "jobs": [
+      {
+        "name": "advisories",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42437299725/job/128598792257",
+        "conclusion": "success",
+        "seconds": 226.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run test -f Cargo.lock",
+            "seconds": 223.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42439656850,
+    "revision": "13836d7dffe452f6678d0a916dadf4b0d09c83bf",
+    "workflow": "Native distribution validation",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 36.717,
+    "rounded_job_minutes": 42,
+    "job_queue_seconds": 21.0,
+    "jobs": [
+      {
+        "name": "native (ubuntu-24.04, x86_64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128605948921",
+        "conclusion": "success",
+        "seconds": 365.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 24.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 129.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 117.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 84.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (ubuntu-24.04-arm, aarch64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128605949029",
+        "conclusion": "success",
+        "seconds": 388.0,
+        "queue_seconds": 4.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 22.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 142.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 128.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 90.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (macos-15, aarch64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128605949044",
+        "conclusion": "success",
+        "seconds": 416.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 15.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 123.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 138.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 124.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (macos-15-intel, x86_64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128605949109",
+        "conclusion": "success",
+        "seconds": 955.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 19.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 387.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 297.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 234.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "manifest",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128609163733",
+        "conclusion": "success",
+        "seconds": 8.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Generate only from all four actual archives",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (ubuntu-24.04-arm, aarch64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128609198589",
+        "conclusion": "success",
+        "seconds": 13.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (macos-15, aarch64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128609198599",
+        "conclusion": "success",
+        "seconds": 21.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 6.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (macos-15-intel, x86_64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128609198606",
+        "conclusion": "success",
+        "seconds": 23.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 7.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (ubuntu-24.04, x86_64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656850/job/128609198618",
+        "conclusion": "success",
+        "seconds": 14.0,
+        "queue_seconds": 1.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42439656835,
+    "revision": "13836d7dffe452f6678d0a916dadf4b0d09c83bf",
+    "workflow": "Rust and contracts",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656835",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 14.067,
+    "rounded_job_minutes": 16,
+    "job_queue_seconds": 12.0,
+    "jobs": [
+      {
+        "name": "coverage",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656835/job/128605948883",
+        "conclusion": "success",
+        "seconds": 152.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned coverage tools",
+            "seconds": 66.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run sh scripts/coverage.sh",
+            "seconds": 81.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (macos-latest, stable)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656835/job/128605949071",
+        "conclusion": "success",
+        "seconds": 169.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 152.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (ubuntu-latest, pinned)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656835/job/128605949088",
+        "conclusion": "success",
+        "seconds": 266.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 9.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 116.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 6.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 128.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (ubuntu-latest, stable)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656835/job/128605949139",
+        "conclusion": "success",
+        "seconds": 114.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 102.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (macos-latest, pinned)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656835/job/128605949254",
+        "conclusion": "success",
+        "seconds": 143.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 7.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 114.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 8.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42439656787,
+    "revision": "13836d7dffe452f6678d0a916dadf4b0d09c83bf",
+    "workflow": "Stable and dependency maintenance",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656787",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 3.783,
+    "rounded_job_minutes": 4,
+    "job_queue_seconds": 2.0,
+    "jobs": [
+      {
+        "name": "advisories",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42439656787/job/128605948813",
+        "conclusion": "success",
+        "seconds": 227.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run test -f Cargo.lock",
+            "seconds": 223.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42440998065,
+    "revision": "0695641421aef9af5d6861e5d9aea55c1201d5cb",
+    "workflow": "Rust and contracts",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998065",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 15.433,
+    "rounded_job_minutes": 18,
+    "job_queue_seconds": 10.0,
+    "jobs": [
+      {
+        "name": "coverage",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998065/job/128610000479",
+        "conclusion": "success",
+        "seconds": 156.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned coverage tools",
+            "seconds": 65.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run sh scripts/coverage.sh",
+            "seconds": 85.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (ubuntu-latest, stable)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998065/job/128610000547",
+        "conclusion": "success",
+        "seconds": 146.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 129.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 7.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (macos-latest, pinned)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998065/job/128610000585",
+        "conclusion": "success",
+        "seconds": 130.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 6.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 107.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (macos-latest, stable)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998065/job/128610000616",
+        "conclusion": "success",
+        "seconds": 232.0,
+        "queue_seconds": 3.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 205.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 8.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 0.0,
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 2.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "check (ubuntu-latest, pinned)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998065/job/128610000630",
+        "conclusion": "success",
+        "seconds": 262.0,
+        "queue_seconds": 1.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select toolchain",
+            "seconds": 11.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Toolchain and dependency policy",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Locked Rust checks",
+            "seconds": 109.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Select pinned kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Real kubectl plugin discovery",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract and gate checks",
+            "seconds": 9.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Targeted fault detection",
+            "seconds": 126.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42440998136,
+    "revision": "0695641421aef9af5d6861e5d9aea55c1201d5cb",
+    "workflow": "Stable and dependency maintenance",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998136",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 3.75,
+    "rounded_job_minutes": 4,
+    "job_queue_seconds": 1.0,
+    "jobs": [
+      {
+        "name": "advisories",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998136/job/128610000515",
+        "conclusion": "success",
+        "seconds": 225.0,
+        "queue_seconds": 1.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run test -f Cargo.lock",
+            "seconds": 220.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  },
+  {
+    "run_id": 42440998060,
+    "revision": "0695641421aef9af5d6861e5d9aea55c1201d5cb",
+    "workflow": "Native distribution validation",
+    "event": "push",
+    "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060",
+    "status": "completed",
+    "conclusion": "success",
+    "runner_minutes": 30.867,
+    "rounded_job_minutes": 36,
+    "job_queue_seconds": 20.0,
+    "jobs": [
+      {
+        "name": "native (macos-15-intel, x86_64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128610000558",
+        "conclusion": "success",
+        "seconds": 694.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 15.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 8.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 263.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 236.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 157.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (ubuntu-24.04-arm, aarch64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128610000573",
+        "conclusion": "success",
+        "seconds": 345.0,
+        "queue_seconds": 4.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Pinned native toolchain and musl C compiler",
+            "seconds": 22.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual native target tests and terminal helpers",
+            "seconds": 126.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh release build baseline and archive",
+            "seconds": 111.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Verified source package and actual local Cargo installation",
+            "seconds": 79.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "native (macos-15, aarch64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128610000615",
+        "conclusion": "success",
+        "seconds": 374.0,
+        "queue_seconds": 1.0,
+        "steps": []
+      },
+      {
+        "name": "native (ubuntu-24.04, x86_64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128610000647",
+        "conclusion": "success",
+        "seconds": 356.0,
+        "queue_seconds": 2.0,
+        "steps": []
+      },
+      {
+        "name": "manifest",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128612500398",
+        "conclusion": "success",
+        "seconds": 11.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Generate only from all four actual archives",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (ubuntu-24.04-arm, aarch64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128612550180",
+        "conclusion": "success",
+        "seconds": 11.0,
+        "queue_seconds": 4.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (macos-15, aarch64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128612550182",
+        "conclusion": "success",
+        "seconds": 15.0,
+        "queue_seconds": 2.0,
+        "steps": []
+      },
+      {
+        "name": "installed (ubuntu-24.04, x86_64-unknown-linux-musl)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128612550197",
+        "conclusion": "success",
+        "seconds": 18.0,
+        "queue_seconds": 1.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 6.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "installed (macos-15-intel, x86_64-apple-darwin)",
+        "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060/job/128612550327",
+        "conclusion": "success",
+        "seconds": 28.0,
+        "queue_seconds": 2.0,
+        "steps": [
+          {
+            "name": "Set up job",
+            "seconds": 5.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "seconds": 3.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/download-artifact@v8.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Matching kubectl",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run azure/setup-kubectl@v5.2.0",
+            "seconds": 4.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Actual isolated Krew installation and installed command behavior",
+            "seconds": 8.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7.0.2",
+            "seconds": 1.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "seconds": 0.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "seconds": 2.0,
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "seconds": 0.0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "scope": "completed-job wall time, summed across parallel jobs; rounded minutes are an estimate, not billing evidence"
+  }
+]

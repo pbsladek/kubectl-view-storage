@@ -14,8 +14,11 @@ Start with [usage examples](../examples/README.md) or `kubectl view-storage --he
 ## Development and installation
 
 - [Development](DEVELOPMENT.md): toolchain, dependency policy, disposable clusters, tests, coverage, and fuzzing.
+- [CI performance](CI_PERFORMANCE.md): measured runner/build/test costs, caching, parallel checks, and repeatable comparisons.
 - [Dependency review](DEPENDENCY_REVIEW.md): runtime dependency choices, maintenance, features, and costs.
 - [Distribution](DISTRIBUTION.md): source installation, release archives, checksums, and local Krew validation.
+
+- [Disposable storage E2E tests](STORAGE_E2E.md): shared local/CI fixtures for local-path, CSI hostpath and cross-node NFS CSI.
 
 ## Progress and support
 

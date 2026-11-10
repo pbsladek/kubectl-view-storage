@@ -1,0 +1,19 @@
+name: Rust dependency cache
+description: Cache dependencies by compiler, target, profile group, environment and lockfiles.
+inputs:
+  group:
+    description: Separate incompatible compiler profiles and targets.
+    required: true
+  workspaces:
+    description: Cargo workspace to target-directory mappings.
+    default: '. -> target'
+runs:
+  using: composite
+  steps:
+    - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      with:
+        shared-key: ${{ inputs.group }}
+        workspaces: ${{ inputs.workspaces }}
+        cache-bin: 'false'
+        cache-workspace-crates: 'false'
+        save-if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}

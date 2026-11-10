@@ -84,5 +84,7 @@
         "bytes": 4782540
       }
     }
-  }
+  },
+  "nfs_csi_release": "v4.13.6",
+  "nfs_lock_sha256": "48b7838fe237604172343d1b6568aa8b612bf85fada33a654d0d1b73ab211075"
 }
