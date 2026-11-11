@@ -136,5 +136,13 @@ The first 1.37.0 attempt failed with the older Ganesha fixture; the replacement
 server passed its real cross-node gate. These are local timings and evidence,
 not GitHub runner measurements or native-host certification. The production
 source fingerprint matches the tested captured release binary; no Rust runtime
-source or dependency changed. GitHub-native evidence remains pending publication.
+source or dependency changed. The complete native GitHub matrix also passed; see the hosted evidence below.
 The offline harness regressions also pass under Python 3.14, matching CI.
+
+## Hosted Linux results
+
+[The complete matrix at `0ee4e9d`](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42900675127) passed on native amd64 and arm64 for Kubernetes 1.35.8, 1.36.4 and 1.37.0. All eighteen backend gates passed. Uploaded receipts confirm owned cleanup, unchanged normal kubeconfig fingerprints, and the exact source revision, architecture and binary hash for each reused build. The real NFS reports also pass the shared-node membership, overlap, freshness and total-accounting checks.
+
+[The durable receipt index](storage-e2e-hosted.json) records all six cells and hashes of their validation receipts. Per-cell backend execution totaled 469.23–494.36 seconds, including cluster creation and cleanup; this excludes build and workflow setup time. These receipts prove build reuse and backend behavior, not a controlled warm-cache speedup comparison.
+
+The successful E2E run does not certify raw Block, cloud providers, snapshots, resize or driver cache TTL latency. Follow-up changes to the independent Cargo-tool version wrapper do not alter the tested production or storage-harness sources.

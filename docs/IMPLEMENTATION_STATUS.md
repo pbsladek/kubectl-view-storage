@@ -1,15 +1,19 @@
 # Implementation evidence
 
-Updated 2026-11-07. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A58 and every [phase exit](IMPLEMENTATION_PLAN.md). No release has been published.
+Updated 2026-11-10. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A58 and every [phase exit](IMPLEMENTATION_PLAN.md). No release has been published.
 
 | Phase | Evidence available | Remaining exit work |
 | --- | --- | --- |
-| 0 | Rust/Cargo 1.99.1; thirteen-runtime-crate guard; upstream maintenance/features review; resolved cargo-deny checks; genuine four-target builds; repeated inventory/CSI lifecycles on Kubernetes 1.35–1.37 | Native Linux CI lifecycle and final per-target provenance audit |
+| 0 | Rust/Cargo 1.99.1; thirteen-runtime-crate guard; upstream maintenance/features review; resolved cargo-deny checks; genuine four-target builds; repeated inventory/CSI lifecycles on Kubernetes 1.35–1.37 | Final per-target provenance and acceptance audit |
 | 1 | Typed boundaries, exact arithmetic, eleven passing randomized laws, full production coverage floors and both parser fuzz smoke targets | Remaining native platform checks |
-| 2 | Real SDK/HTTP paths, pagination, fatal base failures, strict selection and live TLS/service-account inventory/RBAC | Final release-binary live rerun and native Linux compatibility jobs |
+| 2 | Real SDK/HTTP paths, pagination, fatal base failures, strict selection and live TLS/service-account inventory/RBAC | Per-case current-source acceptance reconciliation |
 | 3 | Four views, 36 goldens, JSON/CSV, independent reports, configured kubectl discovery and pipe/terminal handling | Complete per-case audit and native installation matrix |
-| 4 | Real CSI byte/inode observations and shared 16 MiB write; HTTP pressure/conflict/partial/Block/cap cases | Final release-binary CSI and negative live telemetry gate; Linux CSI jobs |
+| 4 | Real CSI byte/inode observations and shared 16 MiB write; HTTP pressure/conflict/partial/Block/cap cases | Final negative-live-telemetry acceptance reconciliation |
 | 5 | Locked tests, coverage, controlled faults, scale fixtures, fuzz smoke, owned credential supervision and local Krew installation | Remaining A01–A58 scopes, final source-package install and native CI |
+
+## Current storage compatibility evidence
+
+The [shared local/CI storage suite](STORAGE_E2E.md) now passes local-path, CSI hostpath and cross-node NFS CSI on native GitHub Linux amd64/arm64 across Kubernetes 1.35.8, 1.36.4 and 1.37.0. All eighteen hosted backend gates and owned cleanup passed, with exact binary/source reuse checked. [The receipt index](storage-e2e-hosted.json) preserves all six cells. Equivalent local gates pass on the Mac, including complete oldest/previous-minor suites. The earlier phase table's native Linux storage-lifecycle items are therefore satisfied; broader acceptance and release work remains separate.
 
 ## Locked production checks
 
@@ -49,11 +53,11 @@ Four genuine release binaries and deterministic binary/LICENSE archives exist un
 | Target | Actual evidence | Runtime scope |
 | --- | --- | --- |
 | macOS ARM64 | 135 compiled package IDs; 7,775,248-byte release; current warm rebuild 46.76 s | Native tests, configured plugin, terminal helpers, isolated Krew installation |
-| macOS AMD64 | 136 compiled package IDs; 8,511,984-byte release; current warm cross-build 57.43 s | Cross-build only; native Intel runtime pending |
+| macOS AMD64 | 136 compiled package IDs; 8,511,984-byte release; current warm cross-build 57.43 s | Local baseline cross-build; native Intel tests and installation subsequently passed in CI at `0695641` |
 | Linux ARM64 musl | Full locked tests, terminal helpers and static release build | Native ARM64 container on Docker Desktop ARM64 VM |
 | Linux AMD64 musl | Locked tests, terminal helpers and static release build | AMD64 emulation on the same ARM64 VM |
 
-These times are local warm-cache measurements; separate initial-build receipts preserve their cache conditions. Native distribution CI is prepared for all four platforms, including actual source installation and installed Krew checks, but has not executed remotely.
+These times are local warm-cache measurements; separate initial-build receipts preserve their cache conditions. Native four-target distribution CI subsequently passed at `0695641`, including actual source installation and installed Krew checks. Local warm-build timings above remain separate from hosted measurements.
 
 ## Disposable clusters
 
@@ -63,7 +67,7 @@ Inventory also passes Kubernetes 1.36.4 (`9106ba01-1c74-4ec1-a2f2-e06ad4b3fa78`)
 
 The reviewed CSI lock pins source revisions, licenses, manifests and nine image indexes with ARM64/AMD64 platform digests. Filesystem/inode telemetry and the fsynced 16 MiB shared-write gate pass on Kubernetes 1.37 (`e66f6547-bda3-46ed-bd24-7b895d33e6c0`, repeated optimized run `dbdfc25a-360a-4dc8-a06a-00410629a6c0`), 1.36.4 (`50c63562-1e2b-42b8-b59e-20d0f9aca31a`) and 1.35.8 (`5bc4692e-e9ac-4bad-8864-a3e52074cc0d`). All those profiles were deleted. They are earlier source checkpoints; final release-binary live reruns are recorded separately.
 
-These runs establish single-node CSI hostpath Filesystem behavior on this Mac, Docker Desktop 29.9.2, a Linux ARM64 VM, four Docker CPUs and 3.825 GiB memory. They establish neither minimum resource requirements nor cross-node RWX, raw-block telemetry, cloud-provider support or native Linux-host lifecycle success. Linux compatibility CI is prepared for three Kubernetes minors and both architectures. See [the capability matrix](COMPATIBILITY.md).
+These runs establish single-node CSI hostpath Filesystem behavior on this Mac, Docker Desktop 29.9.2, a Linux ARM64 VM, four Docker CPUs and 3.825 GiB memory. These historical runs alone established neither minimum resource requirements nor cross-node RWX, raw-block telemetry, cloud-provider support or native Linux-host lifecycle success. The newer shared suite now adds native Linux-host lifecycle and real cross-node NFS RWX evidence for three Kubernetes minors and both architectures; raw Block and cloud-provider certification remain unverified. See [the capability matrix](COMPATIBILITY.md).
 
 ## Installation and remaining work
 

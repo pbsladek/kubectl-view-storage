@@ -1,0 +1,214 @@
+{
+  "status": "passed",
+  "revision": "0ee4e9df00f59c6ef5506809016e0981a2a16f09",
+  "workflow_run": 42900675127,
+  "url": "https://github.com/pbsladek/kubectl-view-storage/actions/runs/42900675127",
+  "verified_at": "2026-11-10T21:14:06.820811+00:00",
+  "scope": "Native Linux amd64/arm64; all three real backends in all six Kubernetes/architecture cells; explicit metrics cache-recovery scope documented in STORAGE_E2E.md",
+  "builds": {
+    "ubuntu-24.04": {
+      "revision": "0ee4e9df00f59c6ef5506809016e0981a2a16f09",
+      "architecture": "x86_64",
+      "binary_sha256": "b641bec8a12cd413f7a0b6ba760bc9a890d3c08b7fe73d102a43da21910e205b"
+    },
+    "ubuntu-24.04-arm": {
+      "revision": "0ee4e9df00f59c6ef5506809016e0981a2a16f09",
+      "architecture": "aarch64",
+      "binary_sha256": "934c30004b66d83369b3ce9d47c53a29c6275f49abf5e3839cc5582e9823957a"
+    }
+  },
+  "cells": [
+    {
+      "runner": "ubuntu-24.04",
+      "kubernetes": "1.35.8",
+      "node_image": "kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0",
+      "suite_id": "77152daf-f65a-4555-9f34-a1f2f3776f4e",
+      "status": "passed",
+      "user_kubeconfigs_unchanged": true,
+      "backend_seconds": 494.36,
+      "profiles": {
+        "local-path": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "af07a75d-0da5-43b3-9c3d-a10c9eb25da0",
+          "duration_seconds": 110.03,
+          "validation_sha256": "88e7a78848d6f15306735fd19ba7b38f2c331dc49e60eb0d0421ce6430a2b0e3"
+        },
+        "csi-hostpath": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "28ec0c93-8191-4d58-9412-83ae75d776f5",
+          "duration_seconds": 141.43,
+          "validation_sha256": "f1c119473a36fc01119beeb638f5133952cadf65c8f7a0bb28a0d00a347f27be"
+        },
+        "nfs-csi": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "7bbce35f-02d9-4749-b7e9-91ace01ce84f",
+          "duration_seconds": 242.9,
+          "validation_sha256": "225e91a0e966cdf6c2a09ea3d2eb7e910ce43576e3b9e03bd17d1afb62342a4d"
+        }
+      }
+    },
+    {
+      "runner": "ubuntu-24.04",
+      "kubernetes": "1.36.4",
+      "node_image": "kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+      "suite_id": "7d4f7d9e-0df8-4cf4-a170-1183d6392e21",
+      "status": "passed",
+      "user_kubeconfigs_unchanged": true,
+      "backend_seconds": 478.16,
+      "profiles": {
+        "local-path": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "6aa9067f-64e6-44dd-8742-fd223966e3df",
+          "duration_seconds": 94.88,
+          "validation_sha256": "b9ac65458e0df652b5eff4b87d8dcd3dbb3e5eba41c09e15ae82b588fee35abf"
+        },
+        "csi-hostpath": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "344440a0-4337-43e6-8197-b0dc045a751c",
+          "duration_seconds": 160.49,
+          "validation_sha256": "6d1016386e4182e14a3c9e51ce93f4accacddaea40f8d15d30bd0ea2c12205eb"
+        },
+        "nfs-csi": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "f9e4fcb0-f5b7-4919-9da9-41dce13be3ff",
+          "duration_seconds": 222.79,
+          "validation_sha256": "64586e7d1e3d7d6558d2cc10961dff1b285170cd45db647588ff0c64a311295c"
+        }
+      }
+    },
+    {
+      "runner": "ubuntu-24.04",
+      "kubernetes": "1.37.0",
+      "node_image": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+      "suite_id": "2af3f398-f02f-46d7-9869-28cd9a35451a",
+      "status": "passed",
+      "user_kubeconfigs_unchanged": true,
+      "backend_seconds": 474.32,
+      "profiles": {
+        "local-path": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "c2587d97-8620-4cd2-9b1b-c0cbd8370ffe",
+          "duration_seconds": 92.78,
+          "validation_sha256": "13eea53875a4c07d15e75ba02c2d3e16c7bad67c5217f7c5e4a8dc736a5bd322"
+        },
+        "csi-hostpath": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "f0fc10a1-7063-4c0c-9e18-8cefb29e2eab",
+          "duration_seconds": 169.01,
+          "validation_sha256": "b53de48dd0ece6b78b9c21298677c2bac9e568cc3c630bb0cdc42a445ef9cc38"
+        },
+        "nfs-csi": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "29900986-8ecd-4546-97f6-57474b12da98",
+          "duration_seconds": 212.53,
+          "validation_sha256": "69a4a9e4a8ce6d7fce58b2818057d68acb35d0e3a31e9cd79b31f5df897f7e7b"
+        }
+      }
+    },
+    {
+      "runner": "ubuntu-24.04-arm",
+      "kubernetes": "1.35.8",
+      "node_image": "kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0",
+      "suite_id": "fcd1613f-245a-46a5-b2ac-3d1988067eed",
+      "status": "passed",
+      "user_kubeconfigs_unchanged": true,
+      "backend_seconds": 469.23,
+      "profiles": {
+        "local-path": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "a8fdf9cc-eb7c-42cb-a2fe-f0b738997570",
+          "duration_seconds": 95.06,
+          "validation_sha256": "0cea4166e7564eab270322f7a9879b170ca96f2c70b5f56423c29f69325391eb"
+        },
+        "csi-hostpath": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "b07fb30b-c709-4600-b44e-db41da0b4b6f",
+          "duration_seconds": 146.38,
+          "validation_sha256": "8647a6a4e49edc6836e35c62150155fdbc27524e914479f4f125e144fe799b7e"
+        },
+        "nfs-csi": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "a43af6d7-828f-4e75-9bbf-802ca07aa7fd",
+          "duration_seconds": 227.79,
+          "validation_sha256": "d0322b7989f2555d3880b8d42a69ba15494cabe63824339abcfa68cc0856bc78"
+        }
+      }
+    },
+    {
+      "runner": "ubuntu-24.04-arm",
+      "kubernetes": "1.36.4",
+      "node_image": "kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed",
+      "suite_id": "e475e543-e269-4dd9-a27a-501ad52fb7e1",
+      "status": "passed",
+      "user_kubeconfigs_unchanged": true,
+      "backend_seconds": 476.17,
+      "profiles": {
+        "local-path": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "a08d41ac-134c-416d-af09-7c1d016b832f",
+          "duration_seconds": 88.17,
+          "validation_sha256": "a1fc9abd8e0d2873a96a7b4decc74331431df0f1879dea5709482a81ca617ad8"
+        },
+        "csi-hostpath": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "4986534c-7642-4a82-ae38-51fc91fb585b",
+          "duration_seconds": 165.7,
+          "validation_sha256": "0b8a0e2aec3d2aeaab546f2413a7190069a7120be88b0266592c0bd0ef9fa9a9"
+        },
+        "nfs-csi": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "be07580d-f9cf-469d-9f38-7c58c8ea5940",
+          "duration_seconds": 222.3,
+          "validation_sha256": "bd8254622269cbc399db9d3c0ab4fd95a6c48fed97fd26e062533c964453ed26"
+        }
+      }
+    },
+    {
+      "runner": "ubuntu-24.04-arm",
+      "kubernetes": "1.37.0",
+      "node_image": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+      "suite_id": "30e72560-ff31-458b-9cb2-01212e249328",
+      "status": "passed",
+      "user_kubeconfigs_unchanged": true,
+      "backend_seconds": 479.78,
+      "profiles": {
+        "local-path": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "ae0d2e75-a29c-4b63-b7d3-78e7c19e01c7",
+          "duration_seconds": 100.99,
+          "validation_sha256": "56c358d8927ebd3860f07c521e13e99e538159d2525f12dd107f751d7eedcdce"
+        },
+        "csi-hostpath": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "fcf4289a-32f6-4ce5-967f-0ee1f0008d0e",
+          "duration_seconds": 150.01,
+          "validation_sha256": "c7630837b05abe4c1deb0128a9bf4dc5d38a03ca75dea0351dfe18791787fd35"
+        },
+        "nfs-csi": {
+          "status": "passed",
+          "cleanup": "passed",
+          "run_id": "88a44f4a-303b-4947-810f-05808f10f164",
+          "duration_seconds": 228.78,
+          "validation_sha256": "88dbfde0494e14184711068069278b9a7926709c28c13c4186c320c9b3026a8c"
+        }
+      }
+    }
+  ]
+}

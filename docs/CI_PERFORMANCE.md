@@ -1,6 +1,6 @@
 # CI performance and runner usage
 
-Audit date: 2026-11-08 UTC. This audit uses completed GitHub Actions jobs, compiler/test logs, and the actual workflow graph. [Machine-readable baseline](ci-baseline.json) retains run URLs, revisions, step durations, queue time, and conclusions. The workflow changes described below need hosted cold/warm measurements before their speedup is treated as established.
+Audit date: 2026-11-08 UTC. This audit uses completed GitHub Actions jobs, compiler/test logs, and the actual workflow graph. [Machine-readable baseline](ci-baseline.json) retains run URLs, revisions, step durations, queue time, and conclusions. The first hosted storage/build-reuse run has passed; controlled cold/warm measurements remain required before claiming a cache speedup.
 
 ## Measured baseline
 
@@ -82,7 +82,7 @@ All three storage backends share one local/CI suite. PR compatibility uses only 
 
 ## Local validation of the workflow refactor
 
-Official actionlint 1.7.12 (checksum-verified workspace-local binary) accepts the workflows. Six change-selection tests cover unknown paths, missing history, ancestry, and cancelled-source/docs follow-ups. Two timing tests separate parallel runner time, job rounding and real queue time. Four protocol tests exercise matching-client outputs, pinned-nightly environment lines, the final required gate, and successful/stale/wrong-architecture/corrupt/link compatibility artifacts using the actual inline workflow code. Existing dependency, inventory/CSI harness, packaging, loopback and independent contract checks pass. Hosted cache/reuse measurements remain separate evidence.
+Official actionlint 1.7.12 (checksum-verified workspace-local binary) accepts the workflows. Six change-selection tests cover unknown paths, missing history, ancestry, and cancelled-source/docs follow-ups. Two timing tests separate parallel runner time, job rounding and real queue time. Five protocol tests exercise Cargo external-subcommand version invocation, matching-client outputs, pinned-nightly environment lines, the final required gate, and successful/stale/wrong-architecture/corrupt/link compatibility artifacts using the actual inline workflow code. Existing dependency, inventory/CSI harness, packaging, loopback and independent contract checks pass. Hosted cache/reuse measurements remain separate evidence.
 
 ```sh
 python3 scripts/test-ci-scope.py
@@ -96,3 +96,9 @@ uv run --with PyYAML==6.0.3 python scripts/test-ci-workflows.py
 - [Rust cache implementation and inputs](https://github.com/Swatinem/rust-cache/tree/v2.9.3): compiler/lock/environment keys, dependency pruning, and workspace behavior.
 - [GitHub workflow concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency): replacement of obsolete runs.
 - [Cargo build configuration](https://doc.rust-lang.org/cargo/reference/config.html): compiler parallelism and incremental settings.
+
+## First hosted storage verification
+
+[Run 42900675127](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42900675127) passed two native architecture builds and all six live cells, with all three backends in every cell. [The receipt index](storage-e2e-hosted.json) verifies revision/architecture/binary reuse, eighteen backend validations and cleanup. Backend execution per cell took 469.23–494.36 seconds; that is not the whole workflow duration.
+
+The initial ordinary CI coverage job exposed a Cargo external-command invocation bug in the new tool wrapper: `cargo-llvm-cov` requires `llvm-cov` as its first argument. The wrapper now invokes the exact cached binary with the Cargo subcommand token, and a regression executes the actual action shell with correct/wrong-version fixtures for all three tools, including paths with spaces. Actual workspace-local tool binaries also pass that invocation. This fix changes no Rust source, dependency, coverage floor or test selection.
