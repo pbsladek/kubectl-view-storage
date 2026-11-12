@@ -51,6 +51,9 @@
       "items": {
         "$ref": "#/$defs/diagnostic"
       }
+    },
+    "calculations": {
+      "$ref": "#/$defs/calculations"
     }
   },
   "required": [
@@ -316,7 +319,11 @@
               "pv",
               "driver",
               "node",
-              "pod"
+              "pod",
+              "accessmode",
+              "volumemode",
+              "statefulset",
+              "phase"
             ]
           }
         },
@@ -381,6 +388,12 @@
                 {
                   "type": "null"
                 }
+              ]
+            },
+            "statefulset": {
+              "type": [
+                "string",
+                "null"
               ]
             }
           },
@@ -1048,6 +1061,20 @@
             }
           ]
         },
+        "pvc_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Declared bound claim name for PV inventory."
+        },
+        "pvc_uid": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Verified bound claim UID for PV inventory; null when the claim is unavailable or its binding conflicts."
+        },
         "requested_bytes": {
           "anyOf": [
             {
@@ -1248,6 +1275,27 @@
             "terminal",
             "unknown"
           ]
+        },
+        "statefulset": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "uid"
+          ],
+          "additionalProperties": false
+        },
+        "statefulset_state": {
+          "const": "unknown"
         }
       },
       "required": [
@@ -1765,7 +1813,11 @@
             "pv",
             "driver",
             "node",
-            "pod"
+            "pod",
+            "accessmode",
+            "volumemode",
+            "statefulset",
+            "phase"
           ]
         },
         "value": {
@@ -2321,6 +2373,436 @@
         "used_percent"
       ],
       "additionalProperties": true
+    },
+    "calculation_fraction": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)$"
+        },
+        "denominator": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "additionalProperties": false
+    },
+    "byte_distribution": {
+      "type": "object",
+      "properties": {
+        "known_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "sum_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "min_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "p95_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean_bytes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/calculation_unsigned_fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "median_bytes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/calculation_unsigned_fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "known_count",
+        "total_count",
+        "complete",
+        "sum_bytes",
+        "min_bytes",
+        "max_bytes",
+        "p95_bytes",
+        "mean_bytes",
+        "median_bytes"
+      ],
+      "additionalProperties": false
+    },
+    "capacity_gaps": {
+      "type": "object",
+      "properties": {
+        "known_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "requested_above_bound_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provisioned_above_requested_bytes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "known_count",
+        "total_count",
+        "complete",
+        "requested_above_bound_bytes",
+        "provisioned_above_requested_bytes"
+      ],
+      "additionalProperties": false
+    },
+    "calculation_growth": {
+      "type": "object",
+      "properties": {
+        "eligible_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matched_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "growth_bytes_per_second": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/calculation_fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "first_full_seconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/calculation_unsigned_fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "eligible_count",
+        "matched_count",
+        "complete",
+        "growth_bytes_per_second",
+        "first_full_seconds",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "calculation_statistics": {
+      "type": "object",
+      "properties": {
+        "requested": {
+          "$ref": "#/$defs/byte_distribution"
+        },
+        "bound": {
+          "$ref": "#/$defs/byte_distribution"
+        },
+        "provisioned": {
+          "$ref": "#/$defs/byte_distribution"
+        }
+      },
+      "required": [
+        "requested",
+        "bound",
+        "provisioned"
+      ],
+      "additionalProperties": false
+    },
+    "calculation_row": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "statistics": {
+          "$ref": "#/$defs/calculation_statistics"
+        },
+        "capacity_gaps": {
+          "$ref": "#/$defs/capacity_gaps"
+        },
+        "totals": {
+          "$ref": "#/$defs/totals"
+        },
+        "growth": {
+          "$ref": "#/$defs/calculation_growth"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "statistics",
+        "capacity_gaps",
+        "totals"
+      ],
+      "additionalProperties": false
+    },
+    "calculation_rate": {
+      "type": "object",
+      "properties": {
+        "record_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "unavailable",
+            "growing",
+            "shrinking",
+            "steady",
+            "not_applicable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "interval_nanoseconds": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)$"
+        },
+        "growth_bytes_per_second": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/calculation_fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time_to_full_seconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/calculation_unsigned_fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "record_id",
+        "status",
+        "reason",
+        "growth_bytes_per_second",
+        "time_to_full_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "calculations": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": "view-storage/calculations/v1alpha1"
+        },
+        "display_unit": {
+          "enum": [
+            "auto",
+            "B",
+            "KB",
+            "MB",
+            "GB",
+            "TB",
+            "PB",
+            "KiB",
+            "MiB",
+            "GiB",
+            "TiB",
+            "PiB"
+          ]
+        },
+        "physical_total": {
+          "const": false
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/calculation_row"
+          }
+        },
+        "storage_classes": {
+          "type": "object",
+          "properties": {
+            "named_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "statistics": {
+              "$ref": "#/$defs/calculation_statistics"
+            },
+            "record_counts_by_assignment": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "named_count",
+            "statistics",
+            "record_counts_by_assignment"
+          ],
+          "additionalProperties": false
+        },
+        "comparison": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "baseline_finished_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "baseline_selection_complete": {
+                  "type": "boolean"
+                },
+                "method": {
+                  "const": "two_sample_linear_projection"
+                },
+                "records": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/calculation_rate"
+                  }
+                }
+              },
+              "required": [
+                "baseline_finished_at",
+                "baseline_selection_complete",
+                "method",
+                "records"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "display_unit",
+        "physical_total",
+        "rows",
+        "storage_classes",
+        "comparison"
+      ],
+      "additionalProperties": false
+    },
+    "calculation_unsigned_fraction": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/calculation_fraction"
+        },
+        {
+          "properties": {
+            "numerator": {
+              "pattern": "^(0|[1-9][0-9]*)$"
+            }
+          }
+        }
+      ]
     }
   }
 }

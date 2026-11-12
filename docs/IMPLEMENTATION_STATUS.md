@@ -1,6 +1,6 @@
 # Implementation evidence
 
-Updated 2026-11-10. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A58 and every [phase exit](IMPLEMENTATION_PLAN.md). No release has been published.
+Updated 2026-11-11. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A65 and every [phase exit](IMPLEMENTATION_PLAN.md). No release has been published.
 
 | Phase | Evidence available | Remaining exit work |
 | --- | --- | --- |
@@ -11,6 +11,14 @@ Updated 2026-11-10. The phases 0–5 objective remains in final validation. The 
 | 4 | Real CSI byte/inode observations and shared 16 MiB write; HTTP pressure/conflict/partial/Block/cap cases | Final negative-live-telemetry acceptance reconciliation |
 | 5 | Locked tests, coverage, controlled faults, scale fixtures, fuzz smoke, owned credential supervision and local Krew installation | Remaining A01–A58 scopes, final source-package install and native CI |
 
+## Operator calculation extension
+
+The [calculation contract](CALCULATIONS.md) is implemented: `--view stats`, decimal/binary units, separate inventory sums, per-record and class-total distributions, access/volume-mode and phase groups, owner-based StatefulSet scope, paired growth and earliest-claim-full projections. JSON/CSV retain exact values, coverage and reasons. No runtime dependency was added; the thirteen-crate policy still passes.
+
+The working source fingerprint is `fb285936f9dd0b1c5e07e899543715b63275d35f5d161df97a3e3095e1df495d`. All 189 Rust tests pass on native macOS arm64 and native Linux arm64 (GNU, cached official Rust 1.99.1 image with networking disabled). Five additional actual HTTP calculation exports pass the independent schema/integer/Fraction oracle on each host. The original nineteen pipeline and nine HTTP contract exports still pass their independent checks. The five live-gate harness tests, existing CSI/environment checks, formatting and Clippy pass.
+
+The final macOS release binary SHA-256 is `8bb9502af8a297d9c7d8242bdd98bd1f4649c3f31e6de3ed55bb582d109de1f5`. A disposable kind/CSI run (`7d32aae5-4293-4ac1-bb37-5795ed1f6436`, suite `storage-e2e-94292eed-3e0a-4ee5-95ee-e957b70e7760`) passes an actual fsynced write, independently checked growth/projection, and a real two-replica StatefulSet sharing one claim. StatefulSet/cluster cleanup passed and user kubeconfigs remained unchanged. [Committed captures](../examples/live/calculations/README.md) preserve real unit, workload, text, JSON and CSV results with provenance. A separate owned inventory/local-path run (`e26a2a7d-ea43-42d1-9ca9-51d829027acc`) also captured five claims across three named classes and a classless bucket, with class/type sums and incomplete capacities independently verified; cleanup passed. This is local evidence; no new hosted/native four-target distribution run or publication is claimed for this uncommitted extension.
+
 ## Current storage compatibility evidence
 
 The [shared local/CI storage suite](STORAGE_E2E.md) now passes local-path, CSI hostpath and cross-node NFS CSI on native GitHub Linux amd64/arm64 across Kubernetes 1.35.8, 1.36.4 and 1.37.0. All eighteen hosted backend gates and owned cleanup passed, with exact binary/source reuse checked. [The receipt index](storage-e2e-hosted.json) preserves all six cells. Equivalent local gates pass on the Mac, including complete oldest/previous-minor suites. The earlier phase table's native Linux storage-lifecycle items are therefore satisfied; broader acceptance and release work remains separate.
@@ -19,7 +27,7 @@ The [shared local/CI storage suite](STORAGE_E2E.md) now passes local-path, CSI h
 
 The human terminal presentation now uses aligned columns, explicit units, short percentages, per-family validity, readable findings, and plain-language collection notes. The latest local coverage and test counts below include that change; earlier platform/build receipts retain their original source scope. No runtime dependency was added.
 
-Native macOS ARM64 passes 171 Rust tests: 126 library, six executable-module, eleven randomized Proptest laws, two CLI and 26 real HTTP/executable tests. Formatting, Clippy with warnings denied, toolchain/dependency guards and Python harness checks pass. At the earlier presentation checkpoint, ARM64 Linux passes 169 tests; AMD64 Linux passes 168 under ARM-hosted user-mode emulation, before one test-only addition. Both Linux runs include actual terminal-helper checks and release musl builds. Emulation is not native AMD64 certification.
+At the earlier presentation checkpoint, native macOS ARM64 passed 171 Rust tests: 126 library, six executable-module, eleven randomized Proptest laws, two CLI and 26 real HTTP/executable tests. Formatting, Clippy with warnings denied, toolchain/dependency guards and Python harness checks pass. At the earlier presentation checkpoint, ARM64 Linux passes 169 tests; AMD64 Linux passes 168 under ARM-hosted user-mode emulation, before one test-only addition. Both Linux runs include actual terminal-helper checks and release musl builds. Emulation is not native AMD64 certification.
 
 All nine contract scenarios run through the real SDK, HTTP server and binary in JSON, CSV and four text views. Their nine captured HTTP reports pass the independent verifier, as do nineteen reports from the compiled collector/finalization pipeline. Original examples/schema, 36 text goldens and seven semantic rejection checks also pass. Real HTTP text checks cover semantic fields and ordering; they do not claim byte-for-byte identity with older illustrative diagnostic prose.
 
@@ -35,12 +43,13 @@ cargo-llvm-cov 0.9.1 with LLVM 23 instruments every production module, including
 
 | Scope | Covered lines |
 | --- | --- |
-| All production source | 6097/6504, 93.74% |
+| All production source | 7108/7576, 93.82% |
 | qty | 285/295, 96.61% |
-| join | 636/654, 97.25% |
-| group | 403/411, 98.05% |
+| join | 698/719, 97.08% |
+| group | 416/432, 96.30% |
 | findings | 364/378, 96.30% |
 | policy | 82/88, 93.18% |
+| calculations | 584/599, 97.50% |
 
 Ignored `artifacts/coverage` contains LCOV, HTML and JSON. Controlled fault checks and both 10,000-claim scale fixtures passed through the real locked package at their recorded source checkpoint. Scale measurements describe an in-memory debug-test workload, not network throughput or release ceilings. Parser fuzz smoke uses separate workspace-local nightly tools and AddressSanitizer; bounded runs are not exhaustive parser-safety evidence. Historical receipts retain their own source and lock hashes.
 

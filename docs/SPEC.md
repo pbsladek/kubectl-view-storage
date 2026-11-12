@@ -1,6 +1,6 @@
 # kubectl-view-storage specification
 
-Status: Draft 0.8, 2026-11-07. Companion: [design document](DESIGN.md). Product defaults and release priorities are decided. This is a contract for implementation, not a description of an existing executable. P0 means required for v0.1; P1 and P2 behavior is reserved for later milestones. Execution order and completion gates live in the separate [implementation plan](IMPLEMENTATION_PLAN.md); disposable test environments are defined in [local development](DEVELOPMENT.md).
+Status: Draft 0.9, 2026-11-11. Companion: [design document](DESIGN.md). Product defaults and release priorities are decided. This is a contract for implementation, not a description of an existing executable. P0 means required for v0.1; P1 and P2 behavior is reserved for later milestones. Execution order and completion gates live in the separate [implementation plan](IMPLEMENTATION_PLAN.md); disposable test environments are defined in [local development](DEVELOPMENT.md).
 
 MUST, SHOULD, and MAY express requirements, preferred behavior, and permitted implementation choices. The design explains the choices; this specification defines observable behavior. When drafts disagree, revise both before implementation rather than silently choosing a behavior.
 
@@ -31,7 +31,7 @@ Defaults are PVC inventory, the selected kubeconfig context's namespace (or `def
 | `--kubeconfig PATH` | Client's standard resolution | Select kubeconfig file |
 | `-u, --utilization` | false | Collect filesystem and inode statistics |
 | `-g, --group-by KEYS` | `storageclass,namespace,pvc` | Ordered comma-separated grouping dimensions |
-| `--view NAME` | `tree` | `tree`, `table`, `summary`, or `issues` |
+| `--view NAME` | `tree` | `tree`, `table`, `summary`, `issues`, or `stats` |
 | `--wide` | false | Add volume, consumer, and declared mount details to text views |
 | `-o, --output FORMAT` | `text` | `text`, `json`, or `csv` |
 | `--kind KIND` | `pvc` | Base inventory: `pvc` or `pv` |
@@ -41,6 +41,9 @@ Defaults are PVC inventory, the selected kubeconfig context's namespace (or `def
 | `--storage-class NAME` | None | Exact class name; empty string selects explicitly classless objects |
 | `--driver NAME` | None | Exact CSI driver or known provisioner identifier |
 | `--node NAME` | None | Filter by visible scheduled pod references, not physical storage location |
+| `--statefulset NAME` | None | Select claims referenced by live controlled pods in one namespace; alias `--sts` |
+| `--units UNIT` | `auto` | Stats display units: B, KB–PB or KiB–PiB, case insensitive; alias `--unit` |
+| `--compare FILE` | None | Stats comparison with an earlier utilization JSON report; implies `-u` |
 | `--sort FIELD[:asc\|desc]` | `name:asc` | Order leaf records and sibling groups |
 | `-h, --help` | — | Show help without contacting a cluster |
 | `-V, --version` | — | Show version without contacting a cluster |
@@ -81,6 +84,16 @@ kubectl view-storage -A --kind pv --sort provisioned:desc
 kubectl view-storage -n database -l app=postgres -o json
 kubectl view-storage -A -o csv
 ```
+
+## Operator calculations
+
+The implemented calculation extension is specified in [CALCULATIONS.md](CALCULATIONS.md). `--view stats` MUST default to one `storageclass` grouping level unless `-g` is explicit. Additional grouping dimensions are `accessmode`, `volumemode`, `statefulset` and `phase`; `access-mode`, `volume-mode` and `sts` are accepted CLI aliases. Existing views/defaults remain as specified above. `--units` with a non-auto value and `--compare` MUST require stats view. StatefulSet filtering MUST reject all-namespace/PV mode and preserve unknown membership when required consumer metadata is unavailable.
+
+Calculations MUST preserve selected UID-union accounting, separate capacities, missing/zero distinctions and existing metric coverage/overlap rules. Named-class distributions MUST use class totals, with excluded assignment states exposed. Access-mode grouping MUST use disjoint canonical sets. JSON MUST retain exact integer/rational values; CSV MUST expose exact values and unique group IDs. Default text shows provisioned size distributions; wide text includes requested and bound distributions.
+
+Two-report growth MUST use actual sample intervals, matched stable identities and unchanged capacity. Nonpositive growth MUST NOT fabricate a future-full estimate; zero available bytes is full now. Group earliest-full time MUST be the minimum individual estimate, independent of aggregate growth sign. Unusable pairs and arithmetic overflow MUST be explicit, with no invented zero or successful completeness. Loading a baseline MUST be bounded to 32 MiB and regular files; malformed local inputs MUST fail before Kubernetes configuration. Comparison scope/filter errors MUST fail without emitting a success report. Existing strict policies govern current collection only.
+
+The optional `calculations` object has its own `view-storage/calculations/v1alpha1` version within the existing report schema. Comparison does not enable the reserved watch/Prometheus flags. Validation MUST include real HTTP/executable exports, an independent arithmetic oracle, the 90% calculation-module coverage floor, and a disposable CSI write/StatefulSet gate.
 
 ## Collection contract
 
@@ -181,9 +194,9 @@ A complete selection with zero matches is a genuine empty result and can exit 0.
 
 ### Dimensions
 
-P0 dimensions are `storageclass`, `namespace`, `pvc`, `pv`, `driver`, `node`, and `pod`. `-g` preserves the supplied order, replaces the default list, rejects duplicate or unknown dimensions, and requires at least one dimension. `namespace` means claim namespace. Unknown and explicitly absent class metadata MUST have different group keys and labels.
+P0 dimensions are `storageclass`, `namespace`, `pvc`, `pv`, `driver`, `node`, `pod`, `accessmode`, `volumemode`, `statefulset`, and `phase`. `-g` preserves the supplied order, replaces the default list, rejects duplicate or unknown dimensions, and requires at least one dimension. `namespace` means claim namespace. Unknown and explicitly absent class metadata MUST have different group keys and labels.
 
-`node` and `pod` are reference dimensions. A claim can occur in multiple such branches. For each group, compute totals over the set of distinct base record IDs beneath it. Parent totals MUST use the union of descendant record IDs. Set `overlapping_children=true` when siblings share members, and display a note that child totals cannot be added. Consumer branches MUST mark repeated volume references as shared.
+`node`, `pod` and `statefulset` are reference dimensions. A claim can occur in multiple such branches. For each group, compute totals over the set of distinct base record IDs beneath it. Parent totals MUST use the union of descendant record IDs. Set `overlapping_children=true` when siblings share members, and display a note that child totals cannot be added. Consumer branches MUST mark repeated volume references as shared.
 
 When both reference dimensions occur, preserve the actual pod-to-node edges. For example, `-g node,pod,pvc` includes a pod only beneath its own scheduled node. It MUST NOT form a Cartesian product of all nodes and pods referencing a claim. Group labels use names for readability and UIDs for pod identity.
 
@@ -292,10 +305,11 @@ P1 diagnostics may add provisioning, attachment, mount, resize, topology, quota,
 - `table`: Render one row per distinct base record with relationships summarized as counts; `-g` does not expand rows.
 - `summary`: Render one row for each first-level group with recursive distinct-member totals and phase counts. A single root summary precedes the groups.
 - `issues`: Render findings with subject, code, evidence, and investigation hints; show an explicit message when no findings exist. Collection failures remain visible.
+- `stats`: Render separate inventory sums, optional filesystem usage, size distributions, named-class-total distributions and optional paired growth. Default grouping and precision follow [the calculation contract](CALCULATIONS.md).
 
 All text views MUST identify context, selected scope, kind, and metrics state in readable labels. Table, tree, and summary use measured column widths, two spaces between columns, left-aligned labels, and right-aligned numbers. Headers and separators distinguish columns; do not print unpadded space-delimited rows. Preserve complete identities; cluster-wide claim tables include namespace/name. Tree branches show grouping without internal pod UID suffixes.
 
-Use explicit IEC units (`B`, `KiB`, `MiB`, `GiB`, etc.) and at most one decimal place for human byte quantities. Display percentages with one decimal place. These are presentation rules only: exact thresholds, sort order, raw JSON/CSV bytes, and six-place machine percentages remain unchanged. A rounded displayed threshold MUST NOT change severity.
+Existing views use explicit IEC units (`B`, `KiB`, `MiB`, `GiB`, etc.) and at most one decimal place for human byte quantities. Stats uses the selected units and its documented two/six-place precision. Display percentages with one decimal place. These are presentation rules only: exact thresholds, sort order, raw JSON/CSV bytes, and six-place machine percentages remain unchanged. A rounded displayed threshold MUST NOT change severity.
 
 Table rows show binding phase and visible active/deleting pod counts alongside capacities. With usage enabled, show filesystem size, used, provider-reported available, used percent, inode percent, and a readable filesystem sample status. A stale or conflicting inode percentage carries its own status even when bytes are fresh. Never label a missing/partial/stale/conflicting byte tuple as Fresh. Without `-u`, omit usage columns and state that metrics were not requested. Unknown numeric cells use `--`; not-applicable cells use `n/a`. Partial inventory sums carry `*` and an explanation; keep zero distinct from missing.
 
@@ -339,7 +353,7 @@ Timestamps are RFC 3339 UTC. Percentages are JSON numbers, rounded to at most si
 
 ### CSV report
 
-`-o csv` emits a header and one row per distinct selected base record, independent of text view and reference grouping. P0 columns, in order:
+Outside stats view, `-o csv` emits a header and one row per distinct selected base record, independent of reference grouping. Stats uses the separate calculation-row schema described in [CALCULATIONS.md](CALCULATIONS.md). Ordinary P0 columns, in order:
 
 ```text
 kind,namespace,name,uid,phase,storage_class,driver,volume_mode,pv_name,requested_bytes,bound_bytes,provisioned_bytes,filesystem_capacity_bytes,used_bytes,available_bytes,used_percent,inodes_total,inodes_used,inodes_free,inode_percent,metrics_status,metrics_reason,metrics_source,observed_at,active_consumer_count,terminating_consumer_count,severity
@@ -487,6 +501,13 @@ Malformed input, overflow, incomplete selection, conflicting observations, faile
 | A56 | UTC clock jumps while requests, retries, and shutdown are in progress | Monotonic deadlines remain unchanged; sample freshness uses captured UTC and diagnoses invalid times |
 | A57 | Deep/oversized scalars and cancellation during CPU parsing or normalization | Limits enforced without exponent-sized allocation; bounded checkpoints yield; blocking work joined and no late requests |
 | A58 | Unknown API fields and unfamiliar external status strings | Unknown extras tolerated; open values preserved; dependent logic is unknown/inconclusive; unrelated data retained |
+| A59 | Stats sums with decimal/binary display units, large counters and incomplete quantities | Separate exact requested/bound/provisioned UID-union sums; missing differs from zero; display does not change accounting |
+| A60 | Record and named-storage-class distributions | Independent minimum/mean/median/nearest-rank P95/maximum; class statistics use class totals and expose assignment coverage |
+| A61 | Access-mode, volume-mode and phase grouping | Disjoint canonical access-mode sets; Filesystem/Block and phase breakdowns preserve root sums and unknowns |
+| A62 | StatefulSet grouping and namespace-scoped filtering | Actual controller namespace/name/UID; live references; unknown membership preserved; shared claims counted once; retained unreferenced PVCs outside scope |
+| A63 | Saved-report growth and earliest-full projection | Stable identities, actual sample timestamps, signed byte deltas, available-space projection and earliest individual risk; resized/stale/conflicting/repeated samples withheld |
+| A64 | Invalid comparison input and calculation cancellation | Bounded regular-file JSON preflight; mismatched scope/filter rejection; checked overflow and no fabricated success after cancellation |
+| A65 | Calculation exports, independent arithmetic and live gate | Exact versioned JSON/rational and stats CSV rows; independent Python oracle; 90% module coverage; actual CSI write plus two-replica StatefulSet and owned cleanup |
 
 P0 property checks MUST verify that adding a consumer does not increase root logical capacity, reordering dimensions preserves root totals, unknown values never become zero, incomplete membership never passes a strict policy, and removing an unrelated metric field never suppresses a pressure finding with valid inputs. Group totals are checked against the member-ID union independently of rendered output. Exact ratio equality/order laws, comparator transitivity, unknown-last placement, and ascending identity ties are checked independently of input permutation and ascending/descending selection.
 
@@ -500,4 +521,4 @@ Release smoke tests MUST run on each advertised platform. Inventory live tests c
 
 Releases MUST use a tested latest-stable Rust baseline and its bundled Cargo, pinned in [rust-toolchain.toml](../rust-toolchain.toml), with Rust 2024 edition and a committed Cargo.lock. CI and release builds MUST use the locked dependency resolution. Follow the [toolchain and dependency policy](DEVELOPMENT.md#current-toolchain-and-lightweight-dependencies): review upstream maintenance and advisories, enable only needed features, keep test tools outside runtime dependencies, and record dependency/feature/build-size changes. Enforce a reviewed budget of thirteen unique direct runtime packages including target-specific dependencies; expanding that budget requires a written design rationale. New direct packages require review even within the budget. Direct build dependencies and source overrides require an explicit policy change. Manifest and toolchain consistency checks MUST run in CI. Recheck stable releases weekly and before publishing; document temporary update delays. Dependency measurements start with the Cargo package, not the design fixtures. Passing manifest checks alone MUST NOT be described as a successful resolved dependency audit.
 
-Keep this specification, its schema, and shared expected reports synchronized. The separate [implementation plan](IMPLEMENTATION_PLAN.md) maps numbered phases to deliverables and acceptance/coverage gates; [DEVELOPMENT.md](DEVELOPMENT.md) defines test measurement and disposable cluster profiles, and [COMPATIBILITY.md](COMPATIBILITY.md) records real outcomes. All A01–A58 cases, property/failure requirements, Rust coverage floors, platform checks, and required live gates must pass before P0 is declared complete. Planned work and selected environments are not completed evidence.
+Keep this specification, its schema, and shared expected reports synchronized. The separate [implementation plan](IMPLEMENTATION_PLAN.md) maps numbered phases to deliverables and acceptance/coverage gates; [DEVELOPMENT.md](DEVELOPMENT.md) defines test measurement and disposable cluster profiles, and [COMPATIBILITY.md](COMPATIBILITY.md) records real outcomes. All A01–A65 cases, property/failure requirements, Rust coverage floors, platform checks, and required live gates must pass before P0 is declared complete. Planned work and selected environments are not completed evidence.

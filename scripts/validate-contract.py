@@ -255,6 +255,15 @@ def check_semantics(report, exit_code):
                     check(g["value_state"] == expected_state and g["value"] == record["storage_class"], "storage class bucket differs from record state")
             if g["dimension"] == "node":
                 check(all(any(pods[p]["node"] == g["value"] for rec,p in edges if rec == i) for i in ids), "fabricated node relationship")
+            if g["value_state"] == "known" and g["dimension"] in ("accessmode", "volumemode", "phase"):
+                for identity in ids:
+                    record = records[identity]
+                    expected = "+".join(sorted(set(record["access_modes"]))) if g["dimension"] == "accessmode" else record["volume_mode" if g["dimension"] == "volumemode" else "phase"]
+                    check(g["value"] == expected, "type/phase bucket differs from record")
+            if g["value_state"] == "known" and g["dimension"] == "statefulset":
+                for identity in ids:
+                    owners = [pod for pod in pods.values() if pod["id"] in records[identity]["consumer_ids"] and pod["reference_state"] in ("active", "terminating") and "statefulset" in pod]
+                    check(any(f'{pod["namespace"]}/{pod["statefulset"]["name"]}@{pod["statefulset"]["uid"]}' == g["value"] for pod in owners), "fabricated StatefulSet relationship")
             if g["children"]:
                 groups(g["children"],ids)
             children = [set(c["member_ids"]) for c in g["children"]]

@@ -30,6 +30,12 @@ def main():
         oracle["check_inputs"](report, load(raw_input))
         print(f"PASS Rust report: {scenario['id']}")
     if args.http:
+        calculations = runpy.run_path(str(root / "scripts/validate-calculations.py"))
+        directory = args.directory / "calculations"
+        baseline = load(directory / "before.json")
+        for name in ("classes", "types", "statefulset", "before", "comparison"):
+            calculations["validate"](load(directory / f"{name}.json"), baseline)
+        print("PASS five real HTTP calculation reports against independent integer/Fraction arithmetic and schema")
         print("PASS nine real HTTP/executable reports against the independent schema/input/accounting oracle")
         return
     overlap = load(args.directory / "known-overlap.json")

@@ -240,7 +240,7 @@ impl ExactRatio {
     }
 }
 
-fn decimal_step(remainder: u128, denominator: u128) -> (u8, u128) {
+pub(crate) fn decimal_step(remainder: u128, denominator: u128) -> (u8, u128) {
     let mut acc = 0;
     let mut digit = 0;
     for _ in 0..10 {

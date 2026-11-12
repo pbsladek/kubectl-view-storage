@@ -6,7 +6,6 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
-import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -21,7 +20,7 @@ spec.loader.exec_module(cluster)
 RUN = "11111111-1111-4111-8111-111111111111"
 DRIVER_IMAGE = "example.invalid/hostpath:v1.19.0@sha256:" + "a" * 64
 WORKLOAD_IMAGE = "example.invalid/busybox:1@sha256:" + "b" * 64
-LOCK = {"snapshot_controller": {"namespace": "kube-system", "name": "snapshot-controller"}, "driver_image": DRIVER_IMAGE, "images": [{"image": DRIVER_IMAGE}, {"image": WORKLOAD_IMAGE}]}
+LOCK = {"snapshot_controller": {"namespace": "kube-system", "name": "snapshot-controller"}, "driver_image": DRIVER_IMAGE, "workload_image": WORKLOAD_IMAGE, "images": [{"image": DRIVER_IMAGE}, {"image": WORKLOAD_IMAGE}]}
 IDENTITY = {"uid": "claim", "node": "node-a", "consumers": {"pod:writer", "pod:peer"}, "volume": "pv-data"}
 BASE = csi.timestamp_ns("2026-11-07T12:00:00Z")
 
@@ -251,7 +250,7 @@ class CsiChecks(unittest.TestCase):
                     csi.query("plugin", "owned-config")
                 self.assertNotIn("PRIVATE_TEST_DATA", str(error.exception))
 
-    def run_gate(self, directory, query, *, cleanup_fails=False, utc=None):
+    def run_gate(self, directory, query, *, cleanup_fails=False, utc=None, calculation_error=None):
         root = Path(directory)
         binary = root / "test-plugin"
         binary.write_text("Synthetic executable; subprocess query is mocked.")
@@ -260,7 +259,7 @@ class CsiChecks(unittest.TestCase):
         if utc is None:
             times = iter([BASE, BASE + 2 * 10**9, BASE + 3 * 10**9, BASE + 5 * 10**9])
             utc = lambda: next(times)
-        with patch.object(csi, "fixture_identity", return_value=IDENTITY), patch.object(csi, "query", side_effect=query):
+        with patch.object(csi, "fixture_identity", return_value=IDENTITY), patch.object(csi, "query", side_effect=query), patch.object(csi.dev_calculations, "verify_csi", return_value={"status":"passed"}, side_effect=calculation_error):
             result = csi.verify(kubectl_stub(calls, cleanup_fails=cleanup_fails), "owned-config", binary, root, RUN, LOCK,
                                 monotonic=clock.monotonic, sleep=clock.sleep, utc_ns=utc)
         return result, calls

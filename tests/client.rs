@@ -12,6 +12,8 @@ use wiremock::{
 };
 #[path = "support/budget.rs"]
 mod budget_scenario;
+#[path = "support/calculations.rs"]
+mod calculations;
 #[cfg(unix)]
 #[path = "support/exec_lifecycle.rs"]
 mod exec_lifecycle;

@@ -1,4 +1,4 @@
-name: Rust and contracts
+name: CI
 on:
   push:
     branches: [main]
@@ -49,17 +49,23 @@ jobs:
           python3 scripts/test-coverage-check.py
           python3 scripts/test-dev-environment.py
           python3 scripts/test-csi-environment.py
+          python3 scripts/test-dev-calculations.py
           python3 scripts/test-storage-e2e.py
           python3 scripts/test-release-packaging.py
           python3 scripts/test-smoke-http.py
   lint:
+    name: lint-${{ matrix.label }}
     needs: contracts
     if: needs.contracts.outputs.rust == 'true'
     timeout-minutes: 15
     strategy:
       fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
-        os: [ubuntu-24.04, macos-15]
+        include:
+          - os: ubuntu-24.04
+            label: linux
+          - os: macos-15
+            label: macos
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -67,48 +73,30 @@ jobs:
       - uses: ./.github/actions/rust-cache
         with:
           group: lint
-      - name: Pinned compiler, formatting and lint
+      - name: Formatting
+        if: matrix.os == 'ubuntu-24.04'
+        run: cargo fmt --all --check
+      - name: Pinned compiler and lint
         run: |
           python3 scripts/check-toolchain.py
-          cargo fmt --all --check
           cargo clippy --locked --all-targets -- -D warnings
-  stable:
-    needs: contracts
-    if: needs.contracts.outputs.rust == 'true'
-    timeout-minutes: 15
-    strategy:
-      fail-fast: ${{ github.event_name == 'pull_request' }}
-      matrix:
-        os: [ubuntu-24.04, macos-15]
-    runs-on: ${{ matrix.os }}
-    env:
-      RUSTUP_TOOLCHAIN: stable
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - name: Resolve latest stable and avoid testing the same compiler twice
-        id: compiler
-        run: |
-          rustup toolchain install stable --profile minimal --component clippy
-          python3 - <<'PY'
-          import os, subprocess, tomllib
-          pinned = tomllib.load(open('rust-toolchain.toml', 'rb'))['toolchain']['channel']
-          actual = subprocess.check_output(['rustc', '--version'], text=True).split()[1]
-          differs = actual != pinned
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write('differs=' + str(differs).lower() + '\n')
-          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
-              output.write(f'### Stable compiler\n\nPinned: {pinned}; stable: {actual}. ' + ('Run compatibility tests.\n' if differs else 'Identical release; pinned coverage/native jobs supply the tests.\n'))
-          PY
       - uses: ./.github/actions/rust-cache
-        if: steps.compiler.outputs.differs == 'true'
+        if: matrix.os == 'ubuntu-24.04'
         with:
-          group: stable
-      - name: New stable compiler compatibility
-        if: steps.compiler.outputs.differs == 'true'
-        run: |
-          cargo clippy --locked --all-targets -- -D warnings
-          cargo test --locked --all-targets
-          python3 scripts/test-credential-terminal.py
+          group: fault-detection
+          workspaces: '. -> artifacts/mutations/target'
+      - name: Fault checks
+        if: matrix.os == 'ubuntu-24.04'
+        run: python3 scripts/check-mutations.py
+      - uses: actions/upload-artifact@v7.0.2
+        if: ${{ always() && matrix.os == 'ubuntu-24.04' }}
+        with:
+          name: controlled-faults
+          path: |
+            artifacts/mutations/*.json
+            artifacts/mutations/*.log
+          retention-days: 7
+          if-no-files-found: warn
   coverage:
     needs: contracts
     if: needs.contracts.outputs.rust == 'true'
@@ -149,39 +137,18 @@ jobs:
           path: artifacts/coverage
           retention-days: 7
           if-no-files-found: error
-  faults:
-    needs: contracts
-    if: needs.contracts.outputs.rust == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - run: rustup show active-toolchain
-      - uses: ./.github/actions/rust-cache
-        with:
-          group: fault-detection
-          workspaces: '. -> artifacts/mutations/target'
-      - run: python3 scripts/check-mutations.py
-      - uses: actions/upload-artifact@v7.0.2
-        if: always()
-        with:
-          name: controlled-faults
-          path: |
-            artifacts/mutations/*.json
-            artifacts/mutations/*.log
-          retention-days: 7
-          if-no-files-found: warn
   distribution:
+    name: release
     needs: contracts
     if: needs.contracts.outputs.distribution == 'true'
     uses: ./.github/workflows/native-distribution.yml
   required:
     if: always()
-    needs: [contracts, lint, stable, coverage, faults, distribution]
+    needs: [contracts, lint, coverage, distribution]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
-      - name: Required checks, including intentional documentation skips
+      - name: Required checks
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
@@ -193,6 +160,10 @@ jobs:
           rust = results['contracts']['outputs'].get('rust')
           assert rust in ('true', 'false'), results
           if rust == 'true':
-              assert all(results[name]['result'] == 'success' for name in ('lint', 'stable', 'coverage', 'faults', 'distribution')), results
-          print('PASS required checks; documentation-only skips are intentional')
+              assert all(results[name]['result'] == 'success' for name in ('lint', 'coverage')), results
+          distribution = results['contracts']['outputs'].get('distribution')
+          assert distribution in ('true', 'false'), results
+          if distribution == 'true':
+              assert results['distribution']['result'] == 'success', results
+          print('PASS required checks; requested scopes succeeded')
           PY

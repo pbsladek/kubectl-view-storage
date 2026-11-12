@@ -49,6 +49,30 @@ fn healthy_report_matches_shared_contract_semantics() {
     }
 }
 
+#[test]
+fn pv_report_preserves_claim_identity_and_withholds_unverified_claim_uids() {
+    let input: Value =
+        serde_json::from_str(include_str!("../../examples/contract/healthy/input.json")).unwrap();
+    let mut inventory: crate::transport::Inventory =
+        serde_json::from_value(input["kubernetes"].clone()).unwrap();
+    let query = crate::cli::Cli::try_parse_from(["cmd", "-A", "--kind", "pv"])
+        .unwrap()
+        .query("demo")
+        .unwrap();
+    for conflict in [false, true] {
+        if conflict {
+            inventory.pvs[0].spec["claimRef"]["uid"] = "old-claim".into();
+        }
+        let graph = join::normalize(&inventory, &query, true).unwrap();
+        let record = record_checked(&graph.records[0], &mut Unbounded).unwrap();
+        assert_eq!(record["pvc_name"], "data");
+        assert_eq!(
+            record["pvc_uid"],
+            if conflict { Value::Null } else { json!("data") }
+        );
+    }
+}
+
 struct Budget(usize);
 impl Checkpoint for Budget {
     type Error = ();

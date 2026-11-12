@@ -22,7 +22,7 @@ class CoverageChecks(unittest.TestCase):
                 file["filename"] = str(root / Path(file["filename"]).name)
             with self.assertRaisesRegex(ValueError, "main.rs"):
                 module.measure(report, root, require_complete=True)
-            self.assertEqual(module.measure(report, root)["overall"], (450, 500))
+            self.assertEqual(module.measure(report, root)["overall"], (90 * len(module.CORE), 100 * len(module.CORE)))
     def report(self):
         return {"data": [{"files": [
             {"filename": f"/tmp/source/{name}.rs", "summary": {"lines": {"count": 100, "covered": 90}}}
@@ -36,7 +36,7 @@ class CoverageChecks(unittest.TestCase):
             report["data"][0]["files"][0],
             {"filename": "/tmp/dependencies/fake.rs", "summary": {"lines": {"count": 90000, "covered": 90000}}},
         ])
-        self.assertEqual(module.measure(report, Path("/tmp/source"))["overall"], (450, 1500))
+        self.assertEqual(module.measure(report, Path("/tmp/source"))["overall"], (90 * len(module.CORE), 100 * len(module.CORE) + 1000))
 
     def test_missing_and_inconsistent_evidence_fails(self):
         for mutate in [

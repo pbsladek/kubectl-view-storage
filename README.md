@@ -7,11 +7,12 @@ A Rust kubectl plugin for inspecting Kubernetes persistent volumes, claims, cons
 ## Features
 
 - PVC and PV inventory with pod, node, and mount relationships.
-- Tree, table, summary, and issues views with configurable grouping.
+- Tree, table, summary, issues and stats views with configurable grouping.
 - Filesystem and inode usage with timestamps, coverage, and findings.
 - Separate requested, provisioned, and filesystem capacities; shared claims counted once.
 - Useful inventory with limited permissions and explicit reasons for missing data.
 - Deterministic JSON and CSV output.
+- Storage sums and statistics by class, volume/access mode and StatefulSet; observed growth from saved reports.
 
 ## Build from source
 
@@ -23,7 +24,7 @@ export PATH="$PWD/target/debug:$PATH"
 kubectl view-storage --help
 ```
 
-See [development](docs/DEVELOPMENT.md) for disposable kind clusters and testing, and [distribution](docs/DISTRIBUTION.md) for Cargo and local Krew installation.
+See [development](docs/DEVELOPMENT.md) for disposable kind clusters and testing, [distribution](docs/DISTRIBUTION.md) for Cargo and local Krew installation, and [Krew readiness](docs/KREW_READINESS.md) for the release checklist.
 
 ## Usage
 
@@ -51,6 +52,8 @@ Filesystem totals are per claim, not physical storage totals.
 By default, inventory is grouped by storage class → namespace → PVC. Usage collection requires `-u`; available metrics depend on the storage driver and permissions.
 
 See [real command output in all views, JSON, and CSV](examples/README.md) and the [CLI specification](docs/SPEC.md).
+
+For totals and size statistics, use `kubectl view-storage -A --view stats --units GB`. See [calculations](docs/CALCULATIONS.md) for workload scope, units and fill-rate comparisons.
 
 ## Documentation
 

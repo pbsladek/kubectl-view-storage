@@ -1,0 +1,35 @@
+Persistent volume claims
+Context: kind-view-storage-inventory  |  Namespaces: all
+
+Storage calculations (units: GB; logical capacity)
+
+GROUP                       COUNT  REQUESTED     BOUND  PROVISIONED
+--------------------------  -----  ---------  --------  -----------
+TOTAL                           5    0.67 GB  0.40 GB*     0.40 GB*
+ReadWriteOnce                   5    0.67 GB  0.40 GB*     0.40 GB*
+ReadWriteOnce / Filesystem      5    0.67 GB  0.40 GB*     0.40 GB*
+
+Provisioned volume sizes (known records; P95 uses nearest rank)
+
+GROUP                       MEASURE      KNOWN      MIN     MEAN   MEDIAN      P95      MAX
+--------------------------  -----------  -----  -------  -------  -------  -------  -------
+TOTAL                       provisioned   3/5*  0.13 GB  0.13 GB  0.13 GB  0.13 GB  0.13 GB
+ReadWriteOnce               provisioned   3/5*  0.13 GB  0.13 GB  0.13 GB  0.13 GB  0.13 GB
+ReadWriteOnce / Filesystem  provisioned   3/5*  0.13 GB  0.13 GB  0.13 GB  0.13 GB  0.13 GB
+
+Distribution of named storage-class totals (3 classes)
+
+GROUP         MEASURE      KNOWN      MIN     MEAN   MEDIAN      P95      MAX
+------------  -----------  -----  -------  -------  -------  -------  -------
+CLASS TOTALS  requested      3/3  0.13 GB  0.18 GB  0.13 GB  0.27 GB  0.27 GB
+CLASS TOTALS  provisioned   2/3*  0.13 GB  0.20 GB  0.20 GB  0.27 GB  0.27 GB
+Class distributions exclude classless=1, unassigned=0, unknown=0 record(s); TOTAL includes them.
+
+* Incomplete selection or quantities; statistics use known values.
+Requested, bound and provisioned are separate capacities; do not add them together.
+
+Selection: complete (5 matched)
+Metrics: not requested (use -u to collect usage).
+* Partial capacity: sum of known values; unknown values are excluded.
+Findings: 5 info (details: --view issues)
+Collection note [not_found]: storageclasses collection failed (HTTP status 404); inspect permissions, API availability, and collection limits.

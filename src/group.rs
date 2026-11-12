@@ -318,10 +318,12 @@ pub(crate) fn build_checked<C: Checkpoint>(
         control.step()?;
         consumers.insert(&consumer.id, consumer);
     }
-    let references = query
-        .group_by
-        .iter()
-        .any(|dimension| matches!(dimension, Dimension::Node | Dimension::Pod));
+    let references = query.group_by.iter().any(|dimension| {
+        matches!(
+            dimension,
+            Dimension::Node | Dimension::Pod | Dimension::Statefulset
+        )
+    });
     let mut paths: BTreeSet<PathEntry> = BTreeSet::new();
     for record in &graph.records {
         control.step()?;
@@ -395,6 +397,35 @@ fn dimension_value(
             .map(MetadataValue::Known)
             .unwrap_or(MetadataValue::Absent),
         Dimension::Driver => record.driver.clone(),
+        Dimension::Phase => MetadataValue::Known(record.phase.as_str().into()),
+        Dimension::Volumemode => match &record.volume_mode {
+            VolumeMode::Filesystem => MetadataValue::Known("Filesystem".into()),
+            VolumeMode::Block => MetadataValue::Known("Block".into()),
+            VolumeMode::Unsupported(value) => MetadataValue::Known(value.clone()),
+            VolumeMode::Invalid => MetadataValue::Unknown,
+        },
+        Dimension::Accessmode => {
+            let modes: BTreeSet<_> = record.access_modes.iter().map(String::as_str).collect();
+            if modes.is_empty() {
+                MetadataValue::Unknown
+            } else {
+                MetadataValue::Known(modes.into_iter().collect::<Vec<_>>().join("+"))
+            }
+        }
+        Dimension::Statefulset => match consumer {
+            Some(consumer) => match &consumer.statefulset {
+                MetadataValue::Known(owner) => MetadataValue::Known(format!(
+                    "{}/{}@{}",
+                    consumer.namespace, owner.name, owner.uid
+                )),
+                MetadataValue::Unknown => MetadataValue::Unknown,
+                _ => MetadataValue::Absent,
+            },
+            None if matches!(record.consumer_visibility, ConsumerVisibility::Complete) => {
+                MetadataValue::Absent
+            }
+            None => MetadataValue::Unknown,
+        },
         Dimension::Pod => consumer
             .map(|c| MetadataValue::Known(format!("{}/{}@{}", c.namespace, c.name, c.uid)))
             .unwrap_or_else(|| {

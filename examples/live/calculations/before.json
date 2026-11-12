@@ -1,0 +1,681 @@
+{
+  "collection": {
+    "context": "kind-view-storage-csi",
+    "cost": {
+      "base_attempts": 1,
+      "enrichment_attempts": 3,
+      "enrichment_budget": 256,
+      "enrichment_strategy": {
+        "persistentvolumes": "targeted_get",
+        "storageclasses": "targeted_get"
+      },
+      "node_requests": 1,
+      "node_targets": 1,
+      "priority_sequence": [
+        "membership",
+        "utilization_targets",
+        "display"
+      ],
+      "response_bytes": 110224,
+      "unresolved_prerequisites": []
+    },
+    "finished_at": "2026-11-11T09:03:36.204423Z",
+    "scope": {
+      "all_namespaces": false,
+      "namespace": "view-storage-csi"
+    },
+    "sources": [
+      {
+        "resource": "persistentvolumeclaims",
+        "resource_version": "908",
+        "scope": "view-storage-csi",
+        "status": "complete",
+        "verb": "list"
+      },
+      {
+        "resource": "pods",
+        "resource_version": "908",
+        "scope": "view-storage-csi",
+        "status": "complete",
+        "verb": "list"
+      }
+    ],
+    "started_at": "2026-11-11T09:03:36.161705Z"
+  },
+  "consumers": [
+    {
+      "active": true,
+      "deletion_timestamp": null,
+      "id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "name": "peer",
+      "namespace": "view-storage-csi",
+      "node": "view-storage-csi-control-plane",
+      "phase": "Running",
+      "reference_state": "active",
+      "uid": "5aad205d-b71d-41ce-8772-d4c4e6509a68"
+    },
+    {
+      "active": true,
+      "deletion_timestamp": null,
+      "id": "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "name": "writer",
+      "namespace": "view-storage-csi",
+      "node": "view-storage-csi-control-plane",
+      "phase": "Running",
+      "reference_state": "active",
+      "uid": "586d7a18-f0a2-4468-8c5a-be24f819d385"
+    }
+  ],
+  "diagnostics": [],
+  "findings": [],
+  "groups": [
+    {
+      "children": [
+        {
+          "children": [],
+          "dimension": "pvc",
+          "id": "group:pod=view-storage-csi%2Fpeer%405aad205d-b71d-41ce-8772-d4c4e6509a68/pvc=data",
+          "member_ids": [
+            "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+          ],
+          "overlapping_children": false,
+          "totals": {
+            "bound": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "filesystem": {
+              "available_bytes": "20882255872",
+              "capacity_bytes": "62671097856",
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 1,
+                "not_applicable": 0
+              },
+              "newest_observed_at": "2026-11-11T09:03:35Z",
+              "oldest_observed_at": "2026-11-11T09:03:35Z",
+              "physical_total": false,
+              "reason": null,
+              "status": "ok",
+              "used_bytes": "38572126208",
+              "used_percent": 61.546913
+            },
+            "finding_counts": {
+              "critical": 0,
+              "info": 0,
+              "warning": 0
+            },
+            "inodes": {
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 1,
+                "not_applicable": 0
+              },
+              "inodes_free": "3449725",
+              "inodes_total": "3907584",
+              "inodes_used": "457859",
+              "newest_observed_at": "2026-11-11T09:03:35Z",
+              "oldest_observed_at": "2026-11-11T09:03:35Z",
+              "physical_total": false,
+              "reason": null,
+              "status": "ok",
+              "used_percent": 11.717189
+            },
+            "phase_counts": {
+              "Bound": 1
+            },
+            "provisioned": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "record_count": 1,
+            "requested": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "selection_complete": true
+          },
+          "value": "data",
+          "value_state": "known"
+        }
+      ],
+      "dimension": "pod",
+      "id": "group:pod=view-storage-csi%2Fpeer%405aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "member_ids": [
+        "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+      ],
+      "overlapping_children": false,
+      "totals": {
+        "bound": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "filesystem": {
+          "available_bytes": "20882255872",
+          "capacity_bytes": "62671097856",
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 1,
+            "not_applicable": 0
+          },
+          "newest_observed_at": "2026-11-11T09:03:35Z",
+          "oldest_observed_at": "2026-11-11T09:03:35Z",
+          "physical_total": false,
+          "reason": null,
+          "status": "ok",
+          "used_bytes": "38572126208",
+          "used_percent": 61.546913
+        },
+        "finding_counts": {
+          "critical": 0,
+          "info": 0,
+          "warning": 0
+        },
+        "inodes": {
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 1,
+            "not_applicable": 0
+          },
+          "inodes_free": "3449725",
+          "inodes_total": "3907584",
+          "inodes_used": "457859",
+          "newest_observed_at": "2026-11-11T09:03:35Z",
+          "oldest_observed_at": "2026-11-11T09:03:35Z",
+          "physical_total": false,
+          "reason": null,
+          "status": "ok",
+          "used_percent": 11.717189
+        },
+        "phase_counts": {
+          "Bound": 1
+        },
+        "provisioned": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "record_count": 1,
+        "requested": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "selection_complete": true
+      },
+      "value": "view-storage-csi/peer@5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "value_state": "known"
+    },
+    {
+      "children": [
+        {
+          "children": [],
+          "dimension": "pvc",
+          "id": "group:pod=view-storage-csi%2Fwriter%40586d7a18-f0a2-4468-8c5a-be24f819d385/pvc=data",
+          "member_ids": [
+            "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+          ],
+          "overlapping_children": false,
+          "totals": {
+            "bound": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "filesystem": {
+              "available_bytes": "20882255872",
+              "capacity_bytes": "62671097856",
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 1,
+                "not_applicable": 0
+              },
+              "newest_observed_at": "2026-11-11T09:03:35Z",
+              "oldest_observed_at": "2026-11-11T09:03:35Z",
+              "physical_total": false,
+              "reason": null,
+              "status": "ok",
+              "used_bytes": "38572126208",
+              "used_percent": 61.546913
+            },
+            "finding_counts": {
+              "critical": 0,
+              "info": 0,
+              "warning": 0
+            },
+            "inodes": {
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 1,
+                "not_applicable": 0
+              },
+              "inodes_free": "3449725",
+              "inodes_total": "3907584",
+              "inodes_used": "457859",
+              "newest_observed_at": "2026-11-11T09:03:35Z",
+              "oldest_observed_at": "2026-11-11T09:03:35Z",
+              "physical_total": false,
+              "reason": null,
+              "status": "ok",
+              "used_percent": 11.717189
+            },
+            "phase_counts": {
+              "Bound": 1
+            },
+            "provisioned": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "record_count": 1,
+            "requested": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "selection_complete": true
+          },
+          "value": "data",
+          "value_state": "known"
+        }
+      ],
+      "dimension": "pod",
+      "id": "group:pod=view-storage-csi%2Fwriter%40586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "member_ids": [
+        "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+      ],
+      "overlapping_children": false,
+      "totals": {
+        "bound": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "filesystem": {
+          "available_bytes": "20882255872",
+          "capacity_bytes": "62671097856",
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 1,
+            "not_applicable": 0
+          },
+          "newest_observed_at": "2026-11-11T09:03:35Z",
+          "oldest_observed_at": "2026-11-11T09:03:35Z",
+          "physical_total": false,
+          "reason": null,
+          "status": "ok",
+          "used_bytes": "38572126208",
+          "used_percent": 61.546913
+        },
+        "finding_counts": {
+          "critical": 0,
+          "info": 0,
+          "warning": 0
+        },
+        "inodes": {
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 1,
+            "not_applicable": 0
+          },
+          "inodes_free": "3449725",
+          "inodes_total": "3907584",
+          "inodes_used": "457859",
+          "newest_observed_at": "2026-11-11T09:03:35Z",
+          "oldest_observed_at": "2026-11-11T09:03:35Z",
+          "physical_total": false,
+          "reason": null,
+          "status": "ok",
+          "used_percent": 11.717189
+        },
+        "phase_counts": {
+          "Bound": 1
+        },
+        "provisioned": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "record_count": 1,
+        "requested": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "selection_complete": true
+      },
+      "value": "view-storage-csi/writer@586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "value_state": "known"
+    }
+  ],
+  "query": {
+    "critical_used_percent": "90",
+    "fail_on": null,
+    "filters": {
+      "driver": null,
+      "node": null,
+      "pv": null,
+      "pvc": "data",
+      "selector": null,
+      "storage_class": null
+    },
+    "group_by": [
+      "pod",
+      "pvc"
+    ],
+    "kind": "pvc",
+    "max_metrics_age_seconds": 90,
+    "metrics_source": "kubelet",
+    "require_metrics": true,
+    "sort": "name:asc",
+    "utilization": true,
+    "warn_used_percent": "80"
+  },
+  "records": [
+    {
+      "access_modes": [
+        "ReadWriteOnce"
+      ],
+      "active_consumer_count": 2,
+      "bound_bytes": "1073741824",
+      "consumer_ids": [
+        "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+        "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68"
+      ],
+      "consumer_visibility": "complete",
+      "created_at": "2026-11-11T09:01:02Z",
+      "driver": "hostpath.csi.k8s.io",
+      "filesystem": {
+        "available_bytes": "20882255872",
+        "candidate_count": 2,
+        "candidates": [
+          {
+            "available_bytes": "20882255872",
+            "capacity_bytes": "62671097856",
+            "field_status": {
+              "available_bytes": "ok",
+              "capacity_bytes": "ok",
+              "used_bytes": "ok"
+            },
+            "observed_at": "2026-11-11T09:03:35Z",
+            "reason": null,
+            "source": {
+              "node": "view-storage-csi-control-plane",
+              "pod_id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+              "provider": "kubelet",
+              "volume_name": "data"
+            },
+            "status": "ok",
+            "used_bytes": "38572126208",
+            "used_percent": 61.546913
+          },
+          {
+            "available_bytes": "20882259968",
+            "capacity_bytes": "62671097856",
+            "field_status": {
+              "available_bytes": "ok",
+              "capacity_bytes": "ok",
+              "used_bytes": "ok"
+            },
+            "observed_at": "2026-11-11T09:03:31Z",
+            "reason": null,
+            "source": {
+              "node": "view-storage-csi-control-plane",
+              "pod_id": "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+              "provider": "kubelet",
+              "volume_name": "data"
+            },
+            "status": "ok",
+            "used_bytes": "38572122112",
+            "used_percent": 61.546907
+          }
+        ],
+        "capacity_bytes": "62671097856",
+        "field_status": {
+          "available_bytes": "ok",
+          "capacity_bytes": "ok",
+          "used_bytes": "ok"
+        },
+        "observed_at": "2026-11-11T09:03:35Z",
+        "observed_range_percent": {
+          "max": 61.546913,
+          "min": 61.546907
+        },
+        "reason": null,
+        "source": {
+          "node": "view-storage-csi-control-plane",
+          "pod_id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+          "provider": "kubelet",
+          "volume_name": "data"
+        },
+        "status": "ok",
+        "used_bytes": "38572126208",
+        "used_percent": 61.546913
+      },
+      "id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "inodes": {
+        "candidate_count": 2,
+        "candidates": [
+          {
+            "field_status": {
+              "inodes_free": "ok",
+              "inodes_total": "ok",
+              "inodes_used": "ok"
+            },
+            "inodes_free": "3449725",
+            "inodes_total": "3907584",
+            "inodes_used": "457859",
+            "observed_at": "2026-11-11T09:03:35Z",
+            "reason": null,
+            "source": {
+              "node": "view-storage-csi-control-plane",
+              "pod_id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+              "provider": "kubelet",
+              "volume_name": "data"
+            },
+            "status": "ok",
+            "used_percent": 11.717189
+          },
+          {
+            "field_status": {
+              "inodes_free": "ok",
+              "inodes_total": "ok",
+              "inodes_used": "ok"
+            },
+            "inodes_free": "3449725",
+            "inodes_total": "3907584",
+            "inodes_used": "457859",
+            "observed_at": "2026-11-11T09:03:31Z",
+            "reason": null,
+            "source": {
+              "node": "view-storage-csi-control-plane",
+              "pod_id": "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+              "provider": "kubelet",
+              "volume_name": "data"
+            },
+            "status": "ok",
+            "used_percent": 11.717189
+          }
+        ],
+        "field_status": {
+          "inodes_free": "ok",
+          "inodes_total": "ok",
+          "inodes_used": "ok"
+        },
+        "inodes_free": "3449725",
+        "inodes_total": "3907584",
+        "inodes_used": "457859",
+        "observed_at": "2026-11-11T09:03:35Z",
+        "observed_range_percent": {
+          "max": 11.717189,
+          "min": 11.717189
+        },
+        "reason": null,
+        "source": {
+          "node": "view-storage-csi-control-plane",
+          "pod_id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+          "provider": "kubelet",
+          "volume_name": "data"
+        },
+        "status": "ok",
+        "used_percent": 11.717189
+      },
+      "kind": "pvc",
+      "name": "data",
+      "namespace": "view-storage-csi",
+      "phase": "Bound",
+      "provisioned_bytes": "1073741824",
+      "pv_name": "pvc-dc626703-100a-4cc9-be4d-019b3e73b848",
+      "reclaim_policy": "Delete",
+      "requested_bytes": "1073741824",
+      "storage_class": "view-storage-csi",
+      "storage_class_state": "known",
+      "terminating_consumer_count": 0,
+      "uid": "dc626703-100a-4cc9-be4d-019b3e73b848",
+      "volume_binding_mode": "Immediate",
+      "volume_mode": "Filesystem"
+    }
+  ],
+  "relationships": [
+    {
+      "consumer_id": "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "id": "edge:dc626703-100a-4cc9-be4d-019b3e73b848:586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "mounts": [
+        {
+          "container": "probe",
+          "container_kind": "app",
+          "kind": "filesystem",
+          "path": "/data",
+          "read_only": false,
+          "sub_path": null,
+          "sub_path_expr": null,
+          "volume_name": "data"
+        }
+      ],
+      "record_id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "runtime_state": "unverified",
+      "volume_names": [
+        "data"
+      ]
+    },
+    {
+      "consumer_id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "id": "edge:dc626703-100a-4cc9-be4d-019b3e73b848:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "mounts": [
+        {
+          "container": "probe",
+          "container_kind": "app",
+          "kind": "filesystem",
+          "path": "/data",
+          "read_only": false,
+          "sub_path": null,
+          "sub_path_expr": null,
+          "volume_name": "data"
+        }
+      ],
+      "record_id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "runtime_state": "unverified",
+      "volume_names": [
+        "data"
+      ]
+    }
+  ],
+  "schema_version": "view-storage/v1alpha1",
+  "selection": {
+    "base_count": 1,
+    "complete": true,
+    "excluded_count": 0,
+    "matched_count": 1,
+    "unknown_count": 0,
+    "unknown_records": []
+  },
+  "summary": {
+    "bound": {
+      "complete": true,
+      "known_count": 1,
+      "known_sum_bytes": "1073741824",
+      "total_count": 1
+    },
+    "filesystem": {
+      "available_bytes": "20882255872",
+      "capacity_bytes": "62671097856",
+      "coverage": {
+        "by_reason": {},
+        "eligible": 1,
+        "fresh_complete": 1,
+        "not_applicable": 0
+      },
+      "newest_observed_at": "2026-11-11T09:03:35Z",
+      "oldest_observed_at": "2026-11-11T09:03:35Z",
+      "physical_total": false,
+      "reason": null,
+      "status": "ok",
+      "used_bytes": "38572126208",
+      "used_percent": 61.546913
+    },
+    "finding_counts": {
+      "critical": 0,
+      "info": 0,
+      "warning": 0
+    },
+    "inodes": {
+      "coverage": {
+        "by_reason": {},
+        "eligible": 1,
+        "fresh_complete": 1,
+        "not_applicable": 0
+      },
+      "inodes_free": "3449725",
+      "inodes_total": "3907584",
+      "inodes_used": "457859",
+      "newest_observed_at": "2026-11-11T09:03:35Z",
+      "oldest_observed_at": "2026-11-11T09:03:35Z",
+      "physical_total": false,
+      "reason": null,
+      "status": "ok",
+      "used_percent": 11.717189
+    },
+    "overlapping_children": true,
+    "phase_counts": {
+      "Bound": 1
+    },
+    "provisioned": {
+      "complete": true,
+      "known_count": 1,
+      "known_sum_bytes": "1073741824",
+      "total_count": 1
+    },
+    "record_count": 1,
+    "requested": {
+      "complete": true,
+      "known_count": 1,
+      "known_sum_bytes": "1073741824",
+      "total_count": 1
+    },
+    "selection_complete": true
+  }
+}

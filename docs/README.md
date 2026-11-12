@@ -7,6 +7,7 @@ Start with [usage examples](../examples/README.md) or `kubectl view-storage --he
 - [Design](DESIGN.md): features, architecture, Rust strategies, and recorded decisions.
 - [Specification](SPEC.md): CLI, accounting, report semantics, exit codes, and acceptance cases.
 - [Report schema](schema/report.schema.json): the machine-readable JSON contract.
+- [Storage calculations](CALCULATIONS.md): sums, units, class/type statistics, StatefulSet scope and observed growth.
 - [Real command output](../examples/live/README.md): captured text views, JSON, CSV, and strict checks from disposable clusters.
 - [Contract scenarios](../examples/contract/README.md): sample inputs, complete reports, and text views.
 - [Lessons from df-pv](DF_PV_LESSONS.md): implementation and support issues addressed by this project.
@@ -17,6 +18,7 @@ Start with [usage examples](../examples/README.md) or `kubectl view-storage --he
 - [CI performance](CI_PERFORMANCE.md): measured runner/build/test costs, caching, parallel checks, and repeatable comparisons.
 - [Dependency review](DEPENDENCY_REVIEW.md): runtime dependency choices, maintenance, features, and costs.
 - [Distribution](DISTRIBUTION.md): source installation, release archives, checksums, and local Krew validation.
+- [Krew readiness](KREW_READINESS.md): audited prerequisites, candidate preparation and the remaining publication/submission steps.
 
 - [Disposable storage E2E tests](STORAGE_E2E.md): shared local/CI fixtures for local-path, CSI hostpath and cross-node NFS CSI.
 

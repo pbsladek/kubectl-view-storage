@@ -88,13 +88,13 @@ Use [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) and the matching
 
 | Scope | Required line coverage | Measurement |
 | --- | --- | --- |
-| Each core module: qty, join, group, findings, policy | At least 90% individually | Sum covered/instrumented production lines within that module and its descendants |
+| Each core module: qty, join, group, findings, policy, calculations | At least 90% individually | Sum covered/instrumented production lines within that module and its descendants |
 | All production source | At least 80% | Sum covered/instrumented lines across application/library source |
 | Required failure and boundary cases | Every specified case passes | Assertions of values, diagnostics, exits, and task cleanup, independently of line coverage |
 
 Percentages are weighted by instrumented line counts, not averaged across files. Include renderers, provider code, error paths, and the CLI in the overall denominator. Dependencies, test/fuzz harnesses, and generated code are outside production-source coverage; record generated-code exclusions explicitly. Keep any other uncovered source visible in reports and close required behavior gaps even if thresholds pass.
 
-Publish LCOV for machine consumption, HTML with uncovered lines for review, and LLVM JSON for a per-module gate. The overall command's threshold does not enforce the separate core-module floors: phase 0 adds a checker over the JSON file/path counts and fails when an implemented required module is omitted. Before Rust source exists, coverage is unmeasured. During incremental phases, check implemented modules; all five core modules are required at phase 5.
+Publish LCOV for machine consumption, HTML with uncovered lines for review, and LLVM JSON for a per-module gate. The overall command's threshold does not enforce the separate core-module floors: phase 0 adds a checker over the JSON file/path counts and fails when an implemented required module is omitted. Before Rust source exists, coverage is unmeasured. During incremental phases, check implemented modules; all six core modules, including calculations, are required at phase 5.
 
 Once the Cargo package and coverage tooling exist, the standard collection/report workflow is:
 
@@ -193,7 +193,7 @@ The quantity/statistics fuzz targets pass actual AddressSanitizer smoke on pinne
 
 ## CI performance
 
-[CI performance](CI_PERFORMANCE.md) records measured build/test and runner costs. CI now uses compiler/target/profile-specific dependency caches, exact-version tool caches, a cumulative change selector, parallel lint/coverage/fault/native jobs, and once-per-architecture compatibility binaries. Source compiler verification, native Cargo/Krew installations, coverage floors, parser fuzzing, and actual CSI gates remain required in their selected workflows. Pure documentation changes skip native compilation; unknown paths/history run full checks. Use the final `required` aggregate as the branch-protection check when configuring protection. Local Docker CPU/memory limits are unchanged.
+[CI performance](CI_PERFORMANCE.md) records measured build/test and runner costs. CI now uses compiler/target/profile-specific dependency caches, exact-version tool caches, a cumulative change selector, parallel lint/coverage/native jobs with the required fault checks inside Linux lint, and once-per-architecture compatibility binaries. Source compiler verification, native Cargo/Krew installations, coverage floors, parser fuzzing, and actual CSI gates remain required in their selected workflows. Pure documentation changes skip native compilation; known coverage/tool-only inputs retain Rust checks while skipping unrelated distribution jobs. Unknown paths/history run full checks. Latest-stable compatibility runs on both OSes in weekly/manual Maintenance. Use the final `required` aggregate as the branch-protection check when configuring protection. Local Docker CPU/memory limits are unchanged.
 
 ## Shared storage E2E suite
 

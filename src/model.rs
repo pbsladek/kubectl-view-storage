@@ -225,6 +225,13 @@ pub struct Consumer {
     pub deletion_timestamp: Option<Timestamp>,
     pub node: Option<String>,
     pub state: ReferenceState,
+    pub statefulset: MetadataValue<StatefulSet>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StatefulSet {
+    pub name: String,
+    pub uid: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -450,6 +457,7 @@ pub struct Record {
     pub reclaim_policy: Option<String>,
     pub pv_name: Option<String>,
     pub pvc_name: MetadataValue<String>,
+    pub pvc_uid: Option<String>,
     pub requested: Field<Bytes>,
     pub bound: Field<Bytes>,
     pub provisioned: Field<Bytes>,

@@ -17,6 +17,10 @@ Updated 2026-11-10. Actual tests, builds and live profiles below have different 
 
 The initial API target is Kubernetes 1.35–1.37. Inventory, byte metrics, inode metrics and Block handling are separate capabilities. Hostpath demo counters do not establish per-claim physical isolation. Earlier live runs preceded the final credential/retry corrections; final release-binary reruns are recorded separately.
 
+## Calculation extension
+
+The uncommitted calculation source identified in [implementation evidence](IMPLEMENTATION_STATUS.md#operator-calculation-extension) passes 189 Rust tests on native macOS arm64 and Linux arm64 GNU, including actual HTTP/export, history comparison and Unix input/process tests. Both hosts' five calculation reports pass the independent integer/Fraction/schema oracle. The final macOS release binary also passes the disposable CSI write/growth and real StatefulSet/shared-claim gate with owned cleanup. [Real captures](../examples/live/calculations/README.md) include MB/GB/TB, JSON and CSV. This does not refresh earlier Intel/macOS or Linux musl release certification; those jobs remain required for the selected release revision.
+
 ## Live receipts
 
 | Profile | Kubernetes | Run IDs |

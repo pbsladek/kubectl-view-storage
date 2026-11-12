@@ -1,4 +1,4 @@
-name: Parser fuzzing
+name: Fuzz
 on:
   push:
     branches: [main]
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   fuzz:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7.0.1

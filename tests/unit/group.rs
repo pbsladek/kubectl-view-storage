@@ -1,6 +1,59 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 use super::*;
 use clap::Parser;
+
+#[test]
+fn type_and_statefulset_groups_preserve_logical_capacity_and_disjoint_access_mode_sets() {
+    let mut graph = fixture();
+    graph.records[0].access_modes = vec![
+        "ReadWriteMany".into(),
+        "ReadOnlyMany".into(),
+        "ReadWriteMany".into(),
+    ];
+    for (index, consumer) in graph.consumers.iter_mut().enumerate() {
+        consumer.statefulset = MetadataValue::Known(StatefulSet {
+            name: format!("database-{}", index % 2),
+            uid: format!("db-{}", index % 2),
+        });
+    }
+    for dimensions in ["accessmode,volumemode,phase", "statefulset,accessmode"] {
+        let query = crate::cli::Cli::try_parse_from(["cmd", "-g", dimensions])
+            .unwrap()
+            .query("demo")
+            .unwrap();
+        let groups = build(&graph, &query, &[], true);
+        if dimensions.starts_with("accessmode") {
+            assert_eq!(groups.len(), 1);
+            assert_eq!(
+                groups[0].value.known().unwrap(),
+                "ReadOnlyMany+ReadWriteMany"
+            );
+            assert!(!overlap(&groups));
+        } else {
+            assert_eq!(groups.len(), 2);
+            assert!(overlap(&groups));
+            assert!(groups.iter().all(|g| g.member_ids.len() == 1));
+        }
+        assert_eq!(
+            totals(&graph.records.iter().collect::<Vec<_>>(), &[], true, false)
+                .provisioned
+                .sum,
+            Some(107374182400)
+        );
+    }
+    graph.records[0].access_modes.clear();
+    graph.records[0].volume_mode = VolumeMode::Block;
+    let query = crate::cli::Cli::try_parse_from(["cmd", "-g", "volumemode,accessmode"])
+        .unwrap()
+        .query("demo")
+        .unwrap();
+    let groups = build(&graph, &query, &[], true);
+    assert_eq!(groups[0].value.known().unwrap(), "Block");
+    assert!(matches!(
+        groups[0].children[0].value,
+        MetadataValue::Unknown
+    ));
+}
 fn fixture() -> Graph {
     let value: serde_json::Value = serde_json::from_str(include_str!(
         "../../examples/contract/shared-rwx/input.json"

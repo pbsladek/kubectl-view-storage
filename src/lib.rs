@@ -1,6 +1,7 @@
 //! Storage accounting is independent of collection and rendering.
 #![forbid(unsafe_code)]
 
+pub mod calculations;
 pub mod cli;
 pub mod clock;
 pub mod collect;

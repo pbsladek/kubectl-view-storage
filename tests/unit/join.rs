@@ -1,5 +1,51 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 use super::*;
+
+#[test]
+fn statefulset_filter_uses_controller_identity_and_preserves_unknown_membership() {
+    let mut input = fixture(include_str!("../../examples/contract/healthy/input.json"));
+    let owner = serde_json::json!({"apiVersion":"apps/v1","kind":"StatefulSet","name":"database","uid":"database-uid","controller":true});
+    input.pods[0].metadata.owner_references = vec![owner.clone()];
+    let mut query = query();
+    query.filters.statefulset = Some("database".into());
+    let graph = normalize(&input, &query, true).unwrap();
+    let (_, selection) = crate::report::select(graph, &query);
+    assert!(selection.complete);
+    assert_eq!(selection.matched_count, 1);
+    for changes in [
+        serde_json::json!({"controller":false}),
+        serde_json::json!({"name":"other"}),
+        serde_json::json!({"kind":"ReplicaSet"}),
+    ] {
+        let mut changed = owner.clone();
+        changed
+            .as_object_mut()
+            .unwrap()
+            .extend(changes.as_object().unwrap().clone());
+        input.pods[0].metadata.owner_references = vec![changed];
+        let (_, selection) =
+            crate::report::select(normalize(&input, &query, true).unwrap(), &query);
+        assert_eq!(selection.matched_count, 0);
+        assert!(selection.complete);
+    }
+    for owners in [
+        vec![serde_json::json!({"kind":"StatefulSet","name":"database","controller":true})],
+        vec![owner.clone(), owner.clone()],
+        vec![serde_json::json!({"controller":"invalid"})],
+    ] {
+        input.pods[0].metadata.owner_references = owners;
+        let (_, selection) =
+            crate::report::select(normalize(&input, &query, true).unwrap(), &query);
+        assert!(!selection.complete);
+        assert_eq!(selection.unknown_count, 1);
+    }
+    input.pods.clear();
+    let (_, selection) = crate::report::select(normalize(&input, &query, false).unwrap(), &query);
+    assert!(!selection.complete);
+    let (_, selection) = crate::report::select(normalize(&input, &query, true).unwrap(), &query);
+    assert!(selection.complete);
+    assert_eq!(selection.matched_count, 0);
+}
 use clap::Parser;
 fn fixture(input: &str) -> Inventory {
     serde_json::from_value(

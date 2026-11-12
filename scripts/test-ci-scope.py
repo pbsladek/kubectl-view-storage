@@ -3,6 +3,11 @@
 import importlib.util
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
+import contextlib
+import io
+import os
+import tempfile
 import unittest
 from unittest import mock
 
@@ -21,6 +26,33 @@ class ScopeTests(unittest.TestCase):
                      'scripts/package-release.py', 'scripts/test-credential-terminal.py', 'scripts/test-smoke-http.py', '.github/actions/cargo-tool/action.yml', 'new-compiler-input'):
             with self.subTest(name=name):
                 self.assertTrue(scope.rust_needed(['README.md', name]))
+
+    def test_tool_only_changes_keep_rust_checks_without_rebuilding_distributions(self):
+        for name in scope.CI_TOOL_ONLY:
+            with self.subTest(name=name):
+                self.assertTrue(scope.rust_needed([name]))
+                self.assertFalse(scope.distribution_needed(['README.md', name]))
+                self.assertTrue(scope.distribution_needed([name, 'src/main.rs']))
+
+    def test_release_and_unknown_inputs_still_require_distribution_validation(self):
+        for name in ('Cargo.lock', 'rust-toolchain.toml', 'src/output.rs',
+                     '.github/workflows/ci.yml', '.github/workflows/native-distribution.yml',
+                     '.github/actions/rust-cache/action.yml', 'scripts/check-plugin.py',
+                     'scripts/package-release.py', 'scripts/test-credential-terminal.py',
+                     'scripts/smoke_http.py', 'new-compiler-input'):
+            with self.subTest(name=name):
+                self.assertTrue(scope.distribution_needed([name]))
+        self.assertFalse(scope.distribution_needed(['README.md', 'docs/ci-baseline.json']))
+
+    def test_main_emits_independent_rust_and_distribution_flags(self):
+        for paths, expected in [(None, (True, True)), (['README.md'], (False, False)),
+                                (['.github/actions/cargo-tool/action.yml'], (True, False)),
+                                (['src/main.rs', '.github/actions/cargo-tool/action.yml'], (True, True))]:
+            with self.subTest(paths=paths), tempfile.TemporaryDirectory() as temporary:
+                output, summary = Path(temporary)/'output', Path(temporary)/'summary'
+                with mock.patch.object(scope.argparse.ArgumentParser, 'parse_args', return_value=SimpleNamespace(event=None, event_name='push')), mock.patch.object(scope, 'changed_paths', return_value=paths), mock.patch.dict(os.environ, {'GITHUB_OUTPUT': str(output), 'GITHUB_STEP_SUMMARY': str(summary)}), contextlib.redirect_stdout(io.StringIO()):
+                    scope.main()
+                self.assertEqual(output.read_text(), f'rust={str(expected[0]).lower()}\ndistribution={str(expected[1]).lower()}\n')
 
     def test_force_push_or_missing_history_runs_full_checks(self):
         with mock.patch.object(scope.subprocess, 'run', side_effect=subprocess.CalledProcessError(1, 'git')):

@@ -26,6 +26,12 @@ fn invalid_invocations_fail_before_configuration() {
         vec!["--pvc", "one", "--pvc", "two"],
         vec!["--concurrency", "0"],
         vec!["--metrics-source", "prometheus"],
+        vec!["--units", "GB"],
+        vec!["--view", "stats", "--units", "not-a-unit"],
+        vec!["--compare", "/nonexistent/report.json"],
+        vec!["--view", "stats", "--compare", "/nonexistent/report.json"],
+        vec!["-A", "--statefulset", "database"],
+        vec!["--statefulset", ""],
     ] {
         let output = command().args(&args).output().unwrap();
         assert_eq!(output.status.code(), Some(2), "{args:?}");

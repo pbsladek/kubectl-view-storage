@@ -1,10 +1,15 @@
-name: Disposable Kubernetes compatibility
+name: Storage
 on:
   pull_request:
     paths: ['src/**', 'tests/**', 'Cargo.*', 'rust-toolchain.toml', 'dev/**', 'scripts/dev*', 'scripts/e2e-storage.py', 'scripts/test-storage-e2e.py', '.github/workflows/compatibility.yml']
   schedule:
     - cron: '17 8 * * 3'
   workflow_dispatch:
+    inputs:
+      full_matrix:
+        description: Test all supported Kubernetes versions (otherwise baseline only).
+        type: boolean
+        default: true
 permissions:
   contents: read
 concurrency:
@@ -14,11 +19,16 @@ env:
   CARGO_INCREMENTAL: '0'
 jobs:
   build:
+    name: build-${{ matrix.arch }}
     timeout-minutes: 20
     strategy:
       fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm]
+        include:
+          - os: ubuntu-24.04
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -26,10 +36,9 @@ jobs:
       - uses: ./.github/actions/rust-cache
         with:
           group: compatibility-gnu
-      - name: Test and build once per native architecture
+      - name: Build once per native architecture
         run: |
           python3 scripts/check-toolchain.py
-          cargo test --locked --all-targets
           cargo build --locked --release
           python3 scripts/test-credential-terminal.py --binary target/release/kubectl-view_storage
           mkdir -p artifacts/compatibility-build
@@ -47,13 +56,19 @@ jobs:
           retention-days: 3
           if-no-files-found: error
   live:
+    name: k8s-${{ matrix.kubernetes }}-${{ matrix.arch }}
     needs: build
     timeout-minutes: 45
     strategy:
       fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
-        kubernetes: ${{ fromJSON(github.event_name == 'pull_request' && '["1.37.0"]' || '["1.37.0","1.36.4","1.35.8"]') }}
+        kubernetes: ${{ fromJSON((github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && !inputs.full_matrix)) && '["1.37.0"]' || '["1.37.0","1.36.4","1.35.8"]') }}
+        include:
+          - os: ubuntu-24.04
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1

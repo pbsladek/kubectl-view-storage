@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import time
+import dev_calculations
 
 ROOT = Path(__file__).resolve().parents[1]
 NAMESPACE = "view-storage-csi"
@@ -313,7 +314,9 @@ def _verify(kubectl, config, binary, evidence, run_id, lock, *, query_config, mo
                 raise RuntimeError("CSI probe file size differs across shared consumers")
         written = utc_ns()
         after = poll(lambda: sample("after", written, before), deadline, "CSI profile produced no advancing compatible byte tuple after the bounded write", monotonic=monotonic, sleep=sleep)
+        calculations = dev_calculations.verify_csi(kubectl, config, binary, evidence, run_id, NAMESPACE, lock["workload_image"], timestamp_ns, query_config=query_config)
         result = {"status": "passed", "run_id": run_id, "plugin_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+                  "calculations": calculations,
                   "write_bytes": WRITE_BYTES, "before": before, "after": after, "inode_status": after["inode_status"],
                   "scope": "single-node CSI hostpath Filesystem; no cross-node RWX or raw-block claim"}
     except BaseException:

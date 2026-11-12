@@ -192,7 +192,13 @@ pub(crate) fn build_checked<C: Checkpoint>(
     let mut consumers = vec![];
     for consumer in &graph.consumers {
         control.checked()?;
-        consumers.push(json!({"id":consumer.id.as_str(),"uid":consumer.uid,"namespace":consumer.namespace,"name":consumer.name,"phase":consumer.phase,"deletion_timestamp":timestamp(consumer.deletion_timestamp),"node":consumer.node,"active":(consumer.state!=ReferenceState::Unknown).then_some(consumer.state==ReferenceState::Active),"reference_state":consumer.state.as_str()}));
+        let mut rendered = json!({"id":consumer.id.as_str(),"uid":consumer.uid,"namespace":consumer.namespace,"name":consumer.name,"phase":consumer.phase,"deletion_timestamp":timestamp(consumer.deletion_timestamp),"node":consumer.node,"active":(consumer.state!=ReferenceState::Unknown).then_some(consumer.state==ReferenceState::Active),"reference_state":consumer.state.as_str()});
+        if let Some(owner) = consumer.statefulset.known() {
+            rendered["statefulset"] = json!({"name":owner.name,"uid":owner.uid});
+        } else if matches!(consumer.statefulset, MetadataValue::Unknown) {
+            rendered["statefulset_state"] = json!("unknown");
+        }
+        consumers.push(rendered);
     }
     let mut relationships = vec![];
     for edge in &graph.relationships {
@@ -299,6 +305,10 @@ fn record_checked<C: Checkpoint>(record: &Record, control: &mut C) -> Result<Val
         "storage_class":record.storage_class.known(),"storage_class_state":if matches!(record.storage_class, MetadataValue::Absent) {"classless"} else {record.storage_class.state()},"driver":record.driver.known(),"volume_mode":mode(&record.volume_mode),"reclaim_policy":record.reclaim_policy,"pv_name":record.pv_name,
         "requested_bytes":counter(&record.requested),"bound_bytes":counter(&record.bound),"provisioned_bytes":counter(&record.provisioned),"consumer_visibility":if matches!(record.consumer_visibility,ConsumerVisibility::Complete) {"complete"} else {"unknown"},
         "active_consumer_count":record.active_count,"terminating_consumer_count":record.terminating_count});
+    if record.kind == crate::cli::Kind::Pv {
+        value["pvc_name"] = json!(record.pvc_name.known());
+        value["pvc_uid"] = json!(record.pvc_uid);
+    }
     if let Some(time) = record.deletion_timestamp {
         value["deletion_timestamp"] = json!(timestamp(Some(time)));
     }

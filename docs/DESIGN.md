@@ -1,6 +1,14 @@
 # kubectl-view-storage design
 
-Status: Draft 0.8, 2026-11-07. Product defaults and release priorities are decided below. Target: an initial v0.1 release followed by incremental integrations. Companion: [behavioral specification](SPEC.md). Execution phases live in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); local test environments live in [DEVELOPMENT.md](DEVELOPMENT.md).
+Status: Draft 0.9, 2026-11-11. Product defaults and release priorities are decided below. Target: an initial v0.1 release followed by incremental integrations. Companion: [behavioral specification](SPEC.md). Execution phases live in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); local test environments live in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+## Operator calculations extension
+
+The [implemented calculation contract](CALCULATIONS.md) adds a stats view to the same query command. It reuses the selected UID graph, group member unions and existing inventory/filesystem totals. New access-mode-set, volume-mode, phase and StatefulSet dimensions pass through the ordinary grouping path; controller ownership is typed metadata with known/absent/unknown states. StatefulSet membership is a prioritized consumer prerequisite, with no new resource reads or name-based inference.
+
+`calculations.rs` adds opt-in distributions and two-report comparisons after the common report adapter. Checked u128 arithmetic and reduced signed rational magnitudes preserve large sums, fractional means/medians, negative observed growth and projections without floating-point accounting or a bigint dependency. Stable ordering and cooperative processing checkpoints preserve cancellation. Rounding belongs to presentation. The JSON extension is additive and versioned; default record CSV remains unchanged, while stats CSV explicitly carries group/measure rows and unique IDs.
+
+Explicit saved reports provide a bounded history input for observed growth. This keeps the feature independent of an external monitoring system, new runtime dependencies and persistent background state. Rates use compatible per-record samples and their timestamps; aggregate rates cover the paired cohort and first-full estimates retain the earliest individual risk. Missing, conflicting, resized and overlapping observations remain unavailable. Current strict collection policy is preserved. Real executable exports have an independent Python Fraction oracle, the new module has a 90% coverage gate, and the existing CSI kind suite reuses its bounded write and creates/deletes a real StatefulSet to verify shared-claim accounting.
 
 `kubectl-view-storage` will be a Rust kubectl plugin for investigating Kubernetes persistent storage from one command. It will connect capacity, actual usage, consumers, and operational findings while remaining useful without a monitoring stack or cluster administrator permissions. The initial experience will be a readable tree, with flags for other views and machine output.
 
@@ -261,7 +269,7 @@ Project API objects on owned workers with checked traversal of metadata labels, 
 
 After required base inventory completes, an elapsed collection deadline stops new network dispatch while finite projection of retained inventory and already validated observations drains cooperatively. User cancellation still stops that projection. This preserves the specified partial report instead of losing base objects to a report-building timeout. Production verification of projection/planning, output interruption, and end-to-end decode behavior remains an implementation gate.
 
-Unit/property tests cover pure logic, wiremock tests cover transport behavior, CLI tests cover serialization and exit policy, and kind validates real integration. Use cargo-llvm-cov for coverage: every core module (`qty`, `join`, `group`, `findings`, `policy`) must reach 90% line coverage and production source overall must reach 80%. Required boundary/error cases remain independent gates. The [development guide](DEVELOPMENT.md) defines measurement, artifacts, and exclusions; the [implementation phases](IMPLEMENTATION_PLAN.md) define when gates activate. Parser fuzzing begins as each Rust parser lands.
+Unit/property tests cover pure logic, wiremock tests cover transport behavior, CLI tests cover serialization and exit policy, and kind validates real integration. Use cargo-llvm-cov for coverage: every core module (`qty`, `join`, `group`, `findings`, `policy`, `calculations`) must reach 90% line coverage and production source overall must reach 80%. Required boundary/error cases remain independent gates. The [development guide](DEVELOPMENT.md) defines measurement, artifacts, and exclusions; the [implementation phases](IMPLEMENTATION_PLAN.md) define when gates activate. Parser fuzzing begins as each Rust parser lands.
 
 ## Repository setup
 

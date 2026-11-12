@@ -7,7 +7,12 @@ use tokio_util::sync::CancellationToken;
 pub fn write(writer: impl Write, report: &Value, cancel: &CancellationToken) -> io::Result<()> {
     check_cancel(cancel)?;
     let mut writer = csv::WriterBuilder::new().from_writer(CancelWriter { writer, cancel });
-    writer.write_record(output::CSV_HEADER).map_err(csv_error)?;
+    let header: &[&str] = if report.get("calculations").is_some() {
+        &output::CALCULATION_CSV_HEADER
+    } else {
+        &output::CSV_HEADER
+    };
+    writer.write_record(header).map_err(csv_error)?;
     output::for_each_csv_row(report, cancel, |row| {
         writer.write_record(row).map_err(csv_error)
     })?;

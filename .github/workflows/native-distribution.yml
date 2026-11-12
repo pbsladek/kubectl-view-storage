@@ -1,4 +1,4 @@
-name: Native distribution validation
+name: Release
 on:
   workflow_call:
     inputs:
@@ -20,6 +20,7 @@ env:
   CARGO_INCREMENTAL: '0'
 jobs:
   native:
+    name: build-${{ matrix.label }}
     timeout-minutes: 45
     strategy:
       fail-fast: ${{ github.event_name == 'pull_request' }}
@@ -27,12 +28,16 @@ jobs:
         include:
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-musl
+            label: linux-amd64
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-musl
+            label: linux-arm64
           - os: macos-15-intel
             target: x86_64-apple-darwin
+            label: macos-amd64
           - os: macos-15
             target: aarch64-apple-darwin
+            label: macos-arm64
     runs-on: ${{ matrix.os }}
     env:
       RELEASE_TARGET: ${{ matrix.target }}
@@ -137,6 +142,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
   installed:
+    name: install-${{ matrix.label }}
     needs: manifest
     timeout-minutes: 15
     strategy:
@@ -145,12 +151,16 @@ jobs:
         include:
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-musl
+            label: linux-amd64
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-musl
+            label: linux-arm64
           - os: macos-15-intel
             target: x86_64-apple-darwin
+            label: macos-amd64
           - os: macos-15
             target: aarch64-apple-darwin
+            label: macos-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1

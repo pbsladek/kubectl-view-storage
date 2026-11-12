@@ -378,6 +378,7 @@ fn text_checked<C: Checkpoint>(
         }
     }
     match view {
+        View::Stats => statistics_text(&mut out, value, utilization, wide, control)?,
         View::Tree => {
             let mut table = group_table("STORAGE", utilization);
             let groups: Vec<_> = items(&value["groups"]).collect();
@@ -570,7 +571,7 @@ fn empty(out: &mut String, report: &Value) {
 fn group_label(group: &Value) -> String {
     let label = if group["value_state"] == "known" {
         let raw = cell(&group["value"]);
-        if group["dimension"] == "pod" {
+        if group["dimension"] == "pod" || group["dimension"] == "statefulset" {
             raw.rsplit_once('@')
                 .map(|(name, _)| name.to_owned())
                 .unwrap_or(raw)
@@ -997,6 +998,9 @@ fn visit_csv_rows<C: Checkpoint>(
     control: &mut C,
     mut visit: impl FnMut(Vec<String>) -> Result<(), C::Error>,
 ) -> Result<(), C::Error> {
+    if report.get("calculations").is_some() {
+        return calculation_csv_rows(report, control, visit);
+    }
     let mut severity = BTreeMap::new();
     for finding in items(&report["findings"]) {
         control.step()?;
@@ -1060,6 +1064,407 @@ fn visit_csv_rows<C: Checkpoint>(
             .into(),
         );
         visit(row)?;
+    }
+    Ok(())
+}
+
+fn calculated_amount(value: &Value, unit: crate::calculations::Unit) -> String {
+    value
+        .as_str()
+        .and_then(|v| v.parse::<u128>().ok())
+        .map(|v| unit.format(v, 1))
+        .unwrap_or_else(|| "--".into())
+}
+fn statistics_text<C: Checkpoint>(
+    out: &mut String,
+    report: &Value,
+    utilization: bool,
+    wide: bool,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    use crate::calculations::{Unit, format_seconds};
+    let calculations = &report["calculations"];
+    let unit = calculations["display_unit"]
+        .as_str()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(Unit::Auto);
+    let _ = writeln!(
+        out,
+        "Storage calculations (units: {unit}; logical capacity)\n"
+    );
+    let mut sums = TextTable::new(vec![
+        ("GROUP", false),
+        ("COUNT", true),
+        ("REQUESTED", true),
+        ("BOUND", true),
+        ("PROVISIONED", true),
+    ]);
+    for row in items(&calculations["rows"]) {
+        control.step()?;
+        let mut cells = vec![cell(&row["label"]), cell(&row["totals"]["record_count"])];
+        for measure in ["requested", "bound", "provisioned"] {
+            let stats = &row["statistics"][measure];
+            let amount = calculated_amount(&stats["sum_bytes"], unit);
+            cells.push(format!(
+                "{amount}{}",
+                if stats["complete"] == false { "*" } else { "" }
+            ));
+        }
+        sums.rows.push(cells);
+    }
+    sums.draw(out, control)?;
+    if utilization {
+        out.push_str("\nReported filesystem usage (per claim; not physical backend totals)\n\n");
+        let mut filesystems = TextTable::new(vec![
+            ("GROUP", false),
+            ("FS SIZE", true),
+            ("USED", true),
+            ("AVAILABLE", true),
+            ("USE%", true),
+            ("SAMPLES", true),
+        ]);
+        for row in items(&calculations["rows"]) {
+            control.step()?;
+            let mut cells = vec![cell(&row["label"])];
+            let fs = &row["totals"]["filesystem"];
+            for field in ["capacity_bytes", "used_bytes", "available_bytes"] {
+                cells.push(if fs["status"] == "not_applicable" {
+                    "n/a".into()
+                } else {
+                    calculated_amount(&fs[field], unit)
+                });
+            }
+            cells.push(percent(&fs["used_percent"]));
+            cells.push(format!(
+                "{}/{}",
+                cell(&fs["coverage"]["fresh_complete"]),
+                cell(&fs["coverage"]["eligible"])
+            ));
+            filesystems.rows.push(cells);
+        }
+        filesystems.draw(out, control)?;
+    }
+    out.push_str(if wide {
+        "\nSize distribution (known records; P95 uses nearest rank)\n\n"
+    } else {
+        "\nProvisioned volume sizes (known records; P95 uses nearest rank)\n\n"
+    });
+    let mut stats_table = TextTable::new(vec![
+        ("GROUP", false),
+        ("MEASURE", false),
+        ("KNOWN", true),
+        ("MIN", true),
+        ("MEAN", true),
+        ("MEDIAN", true),
+        ("P95", true),
+        ("MAX", true),
+    ]);
+    for row in items(&calculations["rows"]) {
+        control.step()?;
+        for &measure in if wide {
+            &["requested", "bound", "provisioned"][..]
+        } else {
+            &["provisioned"][..]
+        } {
+            statistics_row(
+                &mut stats_table,
+                &cell(&row["label"]),
+                measure,
+                &row["statistics"][measure],
+                unit,
+            );
+        }
+    }
+    stats_table.draw(out, control)?;
+    let _ = writeln!(
+        out,
+        "\nDistribution of named storage-class totals ({} classes)\n",
+        cell(&calculations["storage_classes"]["named_count"])
+    );
+    let mut classes = TextTable::new(stats_table.columns.clone());
+    for &measure in if wide {
+        &["requested", "bound", "provisioned"][..]
+    } else {
+        &["requested", "provisioned"][..]
+    } {
+        statistics_row(
+            &mut classes,
+            "CLASS TOTALS",
+            measure,
+            &calculations["storage_classes"]["statistics"][measure],
+            unit,
+        );
+    }
+    classes.draw(out, control)?;
+    let states = &calculations["storage_classes"]["record_counts_by_assignment"];
+    if states.get("classless").is_some()
+        || states.get("unassigned").is_some()
+        || states.get("unknown").is_some()
+    {
+        let _ = writeln!(
+            out,
+            "Class distributions exclude classless={}, unassigned={}, unknown={} record(s); TOTAL includes them.",
+            states["classless"].as_u64().unwrap_or(0),
+            states["unassigned"].as_u64().unwrap_or(0),
+            states["unknown"].as_u64().unwrap_or(0)
+        );
+    }
+    if !calculations["comparison"].is_null() {
+        out.push_str("\nObserved growth (paired samples; first full means earliest claim)\n\n");
+        let mut table = TextTable::new(vec![
+            ("GROUP", false),
+            ("GROWTH / HOUR", true),
+            ("FIRST FULL IN", true),
+            ("PAIRS", true),
+            ("STATUS", false),
+        ]);
+        for row in items(&calculations["rows"]) {
+            control.step()?;
+            let growth = &row["growth"];
+            table.rows.push(vec![
+                cell(&row["label"]),
+                crate::calculations::format_hourly_rate(&growth["growth_bytes_per_second"], unit),
+                format_seconds(&growth["first_full_seconds"]),
+                format!(
+                    "{}/{}",
+                    cell(&growth["matched_count"]),
+                    cell(&growth["eligible_count"])
+                ),
+                if growth["complete"] == true {
+                    "Complete".into()
+                } else {
+                    "Partial".into()
+                },
+            ]);
+        }
+        table.draw(out, control)?;
+        let mut reasons: BTreeMap<&str, usize> = BTreeMap::new();
+        for rate in items(&calculations["comparison"]["records"]) {
+            control.step()?;
+            if rate["status"] == "not_applicable" {
+                continue;
+            }
+            if let Some(reason) = rate["reason"].as_str() {
+                *reasons.entry(reason).or_default() += 1;
+            }
+        }
+        for (reason, count) in reasons {
+            let _ = writeln!(
+                out,
+                "Growth/projection note: {} ({count} record(s))",
+                escape(reason)
+            );
+        }
+        for row in items(&calculations["rows"]) {
+            control.step()?;
+            if row["growth"]["reason"] == "arithmetic_overflow" {
+                let _ = writeln!(
+                    out,
+                    "{}: growth/projection exceeds the supported arithmetic range.",
+                    cell(&row["label"])
+                );
+            }
+        }
+        out.push_str("Two-sample linear estimates assume unchanged growth; they are not forecasts of backend capacity.\n");
+    }
+    for row in items(&calculations["rows"]) {
+        control.step()?;
+        let gaps = &row["capacity_gaps"];
+        if gaps["requested_above_bound_bytes"]
+            .as_str()
+            .is_some_and(|v| v != "0")
+            || gaps["provisioned_above_requested_bytes"]
+                .as_str()
+                .is_some_and(|v| v != "0")
+        {
+            let _ = writeln!(
+                out,
+                "\n{}: requested above bound {}; provisioned above requested {} (paired {}/{}, complete={}).",
+                cell(&row["label"]),
+                calculated_amount(&gaps["requested_above_bound_bytes"], unit),
+                calculated_amount(&gaps["provisioned_above_requested_bytes"], unit),
+                cell(&gaps["known_count"]),
+                cell(&gaps["total_count"]),
+                cell(&gaps["complete"])
+            );
+        }
+    }
+    out.push_str("\n* Incomplete selection or quantities; statistics use known values.\nRequested, bound and provisioned are separate capacities; do not add them together.\n");
+    Ok(())
+}
+fn statistics_row(
+    table: &mut TextTable,
+    label: &str,
+    measure: &str,
+    stats: &Value,
+    unit: crate::calculations::Unit,
+) {
+    table.rows.push(vec![
+        label.into(),
+        measure.into(),
+        format!(
+            "{}/{}{}",
+            cell(&stats["known_count"]),
+            cell(&stats["total_count"]),
+            if stats["complete"] == false { "*" } else { "" }
+        ),
+        calculated_amount(&stats["min_bytes"], unit),
+        crate::calculations::format_fraction(&stats["mean_bytes"], unit),
+        crate::calculations::format_fraction(&stats["median_bytes"], unit),
+        calculated_amount(&stats["p95_bytes"], unit),
+        calculated_amount(&stats["max_bytes"], unit),
+    ]);
+}
+
+pub const CALCULATION_CSV_HEADER: [&str; 26] = [
+    "row_type",
+    "group",
+    "measure",
+    "unit",
+    "known_count",
+    "total_count",
+    "complete",
+    "sum_bytes",
+    "sum",
+    "min_bytes",
+    "min",
+    "mean_numerator_bytes",
+    "mean_denominator",
+    "mean",
+    "median_numerator_bytes",
+    "median_denominator",
+    "median",
+    "p95_bytes",
+    "p95",
+    "max_bytes",
+    "max",
+    "growth_numerator_bytes_per_second",
+    "growth_denominator",
+    "first_full_numerator_seconds",
+    "first_full_denominator",
+    "group_id",
+];
+fn statistic_csv_row(
+    row_type: &str,
+    label: &str,
+    id: &str,
+    measure: &str,
+    stats: &Value,
+    unit: crate::calculations::Unit,
+) -> Vec<String> {
+    let mut row = vec![String::new(); CALCULATION_CSV_HEADER.len()];
+    row[25] = id.into();
+    for (index, value) in [
+        (0, row_type.to_owned()),
+        (1, label.to_owned()),
+        (2, measure.to_owned()),
+        (3, unit.to_string()),
+        (4, csv_cell(&stats["known_count"])),
+        (5, csv_cell(&stats["total_count"])),
+        (6, csv_cell(&stats["complete"])),
+    ] {
+        row[index] = value;
+    }
+    for (raw, display, key) in [
+        (7, 8, "sum_bytes"),
+        (9, 10, "min_bytes"),
+        (17, 18, "p95_bytes"),
+        (19, 20, "max_bytes"),
+    ] {
+        row[raw] = csv_cell(&stats[key]);
+        if !stats[key].is_null() {
+            row[display] = calculated_amount(&stats[key], unit);
+        }
+    }
+    for (raw, display, key) in [(11, 13, "mean_bytes"), (14, 16, "median_bytes")] {
+        row[raw] = csv_cell(&stats[key]["numerator"]);
+        row[raw + 1] = csv_cell(&stats[key]["denominator"]);
+        if !stats[key].is_null() {
+            row[display] = crate::calculations::format_fraction(&stats[key], unit);
+        }
+    }
+    row
+}
+fn calculation_csv_rows<C: Checkpoint>(
+    report: &Value,
+    control: &mut C,
+    mut visit: impl FnMut(Vec<String>) -> Result<(), C::Error>,
+) -> Result<(), C::Error> {
+    let calculations = &report["calculations"];
+    let unit = calculations["display_unit"]
+        .as_str()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(crate::calculations::Unit::Auto);
+    for row in items(&calculations["rows"]) {
+        control.step()?;
+        let label = row["label"].as_str().unwrap_or("");
+        let id = row["id"].as_str().unwrap_or("");
+        for measure in ["requested", "bound", "provisioned"] {
+            visit(statistic_csv_row(
+                "group",
+                label,
+                id,
+                measure,
+                &row["statistics"][measure],
+                unit,
+            ))?;
+        }
+        if report["query"]["utilization"] == true {
+            let fs = &row["totals"]["filesystem"];
+            for (measure, key) in [
+                ("filesystem_capacity", "capacity_bytes"),
+                ("used", "used_bytes"),
+                ("available", "available_bytes"),
+            ] {
+                let stats = serde_json::json!({"known_count":fs["coverage"]["fresh_complete"],"total_count":fs["coverage"]["eligible"],"complete":fs["status"]=="ok" && row["totals"]["selection_complete"]==true,"sum_bytes":fs[key]});
+                visit(statistic_csv_row(
+                    "filesystem",
+                    label,
+                    id,
+                    measure,
+                    &stats,
+                    unit,
+                ))?;
+            }
+        }
+        if let Some(growth) = row.get("growth") {
+            let mut entry = statistic_csv_row(
+                "growth",
+                label,
+                id,
+                "used",
+                &serde_json::json!({"known_count":growth["matched_count"],"total_count":growth["eligible_count"],"complete":growth["complete"]}),
+                unit,
+            );
+            for (index, key) in [(21, "growth_bytes_per_second"), (23, "first_full_seconds")] {
+                entry[index] = csv_cell(&growth[key]["numerator"]);
+                entry[index + 1] = csv_cell(&growth[key]["denominator"]);
+            }
+            visit(entry)?;
+        }
+        let gaps = &row["capacity_gaps"];
+        for measure in ["requested_above_bound", "provisioned_above_requested"] {
+            let stats = serde_json::json!({"known_count":gaps["known_count"],"total_count":gaps["total_count"],"complete":gaps["complete"],"sum_bytes":gaps[format!("{measure}_bytes")]});
+            visit(statistic_csv_row(
+                "capacity_gap",
+                label,
+                id,
+                measure,
+                &stats,
+                unit,
+            ))?;
+        }
+    }
+    for measure in ["requested", "bound", "provisioned"] {
+        control.step()?;
+        visit(statistic_csv_row(
+            "storage_classes",
+            "CLASS TOTALS",
+            "storage_classes",
+            measure,
+            &calculations["storage_classes"]["statistics"][measure],
+            unit,
+        ))?;
     }
     Ok(())
 }

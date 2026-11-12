@@ -169,7 +169,7 @@ class PackagingTests(unittest.TestCase):
             release.smoke(self.artifacts, VERSION)
         self.assertEqual(json.loads(record.read_text())["status"], "failed")
 
-    def test_smoke_uses_owned_root_and_cleans_up_without_user_configuration(self):
+    def smoke_fixture(self, download=False, license_mode="valid"):
         artifacts = self.complete_set()
         calls, roots = [], []
         native = next(item for item in artifacts if item["target"] == "aarch64-apple-darwin")
@@ -186,22 +186,46 @@ class PackagingTests(unittest.TestCase):
             calls.append(command)
             roots.append(owned)
             if command[1] == "install":
+                self.assertEqual(any(arg.startswith("--archive=") for arg in command), not download)
                 stored = owned / "store" / "plugin"
                 stored.parent.mkdir()
                 stored.write_bytes(header_fixture(native["target"]))
                 stored.chmod(0o755)
+                if license_mode != "missing":
+                    (stored.parent / "LICENSE").write_bytes((release.ROOT / "LICENSE").read_bytes() if license_mode == "valid" else b"wrong license")
                 (owned / "bin").mkdir()
                 (owned / "bin" / release.BINARY).symlink_to(stored)
                 return subprocess_result("")
             return subprocess_result(f"kubectl-view-storage {VERSION}\n" if command[-1] == "--version" else "--require-metrics")
 
         with mock.patch.object(release.platform, "system", return_value="Darwin"), mock.patch.object(release.platform, "machine", return_value="arm64"), mock.patch.object(release.subprocess, "run", side_effect=run):
-            release.smoke(self.artifacts, VERSION, Path("/mock/krew"), Path("/mock/kubectl"))
+            try:
+                release.smoke(self.artifacts, VERSION, Path("/mock/krew"), Path("/mock/kubectl"), download=download)
+            finally:
+                self.assertTrue(all(not path.exists() for path in roots))
         self.assertEqual(len(calls), 5)
         self.assertIn("check-plugin.py",calls[3][1])
         self.assertIn("test-credential-terminal.py",calls[4][1])
-        self.assertTrue(all(not path.exists() for path in roots))
-        self.assertEqual(json.loads((self.artifacts / "krew-smoke.json").read_text())["status"], "passed")
+        record = json.loads((self.artifacts / "krew-smoke.json").read_text())
+        self.assertEqual(record["status"], "passed")
+        self.assertTrue(record["license_verified"])
+        self.assertEqual(record["installation_source"], "manifest-uri" if download else "local-archive")
+
+    def test_smoke_uses_owned_root_and_cleans_up_without_user_configuration(self):
+        self.smoke_fixture()
+
+    def test_download_smoke_uses_manifest_uri_without_archive_override(self):
+        self.smoke_fixture(download=True)
+
+    def test_missing_installed_license_fails_and_cleans_up(self):
+        with self.assertRaisesRegex(ValueError, "preserve the project LICENSE"):
+            self.smoke_fixture(license_mode="missing")
+        self.assertEqual(json.loads((self.artifacts / "krew-smoke.json").read_text())["status"], "failed")
+
+    def test_wrong_installed_license_fails_and_cleans_up(self):
+        with self.assertRaisesRegex(ValueError, "preserve the project LICENSE"):
+            self.smoke_fixture(license_mode="wrong")
+        self.assertEqual(json.loads((self.artifacts / "krew-smoke.json").read_text())["status"], "failed")
 
 
 def subprocess_result(stdout):

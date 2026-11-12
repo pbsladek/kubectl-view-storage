@@ -1,0 +1,47 @@
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+Storage calculations (units: GiB; logical capacity)
+
+GROUP             COUNT  REQUESTED     BOUND  PROVISIONED
+----------------  -----  ---------  --------  -----------
+TOTAL                 1   1.00 GiB  1.00 GiB     1.00 GiB
+view-storage-csi      1   1.00 GiB  1.00 GiB     1.00 GiB
+
+Reported filesystem usage (per claim; not physical backend totals)
+
+GROUP               FS SIZE       USED  AVAILABLE   USE%  SAMPLES
+----------------  ---------  ---------  ---------  -----  -------
+TOTAL             58.37 GiB  35.94 GiB  19.43 GiB  61.6%      1/1
+view-storage-csi  58.37 GiB  35.94 GiB  19.43 GiB  61.6%      1/1
+
+Provisioned volume sizes (known records; P95 uses nearest rank)
+
+GROUP             MEASURE      KNOWN       MIN      MEAN    MEDIAN       P95       MAX
+----------------  -----------  -----  --------  --------  --------  --------  --------
+TOTAL             provisioned    1/1  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB
+view-storage-csi  provisioned    1/1  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB
+
+Distribution of named storage-class totals (1 classes)
+
+GROUP         MEASURE      KNOWN       MIN      MEAN    MEDIAN       P95       MAX
+------------  -----------  -----  --------  --------  --------  --------  --------
+CLASS TOTALS  requested      1/1  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB
+CLASS TOTALS  provisioned    1/1  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB  1.00 GiB
+
+Observed growth (paired samples; first full means earliest claim)
+
+GROUP             GROWTH / HOUR  FIRST FULL IN  PAIRS  STATUS
+----------------  -------------  -------------  -----  --------
+TOTAL                  0.73 GiB         1.11 d    1/1  Complete
+view-storage-csi       0.73 GiB         1.11 d    1/1  Complete
+Two-sample linear estimates assume unchanged growth; they are not forecasts of backend capacity.
+
+* Incomplete selection or quantities; statistics use known values.
+Requested, bound and provisioned are separate capacities; do not add them together.
+
+Selection: complete (1 matched)
+Metrics: 1/1 claims fresh and complete; inodes: 1/1
+Latest sample: 2026-11-11T09:04:53Z
+Note: filesystem size exceeds provisioned size on 1 volume(s); the driver may report backing storage.
+Filesystem totals are per claim, not physical storage totals.

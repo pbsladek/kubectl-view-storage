@@ -9,7 +9,7 @@ in parallel across native architectures and Kubernetes versions.
 | Backend | Fixture | Required assertions |
 | --- | --- | --- |
 | Local-path | kind provisioner, 128Mi RWO claim, two consumers on one node | Dynamic binding and provider identity; 16MiB shared write and SHA-256; persistence after replacing the writer; deduplicated claim capacity; unknown counters remain null and strict metrics fail when unavailable. Includes the existing inventory and restricted-RBAC cases. |
-| CSI hostpath | Reviewed upstream driver, 1Gi RWO Filesystem claim | Two mounted consumers; fresh attributable byte tuples before/after a bounded fsynced write; shared content; request budgets and logical capacity. Inode availability is recorded independently. |
+| CSI hostpath | Reviewed upstream driver, 1Gi RWO Filesystem claim | Two mounted consumers; fresh attributable byte tuples before/after a bounded fsynced write; shared content; request budgets and logical capacity. The same write also validates exact observed growth/available-space projection; a temporary two-replica StatefulSet verifies owner-based scope and one shared claim in stats/JSON/CSV. Inode availability is recorded independently. |
 | NFS CSI | Reviewed upstream driver, containerized userspace Ganesha server, 1Gi RWX claim | Required anti-affinity places consumers on two worker nodes; cross-node size and SHA-256; fresh byte and inode candidates from both nodes; counters change after writing; one logical capacity and no claimed physical total. |
 
 These are filesystem tests. They do not certify raw Block, cloud disks, snapshots,
@@ -59,9 +59,20 @@ The compatibility workflow builds and tests the binary once per native Linux
 architecture (`ubuntu-24.04` and `ubuntu-24.04-arm`). Live jobs verify the artifact's
 revision, architecture, SHA-256 and regular tar member before executing it.
 Each live job runs all three backends. PRs run the baseline Kubernetes version
-on both architectures; weekly and manual runs cover all three reviewed versions
-on both architectures. The clusters are disposable, and no cloud storage
+on both architectures; weekly and default manual runs cover all three reviewed versions
+on both architectures. The Storage build jobs create release binaries and run
+release PTY checks; the main CI suite supplies the unit/property/HTTP tests. The clusters are disposable, and no cloud storage
 credentials or external NFS service are required.
+
+For a quick manual workflow check with all three storage types on both
+architectures, select the baseline only:
+
+```sh
+gh workflow run compatibility.yml --ref main -f full_matrix=false
+```
+
+The default remains the complete six-cell matrix. No backend is omitted by the
+baseline option.
 
 Each profile records sanitized plugin reports and a validation receipt under
 `artifacts/<run-id>/`. The suite receipt under `artifacts/storage-e2e-<suite-id>/`

@@ -1,6 +1,53 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 use super::*;
 use crate::policy::Exit;
+
+#[test]
+fn statistics_text_and_csv_expose_partial_values_growth_reasons_and_capacity_gaps() {
+    use clap::Parser;
+    let mut document: Value =
+        serde_json::from_str(include_str!("../../examples/contract/healthy/report.json")).unwrap();
+    document["records"][0]["requested_bytes"] = "120".into();
+    document["records"][0]["bound_bytes"] = "100".into();
+    document["records"][0]["provisioned_bytes"] = "150".into();
+    document["summary"]["selection_complete"] = false.into();
+    let mut query = crate::cli::Cli::try_parse_from(["cmd", "--view", "stats", "--units", "B"])
+        .unwrap()
+        .query("demo")
+        .unwrap();
+    crate::calculations::attach_checked(&mut document, &query, &mut Unbounded).unwrap();
+    let mut report = Report {
+        document,
+        exit: Exit::Success,
+        strict_conflict: None,
+    };
+    let text = text(&report, View::Stats, false, false);
+    assert!(text.contains("120.00 B*") && text.contains("requested above bound 20.00 B"));
+    let rows = csv_rows(&report.document);
+    assert!(
+        rows.iter()
+            .all(|row| row.len() == CALCULATION_CSV_HEADER.len())
+    );
+    assert_eq!(rows[0][6], "false");
+    assert_eq!(rows[0][7], "120");
+    assert_eq!(rows[0][8], "120.00 B");
+    let baseline = report.document.clone();
+    query.baseline = Some(std::sync::Arc::new(
+        crate::calculations::Baseline::from_document(baseline).unwrap(),
+    ));
+    report.document["collection"]["finished_at"] = "2026-11-06T21:00:00Z".into();
+    crate::calculations::attach_checked(&mut report.document, &query, &mut Unbounded).unwrap();
+    let rendered = super::text(&report, View::Stats, false, false);
+    assert!(rendered.contains("sample_not_newer") && rendered.contains("0/1"));
+    report.document["calculations"]["rows"][0]["label"] = "untrusted\n\u{1b}[31m".into();
+    let rendered = super::text(&report, View::Stats, false, false);
+    assert!(rendered.contains("untrusted\\n\\u{1b}[31m"));
+    assert!(!rendered.contains('\u{1b}'));
+    let cancel = CancellationToken::new();
+    cancel.cancel();
+    assert!(write_text(Vec::new(), &report, View::Stats, false, false, &cancel).is_err());
+    assert!(for_each_csv_row(&report.document, &cancel, |_| Ok(())).is_err());
+}
 macro_rules! scenario {
     ($name:literal) => {
         (

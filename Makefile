@@ -11,6 +11,7 @@ check:
 	python3 scripts/test-dependency-check.py
 	python3 scripts/test-dev-environment.py
 	python3 scripts/test-csi-environment.py
+	python3 scripts/test-dev-calculations.py
 	python3 scripts/test-storage-e2e.py
 	python3 scripts/test-release-packaging.py
 	python3 scripts/test-smoke-http.py

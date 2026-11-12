@@ -1,4 +1,4 @@
-name: Stable and dependency maintenance
+name: Maintenance
 on:
   pull_request:
     paths-ignore: ['**/*.md', 'examples/live/**']
@@ -17,13 +17,52 @@ env:
   CARGO_INCREMENTAL: '0'
 jobs:
   stable:
+    name: stable-${{ matrix.label }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: ${{ github.event_name == 'pull_request' }}
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            label: linux
+          - os: macos-15
+            label: macos
+    runs-on: ${{ matrix.os }}
+    env:
+      RUSTUP_TOOLCHAIN: stable
     steps:
       - uses: actions/checkout@v7.0.1
-      - run: python3 scripts/check-toolchain.py --latest
+      - name: Resolve latest stable and avoid testing the same compiler twice
+        id: compiler
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          python3 - <<'PY'
+          import os, subprocess, tomllib
+          with open('rust-toolchain.toml', 'rb') as source:
+              pinned = tomllib.load(source)['toolchain']['channel']
+          actual = subprocess.check_output(['rustc', '--version'], text=True).split()[1]
+          differs = actual != pinned
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('differs=' + str(differs).lower() + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+              output.write(f'### Stable compiler\n\nPinned: {pinned}; stable: {actual}. ' + ('Run compatibility tests.\n' if differs else 'Identical release; pinned coverage/native jobs supply the tests.\n'))
+          PY
+      - uses: ./.github/actions/rust-cache
+        if: steps.compiler.outputs.differs == 'true'
+        with:
+          group: stable
+      - name: New stable compiler compatibility
+        if: steps.compiler.outputs.differs == 'true'
+        run: |
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --all-targets
+          python3 scripts/test-credential-terminal.py
+      - name: Latest stable bundle
+        run: python3 scripts/check-toolchain.py --latest
   advisories:
-    runs-on: ubuntu-latest
+    name: audit
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
       - run: rustup show active-toolchain

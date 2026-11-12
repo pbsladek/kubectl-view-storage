@@ -1,6 +1,20 @@
 # Phases 0–5 acceptance audit
 
-Updated 2026-11-07 against [the specification](SPEC.md) and [phase exits](IMPLEMENTATION_PLAN.md). Final validation remains in progress. Native macOS ARM64 and Linux ARM64 pass 169 Rust tests; emulated Linux AMD64 passes 168 before one test-only addition. Full-source coverage is 93.44%. Eleven randomized laws, both parser fuzz smoke targets, nineteen pipeline reports and nine actual HTTP reports pass. Inventory/RBAC and CSI lifecycles pass on Kubernetes 1.35–1.37. Four genuine target archives and a native macOS ARM64 isolated Krew install pass. [Implementation evidence](IMPLEMENTATION_STATUS.md) records source/platform limits.
+Original 2026-11-07 checkpoint against [the specification](SPEC.md) and [phase exits](IMPLEMENTATION_PLAN.md). Final validation remains in progress. Native macOS ARM64 and Linux ARM64 pass 169 Rust tests; emulated Linux AMD64 passes 168 before one test-only addition. Full-source coverage is 93.44%. Eleven randomized laws, both parser fuzz smoke targets, nineteen pipeline reports and nine actual HTTP reports pass. Inventory/RBAC and CSI lifecycles pass on Kubernetes 1.35–1.37. Four genuine target archives and a native macOS ARM64 isolated Krew install pass. [Implementation evidence](IMPLEMENTATION_STATUS.md) records source/platform limits.
+
+## Operator calculations (A59–A65)
+
+Updated 2026-11-11. The calculation extension adds seven accepted cases to the original audit below. Local evidence passes on the source fingerprint recorded in [implementation evidence](IMPLEMENTATION_STATUS.md#operator-calculation-extension); four-platform hosted validation remains required on the selected release revision. Earlier A01–A58 evidence retains its original scope.
+
+| ID | Evidence examined | Remaining release verification |
+| --- | --- | --- |
+| A59 | Unit/large-counter/unknown tests; actual executable exports; real MB/GB/TB captures | Fresh native release matrix |
+| A60 | Independent Python integer/Fraction distribution oracle, corrupted-stat rejection checks and real class exports | Fresh native release matrix |
+| A61 | Canonical mode-set/Block/phase group tests and actual HTTP type breakdowns | Fresh native release matrix; raw-block telemetry remains outside scope |
+| A62 | Owner/unknown/duplicate-controller tests, real HTTP filter, real two-replica kind StatefulSet with one shared claim and owned deletion | Fresh hosted storage matrix |
+| A63 | Positive/zero/negative/repeated/resized/conflicting growth tests, actual saved-report CLI comparison, independently checked CSI write | Fresh native/hosted matrix; two-sample estimates only |
+| A64 | Invalid scope/filter/file/size/FIFO inputs, checked overflow, cancellation and process/output tests | Fresh native release matrix |
+| A65 | 189 Rust tests on native macOS/Linux arm64; five calculation reports independently validated per host; module coverage 97.50%; real text/JSON/CSV captures | Fresh native amd64/macOS/Linux release matrix; no publication claimed |
 
 ## Phase exits
 
@@ -13,7 +27,7 @@ Updated 2026-11-07 against [the specification](SPEC.md) and [phase exits](IMPLEM
 | 4 | Real fresh CSI byte/inode observations and shared 16 MiB write; pressure/conflict/overlap and active clock/cancellation tests | Final release-binary positive/negative CSI gate and native Linux CSI jobs; live Block/RWX remain unverified |
 | 5 | Locked test/coverage/report evidence, live RBAC/CSI, native release/archive and source-package preparation | Outstanding A01–A58 scopes below; final source installation, live negative gate and native CI; local Krew and all four artifact builds pass |
 
-Phase 5 explicitly requires all A01–A58, including A30. Phase 6's publication work does not remove A30 from this goal. Local preparation/installation remains required; external publication is a separate action.
+Phase 5 now requires all A01–A65, including A30. Phase 6's publication work does not remove A30 from this goal. Local preparation/installation remains required; external publication is a separate action.
 
 ## Acceptance items
 

@@ -111,7 +111,7 @@ pub(crate) fn finish_checked<C: Checkpoint>(
     sort::groups_checked(&mut groups, query, control).map_err(CheckedError::Interrupted)?;
     sort::diagnostics_checked(&mut collected.graph.diagnostics, control)
         .map_err(CheckedError::Interrupted)?;
-    let document = report::build_checked(
+    let mut document = report::build_checked(
         &collected.graph,
         query,
         &collected.selection,
@@ -120,6 +120,9 @@ pub(crate) fn finish_checked<C: Checkpoint>(
         &findings,
         control,
     )?;
+    if query.statistics {
+        crate::calculations::attach_checked(&mut document, query, control)?;
+    }
     Ok(Report {
         document,
         exit,

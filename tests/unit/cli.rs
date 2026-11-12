@@ -1,5 +1,34 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 use super::*;
+
+#[test]
+fn statistics_defaults_and_explicit_dimensions_keep_a_small_cli() {
+    let q = parse(&["--view", "stats", "--units", "tb"]).unwrap();
+    assert!(q.statistics);
+    assert_eq!(q.group_by, vec![Dimension::Storageclass]);
+    assert_eq!(q.units.to_string(), "TB");
+    assert!(!q.utilization);
+    let q = parse(&[
+        "--view",
+        "stats",
+        "--compare",
+        "earlier.json",
+        "-g",
+        "access-mode,volume-mode,sts,phase",
+    ])
+    .unwrap();
+    assert!(q.utilization);
+    assert_eq!(
+        q.group_by,
+        vec![
+            Dimension::Accessmode,
+            Dimension::Volumemode,
+            Dimension::Statefulset,
+            Dimension::Phase
+        ]
+    );
+    assert!(parse(&["--view", "stats", "-g", "accessmode,access-mode"]).is_err());
+}
 fn parse(args: &[&str]) -> Result<Query, String> {
     Cli::try_parse_from(std::iter::once("kubectl-view-storage").chain(args.iter().copied()))
         .map_err(|e| e.to_string())?

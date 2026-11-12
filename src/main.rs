@@ -83,6 +83,22 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         let _ = error_message(cancel, &message).await;
         return Exit::Invalid;
     }
+    let baseline = if let Some(path) = cli.compare.clone() {
+        match tokio::task::spawn_blocking(move || {
+            kubectl_view_storage::calculations::Baseline::load(&path)
+        })
+        .await
+        {
+            Ok(Ok(value)) => Some(Arc::new(value)),
+            Ok(Err(message)) => {
+                let _ = error_message(cancel, &message).await;
+                return Exit::Invalid;
+            }
+            Err(_) => return Exit::Fatal,
+        }
+    } else {
+        None
+    };
     let started = Instant::now();
     let configuration = tokio::select! {
         biased;
@@ -127,13 +143,14 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         let _ = error_message(cancel, "collection deadline exceeded before inventory").await;
         return Exit::Fatal;
     }
-    let query = match cli.query(&namespace) {
+    let mut query = match cli.query(&namespace) {
         Ok(query) => query,
         Err(message) => {
             let _ = error_message(cancel, &message).await;
             return Exit::Invalid;
         }
     };
+    query.baseline = baseline;
     let collected = match collect::collect(
         Arc::new(client),
         Arc::new(SystemClock),

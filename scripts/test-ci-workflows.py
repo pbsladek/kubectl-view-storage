@@ -64,7 +64,7 @@ class WorkflowProtocols(unittest.TestCase):
                 self.assertTrue(lines[1].startswith('kubectl=v'))
 
     def test_binary_reuse_checks_revision_architecture_hash_and_regular_member(self):
-        build = inline_python('compatibility.yml', 'build', 'Test and build once per native architecture')
+        build = inline_python('compatibility.yml', 'build', 'Build once per native architecture')
         consume = inline_python('compatibility.yml', 'live', 'Verify same-revision binary built for this architecture')
         for fault in (None, 'revision', 'architecture', 'hash', 'link'):
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary:
@@ -107,20 +107,66 @@ class WorkflowProtocols(unittest.TestCase):
             subprocess.run([sys.executable, '-c', code], cwd=ROOT, env=env, check=True, capture_output=True)
             self.assertEqual(output.read_text(), 'RUSTUP_TOOLCHAIN=nightly-2026-11-01\n')
 
-    def test_required_gate_rejects_accidentally_skipped_rust_jobs(self):
-        code = inline_python('ci.yml', 'required', 'Required checks, including intentional documentation skips')
-        names = ('lint', 'stable', 'coverage', 'faults', 'distribution')
-        for needed in (True, False):
-            results = {name: {'result':'skipped'} for name in names}
-            results['contracts'] = {'result':'success','outputs':{'rust':str(needed).lower()}}
-            with mock.patch.dict(os.environ, {'RESULTS':json.dumps(results)}):
-                if needed:
-                    with self.assertRaises(AssertionError): exec(compile(code,'required-gate','exec'), {})
-                else:
-                    exec(compile(code,'required-gate','exec'), {})
-            if needed:
-                for name in names: results[name]['result'] = 'success'
-                with mock.patch.dict(os.environ, {'RESULTS':json.dumps(results)}):exec(compile(code,'required-gate','exec'), {})
+    def test_required_gate_checks_rust_and_release_scopes_independently(self):
+        code = inline_python('ci.yml', 'required', 'Required checks')
+        for rust, release in ((False, False), (True, False), (False, True), (True, True)):
+            expected = {'lint', 'coverage'} if rust else set()
+            if release: expected.add('distribution')
+            results = {name: {'result':'success' if name in expected else 'skipped'} for name in ('lint', 'coverage', 'distribution')}
+            results['contracts'] = {'result':'success','outputs':{'rust':str(rust).lower(), 'distribution':str(release).lower()}}
+            with self.subTest(rust=rust, release=release), mock.patch.dict(os.environ, {'RESULTS':json.dumps(results)}):
+                exec(compile(code, 'required-gate', 'exec'), {})
+            for name in expected | {'contracts'}:
+                broken = json.loads(json.dumps(results))
+                broken[name]['result'] = 'skipped'
+                with self.subTest(skipped=name, rust=rust, release=release), mock.patch.dict(os.environ, {'RESULTS':json.dumps(broken)}):
+                    with self.assertRaises(AssertionError): exec(compile(code, 'required-gate', 'exec'), {})
+            for missing in ('rust', 'distribution'):
+                broken = json.loads(json.dumps(results))
+                broken['contracts']['outputs'].pop(missing)
+                with mock.patch.dict(os.environ, {'RESULTS':json.dumps(broken)}):
+                    with self.assertRaises(AssertionError): exec(compile(code, 'required-gate', 'exec'), {})
+
+    def test_faults_remain_in_the_required_linux_lint_job(self):
+        jobs = yaml.safe_load((ROOT / '.github/workflows/ci.yml').read_text())['jobs']
+        self.assertNotIn('faults', jobs)
+        self.assertNotIn('stable', jobs)
+        self.assertIn('lint', jobs['required']['needs'])
+        lint = jobs['lint']
+        self.assertEqual({row['os'] for row in lint['strategy']['matrix']['include']}, {'ubuntu-24.04', 'macos-15'})
+        fault = next(step for step in lint['steps'] if step.get('run') == 'python3 scripts/check-mutations.py')
+        self.assertEqual(fault['if'], "matrix.os == 'ubuntu-24.04'")
+
+    def test_storage_build_preserves_release_and_terminal_checks_without_duplicate_suite(self):
+        jobs = yaml.safe_load((ROOT / '.github/workflows/compatibility.yml').read_text())['jobs']
+        command = next(step['run'] for step in jobs['build']['steps'] if step.get('name') == 'Build once per native architecture')
+        self.assertNotIn('cargo test', command)
+        self.assertIn('cargo build --locked --release', command)
+        self.assertIn('scripts/test-credential-terminal.py --binary target/release/kubectl-view_storage', command)
+        self.assertEqual({row['os'] for row in jobs['build']['strategy']['matrix']['include']}, set(jobs['live']['strategy']['matrix']['os']))
+
+    def test_stable_compatibility_selects_only_a_different_compiler(self):
+        code = inline_python('maintenance.yml', 'stable', 'Resolve latest stable and avoid testing the same compiler twice')
+        import tomllib
+        pinned = tomllib.loads((ROOT / 'rust-toolchain.toml').read_text())['toolchain']['channel']
+        for version, differs in ((pinned, False), ('9.99.0', True)):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as temporary:
+                output, summary = Path(temporary)/'output', Path(temporary)/'summary'
+                with mock.patch.dict(os.environ, {'GITHUB_OUTPUT':str(output), 'GITHUB_STEP_SUMMARY':str(summary)}), mock.patch.object(subprocess, 'check_output', return_value=f'rustc {version} (test revision)'):
+                    exec(compile(code, 'stable-selection', 'exec'), {})
+                self.assertEqual(output.read_text(), 'differs=' + str(differs).lower() + '\n')
+        jobs = yaml.safe_load((ROOT / '.github/workflows/maintenance.yml').read_text())['jobs']
+        self.assertEqual({row['os'] for row in jobs['stable']['strategy']['matrix']['include']}, {'ubuntu-24.04', 'macos-15'})
+        self.assertEqual(jobs['stable']['if'], "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'")
+
+    def test_release_keeps_native_and_installed_validation_for_all_four_targets(self):
+        jobs = yaml.safe_load((ROOT / '.github/workflows/native-distribution.yml').read_text())['jobs']
+        expected = {'x86_64-unknown-linux-musl', 'aarch64-unknown-linux-musl', 'x86_64-apple-darwin', 'aarch64-apple-darwin'}
+        for name in ('native', 'installed'):
+            self.assertEqual({row['target'] for row in jobs[name]['strategy']['matrix']['include']}, expected)
+        for name, dependency in (('manifest', 'native'), ('installed', 'manifest')):
+            needs = jobs[name]['needs']
+            self.assertIn(dependency, [needs] if isinstance(needs, str) else needs)
 
 
 if __name__ == '__main__':

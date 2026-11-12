@@ -720,6 +720,7 @@ pub async fn collect<T: Transport>(
     // A CSI PV can already settle its driver predicate. Keep unresolved PVC
     // drivers as candidates, but do not enrich a known inventory nonmatch.
     inventory_query.filters.node = None;
+    inventory_query.filters.statefulset = None;
     let (restored, relevant) = candidates(
         inventory,
         &inventory_query,
@@ -761,11 +762,12 @@ pub async fn collect<T: Transport>(
             .await?;
         let mut driver_query = query.clone();
         driver_query.filters.node = None;
+        driver_query.filters.statefulset = None;
         let (restored, matches) = candidates(
             inventory,
             &driver_query,
             false,
-            query.filters.node.is_some(),
+            query.filters.node.is_some() || query.filters.statefulset.is_some(),
             RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
         )
         .await?;
@@ -814,11 +816,12 @@ pub async fn collect<T: Transport>(
         if query.filters.driver.is_some() {
             let mut driver_query = query.clone();
             driver_query.filters.node = None;
+            driver_query.filters.statefulset = None;
             let (restored, matches) = candidates(
                 inventory,
                 &driver_query,
                 false,
-                query.filters.node.is_some(),
+                query.filters.node.is_some() || query.filters.statefulset.is_some(),
                 RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
             )
             .await?;
@@ -841,7 +844,7 @@ pub async fn collect<T: Transport>(
     {
         return Err(error.clone());
     }
-    if query.filters.node.is_some() {
+    if query.filters.node.is_some() || query.filters.statefulset.is_some() {
         let (restored, matches) = candidates(
             inventory,
             query,

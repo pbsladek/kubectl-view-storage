@@ -7,6 +7,16 @@ from pathlib import Path
 import subprocess
 
 
+CI_TOOL_ONLY = frozenset({
+    '.github/actions/cargo-tool/action.yml',
+    '.github/workflows/maintenance.yml',
+    '.github/workflows/fuzz.yml',
+    'scripts/coverage.sh',
+    'scripts/check-coverage.py',
+    'scripts/fuzz-smoke.sh',
+})
+
+
 def rust_needed(paths):
     for name in paths:
         # Contract examples are compiled into tests; live captures are docs.
@@ -22,6 +32,12 @@ def rust_needed(paths):
             continue
         return True
     return False
+
+
+def distribution_needed(paths):
+    # These inputs affect validation tools, not the compiled plugin, its source
+    # package or Krew archives. Mixed/unknown/build inputs still select releases.
+    return rust_needed([name for name in paths if name not in CI_TOOL_ONLY])
 
 
 def verified_push_base(after):
@@ -73,14 +89,15 @@ def main():
     event = json.loads(args.event.read_text()) if args.event else {}
     paths = changed_paths(event, args.event_name)
     needed = paths is None or rust_needed(paths)
-    lines = f'rust={str(needed).lower()}\ndistribution={str(needed).lower()}\n'
+    distribution = paths is None or distribution_needed(paths)
+    lines = f'rust={str(needed).lower()}\ndistribution={str(distribution).lower()}\n'
     if output := os.environ.get('GITHUB_OUTPUT'):
         with open(output, 'a') as stream:
             stream.write(lines)
     print(lines, end='')
     if summary := os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(summary, 'a') as stream:
-            stream.write(f'### Check selection\n\nRust/native checks: **{needed}**. ' + ('Full run: manual/initial event or history unavailable.\n' if paths is None else f'{len(paths)} changed paths examined; documentation checks always run.\n'))
+            stream.write(f'### Check selection\n\nRust checks: **{needed}**. Release checks: **{distribution}**. ' + ('Full run: manual/initial event or history unavailable.\n' if paths is None else f'{len(paths)} changed paths examined; documentation checks always run.\n'))
 
 
 if __name__ == '__main__':

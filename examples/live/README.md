@@ -1,6 +1,6 @@
 # Captured live output
 
-These examples were captured from the compiled plugin through actual `kubectl view-storage` invocations against disposable kind clusters on macOS ARM64. They use real Kubernetes API responses and real kubelet/CSI observations, rather than mocked or handwritten reports.
+These examples were captured from the compiled plugin against disposable kind clusters on macOS ARM64. The inventory/usage captures used actual `kubectl view-storage` invocations; the newer [calculation captures](calculations/README.md) used the canonical executable directly and document equivalent kubectl commands. They use real Kubernetes API responses and real kubelet/CSI observations, rather than mocked or handwritten reports.
 
 - [Inventory](inventory/README.md): default tree, table, summary, issues, wide mount declarations, node/pod grouping, PVs, JSON, CSV, and a strict check with missing metrics.
 - [CSI usage](csi/README.md): measured filesystem and inode counters, all four text views, JSON, CSV, and a successful strict check.

@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-CORE = ("qty", "join", "group", "findings", "policy")
+CORE = ("qty", "join", "group", "findings", "policy", "calculations")
 
 
 def measure(report, source_root, require_complete=False):

@@ -374,6 +374,7 @@ pub(crate) fn normalize_checked<C: Checkpoint>(
                 string_at(&object.spec, "/volumeName").map(str::to_owned)
             },
             pvc_name,
+            pvc_uid: compatible_claim.and_then(|claim| claim.metadata.uid.clone()),
             requested,
             bound,
             provisioned,
@@ -471,6 +472,7 @@ pub(crate) fn normalize_checked<C: Checkpoint>(
                 .filter(|s| !s.is_empty())
                 .map(str::to_owned),
             state,
+            statefulset: statefulset_owner(pod, control).map_err(CheckedError::Interrupted)?,
         });
         for (record_index, volume_names) in refs {
             control.checked()?;
@@ -707,6 +709,56 @@ fn pod_owner_checked<C: Checkpoint>(
     Ok(None)
 }
 
+fn statefulset_owner<C: Checkpoint>(
+    pod: &Object,
+    control: &mut C,
+) -> Result<MetadataValue<StatefulSet>, C::Error> {
+    let mut owner = MetadataValue::Absent;
+    let mut controllers = 0;
+    for reference in &pod.metadata.owner_references {
+        control.step()?;
+        if reference
+            .get("controller")
+            .is_some_and(|value| !value.is_boolean())
+        {
+            return Ok(MetadataValue::Unknown);
+        }
+        if reference
+            .get("controller")
+            .and_then(serde_json::Value::as_bool)
+            != Some(true)
+        {
+            continue;
+        }
+        controllers += 1;
+        if controllers > 1 {
+            return Ok(MetadataValue::Unknown);
+        }
+        if string_at(reference, "/kind") == Some("StatefulSet") {
+            owner = match (
+                string_at(reference, "/apiVersion"),
+                string_at(reference, "/name"),
+                string_at(reference, "/uid"),
+            ) {
+                (Some("apps/v1"), Some(name), Some(uid))
+                    if !name.is_empty()
+                        && !name.chars().any(char::is_control)
+                        && ConsumerId::new(uid).is_ok() =>
+                {
+                    MetadataValue::Known(StatefulSet {
+                        name: name.into(),
+                        uid: uid.into(),
+                    })
+                }
+                _ => MetadataValue::Unknown,
+            };
+        } else if string_at(reference, "/kind").is_none() {
+            owner = MetadataValue::Unknown;
+        }
+    }
+    Ok(owner)
+}
+
 pub fn matches(
     record: &Record,
     query: &Query,
@@ -763,6 +815,29 @@ pub(crate) fn matches_checked<C: Checkpoint>(
             Predicate::Match
         } else if !matches!(record.consumer_visibility, ConsumerVisibility::Complete) || uncertain {
             Predicate::Unknown(BTreeSet::from(["node".into()]))
+        } else {
+            Predicate::NoMatch
+        });
+    }
+    if let Some(name) = &query.filters.statefulset {
+        let (mut known, mut uncertain) = (false, false);
+        for id in &record.consumers {
+            control.step()?;
+            if let Some(consumer) = consumers.get(id) {
+                known |= consumer.state.live()
+                    && consumer
+                        .statefulset
+                        .known()
+                        .is_some_and(|owner| &owner.name == name);
+                uncertain |= consumer.state == ReferenceState::Unknown
+                    || consumer.state.live()
+                        && matches!(consumer.statefulset, MetadataValue::Unknown);
+            }
+        }
+        result = result.and(if known {
+            Predicate::Match
+        } else if !matches!(record.consumer_visibility, ConsumerVisibility::Complete) || uncertain {
+            Predicate::Unknown(BTreeSet::from(["statefulset".into()]))
         } else {
             Predicate::NoMatch
         });

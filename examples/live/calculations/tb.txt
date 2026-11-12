@@ -1,0 +1,29 @@
+Persistent volume claims
+Context: kind-view-storage-csi  |  Namespace: view-storage-csi
+
+Storage calculations (units: TB; logical capacity)
+
+GROUP             COUNT    REQUESTED        BOUND  PROVISIONED
+----------------  -----  -----------  -----------  -----------
+TOTAL                 1  0.001074 TB  0.001074 TB  0.001074 TB
+view-storage-csi      1  0.001074 TB  0.001074 TB  0.001074 TB
+
+Provisioned volume sizes (known records; P95 uses nearest rank)
+
+GROUP             MEASURE      KNOWN          MIN         MEAN       MEDIAN          P95          MAX
+----------------  -----------  -----  -----------  -----------  -----------  -----------  -----------
+TOTAL             provisioned    1/1  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB
+view-storage-csi  provisioned    1/1  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB
+
+Distribution of named storage-class totals (1 classes)
+
+GROUP         MEASURE      KNOWN          MIN         MEAN       MEDIAN          P95          MAX
+------------  -----------  -----  -----------  -----------  -----------  -----------  -----------
+CLASS TOTALS  requested      1/1  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB
+CLASS TOTALS  provisioned    1/1  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB  0.001074 TB
+
+* Incomplete selection or quantities; statistics use known values.
+Requested, bound and provisioned are separate capacities; do not add them together.
+
+Selection: complete (1 matched)
+Metrics: not requested (use -u to collect usage).

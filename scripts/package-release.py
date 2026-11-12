@@ -165,7 +165,7 @@ def verify(directory, selected):
     return artifacts
 
 
-def smoke(directory, selected, krew=None, kubectl=None):
+def smoke(directory, selected, krew=None, kubectl=None, download=False):
     record = directory / "krew-smoke.json"
     record.write_text(json.dumps({"status": "running", "version": selected}) + "\n")
     try:
@@ -183,11 +183,17 @@ def smoke(directory, selected, krew=None, kubectl=None):
                        PATH=str(owned / "bin") + os.pathsep + os.environ.get("PATH", ""), NO_COLOR="1")
             for key in ("KREW_OS", "KREW_ARCH"):
                 env.pop(key, None)
-            subprocess.run([krew, "install", "--manifest=" + str((directory / "view-storage.yaml").resolve()),
-                "--archive=" + str((directory / native["archive"]).resolve())], env=env, check=True, capture_output=True, text=True, timeout=90)
+            command = [krew, "install", "--manifest=" + str((directory / "view-storage.yaml").resolve())]
+            if not download:
+                command.append("--archive=" + str((directory / native["archive"]).resolve()))
+            subprocess.run(command, env=env, check=True, capture_output=True, text=True, timeout=90)
             installed = owned / "bin" / BINARY
             require(installed.is_file() and os.access(installed, os.X_OK) and installed.resolve().is_relative_to(owned.resolve()), "Krew did not install the canonical plugin in the owned root")
             require(hashlib.sha256(installed.read_bytes()).hexdigest() == native["binary_sha256"], "installed binary differs from its archive")
+            installed_license = installed.resolve().parent / "LICENSE"
+            require(installed_license.is_file() and installed_license.resolve().is_relative_to(owned.resolve())
+                    and installed_license.read_bytes() == (ROOT / "LICENSE").read_bytes(),
+                    "Krew did not preserve the project LICENSE in the owned installation")
             for flag in ("--help", "--version"):
                 result = subprocess.run([kubectl, "view-storage", flag], env=env, check=True, capture_output=True, text=True, timeout=5)
                 require(not result.stderr, "installed help/version wrote to stderr")
@@ -196,7 +202,8 @@ def smoke(directory, selected, krew=None, kubectl=None):
             # completed stage on a child failure or watchdog timeout.
             subprocess.run([sys.executable,str(ROOT / "scripts/check-plugin.py"),"--binary",str(installed),"--kubectl",kubectl],env=env,check=True,text=True,timeout=30)
             subprocess.run([sys.executable,str(ROOT / "scripts/test-credential-terminal.py"),"--binary",str(installed),"--evidence-directory",str(directory / "installed-authentication")],env=env,check=True,text=True,timeout=30)
-        record.write_text(json.dumps({"status": "passed", "version": selected, "artifact": native}, indent=2) + "\n")
+        record.write_text(json.dumps({"status": "passed", "version": selected, "artifact": native,
+            "installation_source": "manifest-uri" if download else "local-archive", "license_verified": True}, indent=2) + "\n")
     except BaseException as error:
         record.write_text(json.dumps({"status": "failed", "version": selected, "reason": str(error)}) + "\n")
         raise
@@ -214,6 +221,7 @@ def main():
     install = commands.add_parser("smoke")
     install.add_argument("--krew", type=Path)
     install.add_argument("--kubectl", type=Path)
+    install.add_argument("--download", action="store_true", help="install from the manifest URI instead of overriding with the local archive; requires published assets")
     for command in commands.choices.values():
         command.add_argument("--directory", type=Path, required=True)
     args = parser.parse_args()
@@ -226,7 +234,7 @@ def main():
         elif args.command == "verify":
             verify(args.directory, selected)
         else:
-            smoke(args.directory, selected, args.krew, args.kubectl)
+            smoke(args.directory, selected, args.krew, args.kubectl, args.download)
     except (OSError, ValueError, KeyError, tarfile.TarError, struct.error, subprocess.SubprocessError) as error:
         parser.exit(1, f"FAIL release artifacts: {error}\n")
     print(f"PASS local {args.command} checks for v{selected}; publication and cross-platform runtime evidence are separate")

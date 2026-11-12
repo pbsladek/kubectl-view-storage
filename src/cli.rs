@@ -16,6 +16,7 @@ pub enum View {
     Table,
     Summary,
     Issues,
+    Stats,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum Output {
@@ -47,6 +48,10 @@ pub enum Dimension {
     Driver,
     Node,
     Pod,
+    Accessmode,
+    Volumemode,
+    Statefulset,
+    Phase,
 }
 impl FromStr for Dimension {
     type Err = String;
@@ -59,6 +64,10 @@ impl FromStr for Dimension {
             "driver" => Ok(Self::Driver),
             "node" => Ok(Self::Node),
             "pod" => Ok(Self::Pod),
+            "accessmode" | "access-mode" => Ok(Self::Accessmode),
+            "volumemode" | "volume-mode" => Ok(Self::Volumemode),
+            "statefulset" | "sts" => Ok(Self::Statefulset),
+            "phase" => Ok(Self::Phase),
             _ => Err(format!("unsupported grouping dimension: {s}")),
         }
     }
@@ -73,6 +82,10 @@ impl fmt::Display for Dimension {
             Self::Driver => "driver",
             Self::Node => "node",
             Self::Pod => "pod",
+            Self::Accessmode => "accessmode",
+            Self::Volumemode => "volumemode",
+            Self::Statefulset => "statefulset",
+            Self::Phase => "phase",
         })
     }
 }
@@ -165,6 +178,8 @@ pub struct Filters {
     pub storage_class: Option<String>,
     pub driver: Option<String>,
     pub node: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub statefulset: Option<String>,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -206,6 +221,15 @@ pub struct Cli {
     pub driver: Option<String>,
     #[arg(long)]
     pub node: Option<String>,
+    /// Select claims referenced by live pods controlled by this StatefulSet.
+    #[arg(long, alias = "sts")]
+    pub statefulset: Option<String>,
+    /// Units for the stats view: auto, B, KB..PB, or KiB..PiB (case insensitive).
+    #[arg(long, alias = "unit", default_value = "auto")]
+    pub units: crate::calculations::Unit,
+    /// Earlier JSON report used to calculate observed growth and time to full.
+    #[arg(long, value_name = "REPORT.json")]
+    pub compare: Option<PathBuf>,
     #[arg(long, default_value = "name:asc")]
     pub sort: Sort,
     #[arg(long, value_parser=duration, default_value="10s")]
@@ -241,6 +265,9 @@ pub struct Query {
     pub require_metrics: bool,
     pub fail_on: Option<Severity>,
     pub sort: Sort,
+    pub statistics: bool,
+    pub units: crate::calculations::Unit,
+    pub baseline: Option<std::sync::Arc<crate::calculations::Baseline>>,
 }
 
 fn fail_level(value: &str) -> Result<Severity, String> {
@@ -253,6 +280,17 @@ fn fail_level(value: &str) -> Result<Severity, String> {
 
 impl Cli {
     pub fn validate(&self) -> Result<(), String> {
+        if self.view != View::Stats
+            && (self.compare.is_some() || self.units != crate::calculations::Unit::Auto)
+        {
+            return Err("--units and --compare require --view stats".into());
+        }
+        if self.all_namespaces && self.statefulset.is_some() {
+            return Err("--statefulset requires a single namespace; use -n NAMESPACE".into());
+        }
+        if self.kind == Kind::Pv && self.statefulset.is_some() {
+            return Err("--statefulset requires PVC mode".into());
+        }
         if self.kind == Kind::Pv
             && (!self.all_namespaces || self.namespace.is_some() || self.pvc.is_some())
         {
@@ -278,6 +316,7 @@ impl Cli {
             ("pv", &self.pv),
             ("driver", &self.driver),
             ("node", &self.node),
+            ("statefulset", &self.statefulset),
         ] {
             if value
                 .as_ref()
@@ -305,7 +344,9 @@ impl Cli {
                 )
             },
             group_by: self.group_by.clone().unwrap_or_else(|| {
-                if self.kind == Kind::Pv {
+                if self.view == View::Stats {
+                    vec![Dimension::Storageclass]
+                } else if self.kind == Kind::Pv {
                     vec![Dimension::Storageclass, Dimension::Pv]
                 } else {
                     vec![
@@ -322,14 +363,18 @@ impl Cli {
                 storage_class: self.storage_class.clone(),
                 driver: self.driver.clone(),
                 node: self.node.clone(),
+                statefulset: self.statefulset.clone(),
             },
-            utilization: self.utilization || self.require_metrics,
+            utilization: self.utilization || self.require_metrics || self.compare.is_some(),
             max_metrics_age: self.max_metrics_age,
             warn_used: self.warn_used,
             critical_used: self.critical_used,
             require_metrics: self.require_metrics,
             fail_on: self.fail_on,
             sort: self.sort,
+            statistics: self.view == View::Stats,
+            units: self.units,
+            baseline: None,
         })
     }
 }

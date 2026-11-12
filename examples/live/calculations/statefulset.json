@@ -1,0 +1,1775 @@
+{
+  "calculations": {
+    "comparison": null,
+    "display_unit": "GiB",
+    "physical_total": false,
+    "rows": [
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "total",
+        "label": "TOTAL",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "overlapping_children": true,
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      },
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "group:statefulset=view-storage-csi%2Fcalculation-db-7d32aae5%409b9c8112-abcd-4490-8013-7a87b8d89a46",
+        "label": "view-storage-csi/calculation-db-7d32aae5",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      },
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "group:statefulset=view-storage-csi%2Fcalculation-db-7d32aae5%409b9c8112-abcd-4490-8013-7a87b8d89a46/accessmode=ReadWriteOnce",
+        "label": "view-storage-csi/calculation-db-7d32aae5 / ReadWriteOnce",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      },
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "group:statefulset=view-storage-csi%2Fcalculation-db-7d32aae5%409b9c8112-abcd-4490-8013-7a87b8d89a46/accessmode=ReadWriteOnce/volumemode=Filesystem",
+        "label": "view-storage-csi/calculation-db-7d32aae5 / ReadWriteOnce / Filesystem",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      },
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "group:statefulset=~absent",
+        "label": "(none)",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      },
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "group:statefulset=~absent/accessmode=ReadWriteOnce",
+        "label": "(none) / ReadWriteOnce",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      },
+      {
+        "capacity_gaps": {
+          "complete": true,
+          "known_count": 1,
+          "provisioned_above_requested_bytes": "0",
+          "requested_above_bound_bytes": "0",
+          "total_count": 1
+        },
+        "id": "group:statefulset=~absent/accessmode=ReadWriteOnce/volumemode=Filesystem",
+        "label": "(none) / ReadWriteOnce / Filesystem",
+        "statistics": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "max_bytes": "1073741824",
+            "mean_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "median_bytes": {
+              "denominator": "1",
+              "numerator": "1073741824"
+            },
+            "min_bytes": "1073741824",
+            "p95_bytes": "1073741824",
+            "sum_bytes": "1073741824",
+            "total_count": 1
+          }
+        },
+        "totals": {
+          "bound": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "filesystem": {
+            "available_bytes": null,
+            "capacity_bytes": null,
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_bytes": null,
+            "used_percent": null
+          },
+          "finding_counts": {
+            "critical": 0,
+            "info": 0,
+            "warning": 0
+          },
+          "inodes": {
+            "coverage": {
+              "by_reason": {},
+              "eligible": 1,
+              "fresh_complete": 0,
+              "not_applicable": 0
+            },
+            "inodes_free": null,
+            "inodes_total": null,
+            "inodes_used": null,
+            "newest_observed_at": null,
+            "oldest_observed_at": null,
+            "physical_total": false,
+            "reason": null,
+            "status": "not_requested",
+            "used_percent": null
+          },
+          "phase_counts": {
+            "Bound": 1
+          },
+          "provisioned": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "record_count": 1,
+          "requested": {
+            "complete": true,
+            "known_count": 1,
+            "known_sum_bytes": "1073741824",
+            "total_count": 1
+          },
+          "selection_complete": true
+        }
+      }
+    ],
+    "storage_classes": {
+      "named_count": 1,
+      "record_counts_by_assignment": {
+        "known": 1
+      },
+      "statistics": {
+        "bound": {
+          "complete": true,
+          "known_count": 1,
+          "max_bytes": "1073741824",
+          "mean_bytes": {
+            "denominator": "1",
+            "numerator": "1073741824"
+          },
+          "median_bytes": {
+            "denominator": "1",
+            "numerator": "1073741824"
+          },
+          "min_bytes": "1073741824",
+          "p95_bytes": "1073741824",
+          "sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "provisioned": {
+          "complete": true,
+          "known_count": 1,
+          "max_bytes": "1073741824",
+          "mean_bytes": {
+            "denominator": "1",
+            "numerator": "1073741824"
+          },
+          "median_bytes": {
+            "denominator": "1",
+            "numerator": "1073741824"
+          },
+          "min_bytes": "1073741824",
+          "p95_bytes": "1073741824",
+          "sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "requested": {
+          "complete": true,
+          "known_count": 1,
+          "max_bytes": "1073741824",
+          "mean_bytes": {
+            "denominator": "1",
+            "numerator": "1073741824"
+          },
+          "median_bytes": {
+            "denominator": "1",
+            "numerator": "1073741824"
+          },
+          "min_bytes": "1073741824",
+          "p95_bytes": "1073741824",
+          "sum_bytes": "1073741824",
+          "total_count": 1
+        }
+      }
+    },
+    "version": "view-storage/calculations/v1alpha1"
+  },
+  "collection": {
+    "context": "kind-view-storage-csi",
+    "cost": {
+      "base_attempts": 1,
+      "enrichment_attempts": 3,
+      "enrichment_budget": 256,
+      "enrichment_strategy": {
+        "persistentvolumes": "targeted_get",
+        "storageclasses": "targeted_get"
+      },
+      "node_requests": 0,
+      "node_targets": 0,
+      "priority_sequence": [
+        "membership",
+        "utilization_targets",
+        "display"
+      ],
+      "response_bytes": 33964,
+      "unresolved_prerequisites": []
+    },
+    "finished_at": "2026-11-11T09:04:56.144388Z",
+    "scope": {
+      "all_namespaces": false,
+      "namespace": "view-storage-csi"
+    },
+    "sources": [
+      {
+        "resource": "persistentvolumeclaims",
+        "resource_version": "1063",
+        "scope": "view-storage-csi",
+        "status": "complete",
+        "verb": "list"
+      },
+      {
+        "resource": "pods",
+        "resource_version": "1063",
+        "scope": "view-storage-csi",
+        "status": "complete",
+        "verb": "list"
+      }
+    ],
+    "started_at": "2026-11-11T09:04:56.132041Z"
+  },
+  "consumers": [
+    {
+      "active": true,
+      "deletion_timestamp": null,
+      "id": "pod:543af159-227b-4741-8527-db51e32f5d57",
+      "name": "calculation-db-7d32aae5-0",
+      "namespace": "view-storage-csi",
+      "node": "view-storage-csi-control-plane",
+      "phase": "Running",
+      "reference_state": "active",
+      "statefulset": {
+        "name": "calculation-db-7d32aae5",
+        "uid": "9b9c8112-abcd-4490-8013-7a87b8d89a46"
+      },
+      "uid": "543af159-227b-4741-8527-db51e32f5d57"
+    },
+    {
+      "active": true,
+      "deletion_timestamp": null,
+      "id": "pod:ce29bddb-c7e6-45b9-8521-c8bba0ab78be",
+      "name": "calculation-db-7d32aae5-1",
+      "namespace": "view-storage-csi",
+      "node": "view-storage-csi-control-plane",
+      "phase": "Running",
+      "reference_state": "active",
+      "statefulset": {
+        "name": "calculation-db-7d32aae5",
+        "uid": "9b9c8112-abcd-4490-8013-7a87b8d89a46"
+      },
+      "uid": "ce29bddb-c7e6-45b9-8521-c8bba0ab78be"
+    },
+    {
+      "active": true,
+      "deletion_timestamp": null,
+      "id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "name": "peer",
+      "namespace": "view-storage-csi",
+      "node": "view-storage-csi-control-plane",
+      "phase": "Running",
+      "reference_state": "active",
+      "uid": "5aad205d-b71d-41ce-8772-d4c4e6509a68"
+    },
+    {
+      "active": true,
+      "deletion_timestamp": null,
+      "id": "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "name": "writer",
+      "namespace": "view-storage-csi",
+      "node": "view-storage-csi-control-plane",
+      "phase": "Running",
+      "reference_state": "active",
+      "uid": "586d7a18-f0a2-4468-8c5a-be24f819d385"
+    }
+  ],
+  "diagnostics": [],
+  "findings": [],
+  "groups": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "children": [],
+              "dimension": "volumemode",
+              "id": "group:statefulset=view-storage-csi%2Fcalculation-db-7d32aae5%409b9c8112-abcd-4490-8013-7a87b8d89a46/accessmode=ReadWriteOnce/volumemode=Filesystem",
+              "member_ids": [
+                "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+              ],
+              "overlapping_children": false,
+              "totals": {
+                "bound": {
+                  "complete": true,
+                  "known_count": 1,
+                  "known_sum_bytes": "1073741824",
+                  "total_count": 1
+                },
+                "filesystem": {
+                  "available_bytes": null,
+                  "capacity_bytes": null,
+                  "coverage": {
+                    "by_reason": {},
+                    "eligible": 1,
+                    "fresh_complete": 0,
+                    "not_applicable": 0
+                  },
+                  "newest_observed_at": null,
+                  "oldest_observed_at": null,
+                  "physical_total": false,
+                  "reason": null,
+                  "status": "not_requested",
+                  "used_bytes": null,
+                  "used_percent": null
+                },
+                "finding_counts": {
+                  "critical": 0,
+                  "info": 0,
+                  "warning": 0
+                },
+                "inodes": {
+                  "coverage": {
+                    "by_reason": {},
+                    "eligible": 1,
+                    "fresh_complete": 0,
+                    "not_applicable": 0
+                  },
+                  "inodes_free": null,
+                  "inodes_total": null,
+                  "inodes_used": null,
+                  "newest_observed_at": null,
+                  "oldest_observed_at": null,
+                  "physical_total": false,
+                  "reason": null,
+                  "status": "not_requested",
+                  "used_percent": null
+                },
+                "phase_counts": {
+                  "Bound": 1
+                },
+                "provisioned": {
+                  "complete": true,
+                  "known_count": 1,
+                  "known_sum_bytes": "1073741824",
+                  "total_count": 1
+                },
+                "record_count": 1,
+                "requested": {
+                  "complete": true,
+                  "known_count": 1,
+                  "known_sum_bytes": "1073741824",
+                  "total_count": 1
+                },
+                "selection_complete": true
+              },
+              "value": "Filesystem",
+              "value_state": "known"
+            }
+          ],
+          "dimension": "accessmode",
+          "id": "group:statefulset=view-storage-csi%2Fcalculation-db-7d32aae5%409b9c8112-abcd-4490-8013-7a87b8d89a46/accessmode=ReadWriteOnce",
+          "member_ids": [
+            "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+          ],
+          "overlapping_children": false,
+          "totals": {
+            "bound": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "filesystem": {
+              "available_bytes": null,
+              "capacity_bytes": null,
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 0,
+                "not_applicable": 0
+              },
+              "newest_observed_at": null,
+              "oldest_observed_at": null,
+              "physical_total": false,
+              "reason": null,
+              "status": "not_requested",
+              "used_bytes": null,
+              "used_percent": null
+            },
+            "finding_counts": {
+              "critical": 0,
+              "info": 0,
+              "warning": 0
+            },
+            "inodes": {
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 0,
+                "not_applicable": 0
+              },
+              "inodes_free": null,
+              "inodes_total": null,
+              "inodes_used": null,
+              "newest_observed_at": null,
+              "oldest_observed_at": null,
+              "physical_total": false,
+              "reason": null,
+              "status": "not_requested",
+              "used_percent": null
+            },
+            "phase_counts": {
+              "Bound": 1
+            },
+            "provisioned": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "record_count": 1,
+            "requested": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "selection_complete": true
+          },
+          "value": "ReadWriteOnce",
+          "value_state": "known"
+        }
+      ],
+      "dimension": "statefulset",
+      "id": "group:statefulset=view-storage-csi%2Fcalculation-db-7d32aae5%409b9c8112-abcd-4490-8013-7a87b8d89a46",
+      "member_ids": [
+        "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+      ],
+      "overlapping_children": false,
+      "totals": {
+        "bound": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "filesystem": {
+          "available_bytes": null,
+          "capacity_bytes": null,
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 0,
+            "not_applicable": 0
+          },
+          "newest_observed_at": null,
+          "oldest_observed_at": null,
+          "physical_total": false,
+          "reason": null,
+          "status": "not_requested",
+          "used_bytes": null,
+          "used_percent": null
+        },
+        "finding_counts": {
+          "critical": 0,
+          "info": 0,
+          "warning": 0
+        },
+        "inodes": {
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 0,
+            "not_applicable": 0
+          },
+          "inodes_free": null,
+          "inodes_total": null,
+          "inodes_used": null,
+          "newest_observed_at": null,
+          "oldest_observed_at": null,
+          "physical_total": false,
+          "reason": null,
+          "status": "not_requested",
+          "used_percent": null
+        },
+        "phase_counts": {
+          "Bound": 1
+        },
+        "provisioned": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "record_count": 1,
+        "requested": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "selection_complete": true
+      },
+      "value": "view-storage-csi/calculation-db-7d32aae5@9b9c8112-abcd-4490-8013-7a87b8d89a46",
+      "value_state": "known"
+    },
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "children": [],
+              "dimension": "volumemode",
+              "id": "group:statefulset=~absent/accessmode=ReadWriteOnce/volumemode=Filesystem",
+              "member_ids": [
+                "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+              ],
+              "overlapping_children": false,
+              "totals": {
+                "bound": {
+                  "complete": true,
+                  "known_count": 1,
+                  "known_sum_bytes": "1073741824",
+                  "total_count": 1
+                },
+                "filesystem": {
+                  "available_bytes": null,
+                  "capacity_bytes": null,
+                  "coverage": {
+                    "by_reason": {},
+                    "eligible": 1,
+                    "fresh_complete": 0,
+                    "not_applicable": 0
+                  },
+                  "newest_observed_at": null,
+                  "oldest_observed_at": null,
+                  "physical_total": false,
+                  "reason": null,
+                  "status": "not_requested",
+                  "used_bytes": null,
+                  "used_percent": null
+                },
+                "finding_counts": {
+                  "critical": 0,
+                  "info": 0,
+                  "warning": 0
+                },
+                "inodes": {
+                  "coverage": {
+                    "by_reason": {},
+                    "eligible": 1,
+                    "fresh_complete": 0,
+                    "not_applicable": 0
+                  },
+                  "inodes_free": null,
+                  "inodes_total": null,
+                  "inodes_used": null,
+                  "newest_observed_at": null,
+                  "oldest_observed_at": null,
+                  "physical_total": false,
+                  "reason": null,
+                  "status": "not_requested",
+                  "used_percent": null
+                },
+                "phase_counts": {
+                  "Bound": 1
+                },
+                "provisioned": {
+                  "complete": true,
+                  "known_count": 1,
+                  "known_sum_bytes": "1073741824",
+                  "total_count": 1
+                },
+                "record_count": 1,
+                "requested": {
+                  "complete": true,
+                  "known_count": 1,
+                  "known_sum_bytes": "1073741824",
+                  "total_count": 1
+                },
+                "selection_complete": true
+              },
+              "value": "Filesystem",
+              "value_state": "known"
+            }
+          ],
+          "dimension": "accessmode",
+          "id": "group:statefulset=~absent/accessmode=ReadWriteOnce",
+          "member_ids": [
+            "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+          ],
+          "overlapping_children": false,
+          "totals": {
+            "bound": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "filesystem": {
+              "available_bytes": null,
+              "capacity_bytes": null,
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 0,
+                "not_applicable": 0
+              },
+              "newest_observed_at": null,
+              "oldest_observed_at": null,
+              "physical_total": false,
+              "reason": null,
+              "status": "not_requested",
+              "used_bytes": null,
+              "used_percent": null
+            },
+            "finding_counts": {
+              "critical": 0,
+              "info": 0,
+              "warning": 0
+            },
+            "inodes": {
+              "coverage": {
+                "by_reason": {},
+                "eligible": 1,
+                "fresh_complete": 0,
+                "not_applicable": 0
+              },
+              "inodes_free": null,
+              "inodes_total": null,
+              "inodes_used": null,
+              "newest_observed_at": null,
+              "oldest_observed_at": null,
+              "physical_total": false,
+              "reason": null,
+              "status": "not_requested",
+              "used_percent": null
+            },
+            "phase_counts": {
+              "Bound": 1
+            },
+            "provisioned": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "record_count": 1,
+            "requested": {
+              "complete": true,
+              "known_count": 1,
+              "known_sum_bytes": "1073741824",
+              "total_count": 1
+            },
+            "selection_complete": true
+          },
+          "value": "ReadWriteOnce",
+          "value_state": "known"
+        }
+      ],
+      "dimension": "statefulset",
+      "id": "group:statefulset=~absent",
+      "member_ids": [
+        "pvc:dc626703-100a-4cc9-be4d-019b3e73b848"
+      ],
+      "overlapping_children": false,
+      "totals": {
+        "bound": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "filesystem": {
+          "available_bytes": null,
+          "capacity_bytes": null,
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 0,
+            "not_applicable": 0
+          },
+          "newest_observed_at": null,
+          "oldest_observed_at": null,
+          "physical_total": false,
+          "reason": null,
+          "status": "not_requested",
+          "used_bytes": null,
+          "used_percent": null
+        },
+        "finding_counts": {
+          "critical": 0,
+          "info": 0,
+          "warning": 0
+        },
+        "inodes": {
+          "coverage": {
+            "by_reason": {},
+            "eligible": 1,
+            "fresh_complete": 0,
+            "not_applicable": 0
+          },
+          "inodes_free": null,
+          "inodes_total": null,
+          "inodes_used": null,
+          "newest_observed_at": null,
+          "oldest_observed_at": null,
+          "physical_total": false,
+          "reason": null,
+          "status": "not_requested",
+          "used_percent": null
+        },
+        "phase_counts": {
+          "Bound": 1
+        },
+        "provisioned": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "record_count": 1,
+        "requested": {
+          "complete": true,
+          "known_count": 1,
+          "known_sum_bytes": "1073741824",
+          "total_count": 1
+        },
+        "selection_complete": true
+      },
+      "value": null,
+      "value_state": "absent"
+    }
+  ],
+  "query": {
+    "critical_used_percent": "90",
+    "fail_on": null,
+    "filters": {
+      "driver": null,
+      "node": null,
+      "pv": null,
+      "pvc": null,
+      "selector": null,
+      "statefulset": "calculation-db-7d32aae5",
+      "storage_class": null
+    },
+    "group_by": [
+      "statefulset",
+      "accessmode",
+      "volumemode"
+    ],
+    "kind": "pvc",
+    "max_metrics_age_seconds": 300,
+    "metrics_source": null,
+    "require_metrics": false,
+    "sort": "name:asc",
+    "utilization": false,
+    "warn_used_percent": "80"
+  },
+  "records": [
+    {
+      "access_modes": [
+        "ReadWriteOnce"
+      ],
+      "active_consumer_count": 4,
+      "bound_bytes": "1073741824",
+      "consumer_ids": [
+        "pod:543af159-227b-4741-8527-db51e32f5d57",
+        "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+        "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+        "pod:ce29bddb-c7e6-45b9-8521-c8bba0ab78be"
+      ],
+      "consumer_visibility": "complete",
+      "created_at": "2026-11-11T09:01:02Z",
+      "driver": "hostpath.csi.k8s.io",
+      "filesystem": {
+        "available_bytes": null,
+        "candidate_count": 0,
+        "candidates": [],
+        "capacity_bytes": null,
+        "field_status": {
+          "available_bytes": "missing",
+          "capacity_bytes": "missing",
+          "used_bytes": "missing"
+        },
+        "observed_at": null,
+        "observed_range_percent": null,
+        "reason": null,
+        "source": null,
+        "status": "not_requested",
+        "used_bytes": null,
+        "used_percent": null
+      },
+      "id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "inodes": {
+        "candidate_count": 0,
+        "candidates": [],
+        "field_status": {
+          "inodes_free": "missing",
+          "inodes_total": "missing",
+          "inodes_used": "missing"
+        },
+        "inodes_free": null,
+        "inodes_total": null,
+        "inodes_used": null,
+        "observed_at": null,
+        "observed_range_percent": null,
+        "reason": null,
+        "source": null,
+        "status": "not_requested",
+        "used_percent": null
+      },
+      "kind": "pvc",
+      "name": "data",
+      "namespace": "view-storage-csi",
+      "phase": "Bound",
+      "provisioned_bytes": "1073741824",
+      "pv_name": "pvc-dc626703-100a-4cc9-be4d-019b3e73b848",
+      "reclaim_policy": "Delete",
+      "requested_bytes": "1073741824",
+      "storage_class": "view-storage-csi",
+      "storage_class_state": "known",
+      "terminating_consumer_count": 0,
+      "uid": "dc626703-100a-4cc9-be4d-019b3e73b848",
+      "volume_binding_mode": "Immediate",
+      "volume_mode": "Filesystem"
+    }
+  ],
+  "relationships": [
+    {
+      "consumer_id": "pod:543af159-227b-4741-8527-db51e32f5d57",
+      "id": "edge:dc626703-100a-4cc9-be4d-019b3e73b848:543af159-227b-4741-8527-db51e32f5d57",
+      "mounts": [
+        {
+          "container": "probe",
+          "container_kind": "app",
+          "kind": "filesystem",
+          "path": "/data",
+          "read_only": true,
+          "sub_path": null,
+          "sub_path_expr": null,
+          "volume_name": "data"
+        }
+      ],
+      "record_id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "runtime_state": "unverified",
+      "volume_names": [
+        "data"
+      ]
+    },
+    {
+      "consumer_id": "pod:586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "id": "edge:dc626703-100a-4cc9-be4d-019b3e73b848:586d7a18-f0a2-4468-8c5a-be24f819d385",
+      "mounts": [
+        {
+          "container": "probe",
+          "container_kind": "app",
+          "kind": "filesystem",
+          "path": "/data",
+          "read_only": false,
+          "sub_path": null,
+          "sub_path_expr": null,
+          "volume_name": "data"
+        }
+      ],
+      "record_id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "runtime_state": "unverified",
+      "volume_names": [
+        "data"
+      ]
+    },
+    {
+      "consumer_id": "pod:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "id": "edge:dc626703-100a-4cc9-be4d-019b3e73b848:5aad205d-b71d-41ce-8772-d4c4e6509a68",
+      "mounts": [
+        {
+          "container": "probe",
+          "container_kind": "app",
+          "kind": "filesystem",
+          "path": "/data",
+          "read_only": false,
+          "sub_path": null,
+          "sub_path_expr": null,
+          "volume_name": "data"
+        }
+      ],
+      "record_id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "runtime_state": "unverified",
+      "volume_names": [
+        "data"
+      ]
+    },
+    {
+      "consumer_id": "pod:ce29bddb-c7e6-45b9-8521-c8bba0ab78be",
+      "id": "edge:dc626703-100a-4cc9-be4d-019b3e73b848:ce29bddb-c7e6-45b9-8521-c8bba0ab78be",
+      "mounts": [
+        {
+          "container": "probe",
+          "container_kind": "app",
+          "kind": "filesystem",
+          "path": "/data",
+          "read_only": true,
+          "sub_path": null,
+          "sub_path_expr": null,
+          "volume_name": "data"
+        }
+      ],
+      "record_id": "pvc:dc626703-100a-4cc9-be4d-019b3e73b848",
+      "runtime_state": "unverified",
+      "volume_names": [
+        "data"
+      ]
+    }
+  ],
+  "schema_version": "view-storage/v1alpha1",
+  "selection": {
+    "base_count": 1,
+    "complete": true,
+    "excluded_count": 0,
+    "matched_count": 1,
+    "unknown_count": 0,
+    "unknown_records": []
+  },
+  "summary": {
+    "bound": {
+      "complete": true,
+      "known_count": 1,
+      "known_sum_bytes": "1073741824",
+      "total_count": 1
+    },
+    "filesystem": {
+      "available_bytes": null,
+      "capacity_bytes": null,
+      "coverage": {
+        "by_reason": {},
+        "eligible": 1,
+        "fresh_complete": 0,
+        "not_applicable": 0
+      },
+      "newest_observed_at": null,
+      "oldest_observed_at": null,
+      "physical_total": false,
+      "reason": null,
+      "status": "not_requested",
+      "used_bytes": null,
+      "used_percent": null
+    },
+    "finding_counts": {
+      "critical": 0,
+      "info": 0,
+      "warning": 0
+    },
+    "inodes": {
+      "coverage": {
+        "by_reason": {},
+        "eligible": 1,
+        "fresh_complete": 0,
+        "not_applicable": 0
+      },
+      "inodes_free": null,
+      "inodes_total": null,
+      "inodes_used": null,
+      "newest_observed_at": null,
+      "oldest_observed_at": null,
+      "physical_total": false,
+      "reason": null,
+      "status": "not_requested",
+      "used_percent": null
+    },
+    "overlapping_children": true,
+    "phase_counts": {
+      "Bound": 1
+    },
+    "provisioned": {
+      "complete": true,
+      "known_count": 1,
+      "known_sum_bytes": "1073741824",
+      "total_count": 1
+    },
+    "record_count": 1,
+    "requested": {
+      "complete": true,
+      "known_count": 1,
+      "known_sum_bytes": "1073741824",
+      "total_count": 1
+    },
+    "selection_complete": true
+  }
+}

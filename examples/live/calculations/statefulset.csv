@@ -1,0 +1,14 @@
+row_type,group,measure,unit,known_count,total_count,complete,sum_bytes,sum,min_bytes,min,mean_numerator_bytes,mean_denominator,mean,median_numerator_bytes,median_denominator,median,p95_bytes,p95,max_bytes,max,growth_numerator_bytes_per_second,growth_denominator,first_full_numerator_seconds,first_full_denominator,group_id
+group,TOTAL,requested,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,total
+group,TOTAL,bound,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,total
+group,TOTAL,provisioned,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,total
+capacity_gap,TOTAL,requested_above_bound,GiB,1,1,true,0,0.00 GiB,,,,,,,,,,,,,,,,,total
+capacity_gap,TOTAL,provisioned_above_requested,GiB,1,1,true,0,0.00 GiB,,,,,,,,,,,,,,,,,total
+group,view-storage-csi,requested,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,group:storageclass=view-storage-csi
+group,view-storage-csi,bound,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,group:storageclass=view-storage-csi
+group,view-storage-csi,provisioned,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,group:storageclass=view-storage-csi
+capacity_gap,view-storage-csi,requested_above_bound,GiB,1,1,true,0,0.00 GiB,,,,,,,,,,,,,,,,,group:storageclass=view-storage-csi
+capacity_gap,view-storage-csi,provisioned_above_requested,GiB,1,1,true,0,0.00 GiB,,,,,,,,,,,,,,,,,group:storageclass=view-storage-csi
+storage_classes,CLASS TOTALS,requested,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,storage_classes
+storage_classes,CLASS TOTALS,bound,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,storage_classes
+storage_classes,CLASS TOTALS,provisioned,GiB,1,1,true,1073741824,1.00 GiB,1073741824,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1,1.00 GiB,1073741824,1.00 GiB,1073741824,1.00 GiB,,,,,storage_classes
