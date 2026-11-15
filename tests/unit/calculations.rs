@@ -2,6 +2,7 @@
 use super::*;
 use crate::{cli::Cli, work::Unbounded};
 use clap::Parser;
+use proptest::prelude::*;
 
 fn document() -> Value {
     serde_json::from_str(include_str!("../../examples/contract/healthy/report.json")).unwrap()
@@ -48,6 +49,65 @@ fn decimal_and_binary_units_are_exact_case_insensitive_and_safe_at_integer_limit
     assert!("xb".parse::<Unit>().is_err());
     for unit in Unit::ALL {
         assert_eq!(unit.to_string().parse::<Unit>().unwrap(), unit);
+    }
+}
+
+#[test]
+fn unit_and_hourly_conversions_preserve_valid_large_fractions() {
+    assert_eq!(Unit::Mb.format(u128::MAX - 1, u128::MAX), "0.000001 MB");
+    assert_eq!(Unit::Kb.format(u128::MAX - 1, u128::MAX / 50), "0.05 KB");
+    assert_eq!(Unit::Pb.format(0, u128::MAX), "0.00 PB");
+    let rate =
+        json!({"numerator":(u128::MAX - 1).to_string(), "denominator":u128::MAX.to_string()});
+    assert_eq!(format_hourly_rate(&rate, Unit::B), "3600.00 B");
+    assert_eq!(format_hourly_rate(&rate, Unit::Auto), "3.52 KiB");
+    let negative =
+        json!({"numerator":format!("-{}", u128::MAX - 1), "denominator":u128::MAX.to_string()});
+    assert_eq!(format_hourly_rate(&negative, Unit::B), "-3600.00 B");
+}
+
+proptest! {
+    #[test]
+    fn unit_display_matches_independent_integer_rounding(
+        numerator in any::<u64>(), denominator in 1..=u64::MAX, index in 0usize..Unit::ALL.len(),
+    ) {
+        let selected = Unit::ALL[index];
+        let mut unit = selected;
+        if unit == Unit::Auto {
+            unit = Unit::B;
+            for candidate in [Unit::Kib, Unit::Mib, Unit::Gib, Unit::Tib, Unit::Pib] {
+                if u128::from(numerator) / u128::from(denominator) >= candidate.scale() {
+                    unit = candidate;
+                }
+            }
+        }
+        // u64 inputs leave room for these independent cross-products in u128.
+        let divisor = u128::from(denominator) * unit.scale();
+        let rounded = |places| {
+            let scaled = u128::from(numerator) * 10u128.pow(places);
+            scaled / divisor + u128::from(scaled % divisor >= divisor / 2 + divisor % 2)
+        };
+        let amount = if rounded(2) == 0 && numerator != 0 {
+            let value = rounded(6);
+            if value == 0 { "<0.000001".into() } else { format!("0.{value:06}") }
+        } else {
+            let value = rounded(2);
+            format!("{}.{:02}", value / 100, value % 100)
+        };
+        let expected = format!("{amount} {unit}");
+        prop_assert_eq!(selected.format(numerator.into(), denominator.into()), expected.as_str());
+        let factor = u128::MAX / u128::from(numerator.max(denominator));
+        prop_assert_eq!(selected.format(u128::from(numerator) * factor, u128::from(denominator) * factor), expected);
+    }
+
+    #[test]
+    fn hourly_conversion_matches_cross_products_at_integer_limits(
+        numerator in any::<u64>(), denominator in 1..=u64::MAX,
+    ) {
+        let factor = u128::MAX / u128::from(numerator.max(denominator));
+        let scaled = u128::from(numerator) * 3600;
+        let value = Fraction { negative: false, n: u128::from(numerator) * factor, d: u128::from(denominator) * factor };
+        prop_assert_eq!(hourly_parts(value), Some((scaled / u128::from(denominator), (scaled % u128::from(denominator)) * factor)));
     }
 }
 

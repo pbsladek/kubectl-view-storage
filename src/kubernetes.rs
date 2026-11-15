@@ -16,6 +16,7 @@ use std::{
 
 pub struct Kubernetes {
     client: Client,
+    prometheus: Option<Box<Client>>,
     received: AtomicUsize,
 }
 
@@ -77,9 +78,11 @@ impl Kubernetes {
             return Ok(Loaded::IsolateCredentials);
         }
         let client=Client::try_from(config).map_err(|_|"Cannot create Kubernetes client; check TLS, proxy, and credential-helper configuration.".to_owned())?;
+        let prometheus = prometheus_client(cli)?;
         Ok(Loaded::Direct(
             Self {
                 client,
+                prometheus,
                 received: AtomicUsize::new(0),
             },
             namespace,
@@ -90,6 +93,20 @@ impl Kubernetes {
 
 impl Transport for Kubernetes {
     fn get(&self, path: String) -> ResponseFuture<'_> {
+        self.request(&self.client, path)
+    }
+    fn prometheus_get(&self, path: String) -> ResponseFuture<'_> {
+        match &self.prometheus {
+            Some(client) => self.request(client, path),
+            None => Box::pin(async { Err(Failure::Transport) }),
+        }
+    }
+    fn response_bytes(&self) -> Option<usize> {
+        Some(self.received.load(Ordering::Relaxed))
+    }
+}
+impl Kubernetes {
+    fn request<'a>(&'a self, client: &'a Client, path: String) -> ResponseFuture<'a> {
         Box::pin(async move {
             let request = http::Request::get(path)
                 .header(http::header::ACCEPT, "application/json")
@@ -99,7 +116,7 @@ impl Transport for Kubernetes {
                 )
                 .body(kube::client::Body::from(Vec::new()))
                 .map_err(|_| Failure::Invalid)?;
-            let response = self.client.send(request).await.map_err(classify)?;
+            let response = client.send(request).await.map_err(classify)?;
             let status = response.status().as_u16();
             let retry_after = response
                 .headers()
@@ -143,9 +160,41 @@ impl Transport for Kubernetes {
             })
         })
     }
-    fn response_bytes(&self) -> Option<usize> {
-        Some(self.received.load(Ordering::Relaxed))
+}
+
+fn prometheus_client(cli: &Cli) -> Result<Option<Box<Client>>, String> {
+    use kubectl_view_storage::{cli::MetricsSource, prometheus};
+    if cli.metrics_source != MetricsSource::Prometheus {
+        return Ok(None);
     }
+    let uri = prometheus::endpoint(
+        cli.prometheus_url
+            .as_deref()
+            .ok_or("Prometheus URL is required")?,
+    )?;
+    // This fresh configuration has no Kubernetes auth, proxy, headers or CA.
+    let mut config = Config::new(uri);
+    config.default_retry = false;
+    config.connect_timeout = Some(cli.request_timeout);
+    config.read_timeout = Some(cli.request_timeout);
+    if let Some(path) = &cli.prometheus_token_file {
+        let bytes = prometheus::read_configuration_file(path, 64 * 1024)?;
+        let token = String::from_utf8(bytes).map_err(|_| "invalid Prometheus token file")?;
+        let token = token.trim();
+        if token.is_empty() {
+            return Err("empty Prometheus token file".into());
+        }
+        config.auth_info.token = Some(token.to_owned().into());
+    }
+    if let Some(path) = &cli.prometheus_ca_file {
+        prometheus::read_configuration_file(path, 1024 * 1024)?;
+        config.root_cert_file = Some(path.clone());
+    }
+    Client::try_from(config)
+        .map(|client| Some(Box::new(client)))
+        .map_err(|_| {
+            "cannot create Prometheus client; check the explicit URL, CA and token file".into()
+        })
 }
 
 fn classify(error: kube::Error) -> Failure {

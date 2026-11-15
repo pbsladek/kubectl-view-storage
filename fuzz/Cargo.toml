@@ -10,6 +10,8 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4.13"
 kubectl-view-storage = { path = ".." }
+clap = { version = "4.6.7", default-features = false, features = ["std"] }
+serde_json = { version = "1.0.154", default-features = false, features = ["std"] }
 
 [[bin]]
 name = "quantity"
@@ -21,6 +23,13 @@ bench = false
 [[bin]]
 name = "statistics"
 path = "fuzz_targets/statistics.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "prometheus"
+path = "fuzz_targets/prometheus.rs"
 test = false
 doc = false
 bench = false

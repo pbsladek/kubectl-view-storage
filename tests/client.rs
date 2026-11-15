@@ -19,6 +19,24 @@ mod calculations;
 mod exec_lifecycle;
 #[path = "support/http_reports.rs"]
 mod http_reports;
+#[path = "support/prometheus.rs"]
+mod prometheus;
+
+fn save_integration(name: &str, value: &Value) {
+    if let Some(directory) = std::env::var_os("VIEW_STORAGE_HTTP_REPORTS") {
+        let directory = PathBuf::from(directory).join("integrations");
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(
+            directory.join(format!("{name}.json")),
+            serde_json::to_vec(value).unwrap(),
+        )
+        .unwrap();
+    }
+}
+#[path = "support/watch.rs"]
+mod watch;
+#[path = "support/workloads.rs"]
+mod workloads;
 
 struct Kubeconfig {
     directory: PathBuf,

@@ -82,6 +82,8 @@ CI exports actual collector/finalizer reports with `VIEW_STORAGE_TEST_REPORTS` a
 
 ## Rust quality and coverage
 
+The HTTP report verifier also checks nine watch/Prometheus/workload exports for NDJSON history pairing, exact provider counters, replica deduplication and real controller relationships. `scripts/verify-prometheus-live.py --prometheus-binary /path/to/prometheus` runs a dedicated native TLS provider fixture without Docker or a user kubeconfig. The separate fuzz workspace now includes a `prometheus` target with fixed inventory, exercising arbitrary bounded provider envelopes while asserting that inventory and graph relationships survive. It reuses the already resolved clap/serde_json versions as fuzz-only dependencies; the production dependency graph is unchanged.
+
 Use rustfmt and Clippy in CI, with warnings treated as errors on the pinned development toolchain. Review fallible conversions and exhaustive state handling; external input paths must not rely on unwrap/expect, unchecked indexing, or lossy casts. Test the committed resolution on the pinned baseline and the current-stable update check. Compiler/lint checks supplement behavioral tests.
 
 Use [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) and the matching llvm-tools-preview component. Phase 0 pins their versions and adds the coverage job. Measure the same production feature set as the release binary, using the unit, property, mock HTTP, and CLI tests without a disposable cluster. This makes the coverage gate reproducible on CI without driver availability.

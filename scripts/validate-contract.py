@@ -201,8 +201,14 @@ def check_semantics(report, exit_code):
                 check(m["status"] == "invalid" and m["candidate_count"] == 0 and all(m[field] is None for field in fields), "unknown volume mode asserted usable metrics")
             check(m["candidate_count"] == len(m["candidates"]), "candidate count mismatch")
             for candidate in m["candidates"]:
-                check(candidate["source"]["pod_id"] in targets, "candidate source is not a consumer")
-                check(pods[candidate["source"]["pod_id"]]["reference_state"] in ("active", "terminating"), "candidate source has unknown or terminal lifecycle")
+                source = candidate["source"]
+                check(source["provider"] == query["metrics_source"], "candidate uses a different provider")
+                if source["provider"] == "kubelet":
+                    check(source["pod_id"] in targets, "candidate source is not a consumer")
+                    check(pods[source["pod_id"]]["reference_state"] in ("active", "terminating"), "candidate source has unknown or terminal lifecycle")
+                else:
+                    check(source["pod_id"] is None and source["volume_name"] is None, "Prometheus invented a pod or volume reference")
+                    check(source["namespace"] == r["namespace"] and source["pvc"] == (r["name"] if r["kind"] == "pvc" else r["pvc_name"]), "Prometheus attributed samples to the wrong claim")
                 cv = [int(candidate[k]) if candidate[k] is not None else None for k in fields]
                 check(all(v is None or 0 <= v <= 2**64-1 for v in cv), "candidate counter outside u64")
                 check(candidate["used_percent"] == percentage(cv), "candidate percentage mismatch")
@@ -215,8 +221,13 @@ def check_semantics(report, exit_code):
             if m["status"] == "ok":
                 check(all(m["field_status"][k] == "ok" for k in fields), "partial tuple marked complete")
             if m["source"] is not None:
-                check(m["source"]["pod_id"] in targets, "metric source is not a consumer")
-                check(pods[m["source"]["pod_id"]]["node"] == m["source"]["node"], "metric attributed to wrong node")
+                check(m["source"]["provider"] == query["metrics_source"], "selected metric uses a different provider")
+                if m["source"]["provider"] == "kubelet":
+                    check(m["source"]["pod_id"] in targets, "metric source is not a consumer")
+                    check(pods[m["source"]["pod_id"]]["node"] == m["source"]["node"], "metric attributed to wrong node")
+                else:
+                    check(m["source"]["pod_id"] is None and m["source"]["volume_name"] is None, "Prometheus invented a selected pod reference")
+                    check(m["source"]["namespace"] == r["namespace"] and m["source"]["pvc"] == (r["name"] if r["kind"] == "pvc" else r["pvc_name"]), "selected Prometheus sample has the wrong claim identity")
             if m["status"] in ("ok","partial"):
                 age = (time(report["collection"]["finished_at"])-time(m["observed_at"])).total_seconds()
                 check(-30 <= age <= report["query"]["max_metrics_age_seconds"], "stale observation marked fresh")
@@ -264,6 +275,10 @@ def check_semantics(report, exit_code):
                 for identity in ids:
                     owners = [pod for pod in pods.values() if pod["id"] in records[identity]["consumer_ids"] and pod["reference_state"] in ("active", "terminating") and "statefulset" in pod]
                     check(any(f'{pod["namespace"]}/{pod["statefulset"]["name"]}@{pod["statefulset"]["uid"]}' == g["value"] for pod in owners), "fabricated StatefulSet relationship")
+            if g["value_state"] == "known" and g["dimension"] == "workload":
+                for identity in ids:
+                    owners = [pod for pod in pods.values() if pod["id"] in records[identity]["consumer_ids"] and pod["reference_state"] in ("active", "terminating") and "workload" in pod]
+                    check(any(f'{pod["namespace"]}/{pod["workload"]["kind"]}/{pod["workload"]["name"]}@{pod["workload"]["uid"]}' == g["value"] for pod in owners), "fabricated workload relationship")
             if g["children"]:
                 groups(g["children"],ids)
             children = [set(c["member_ids"]) for c in g["children"]]

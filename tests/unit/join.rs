@@ -32,6 +32,8 @@ fn statefulset_filter_uses_controller_identity_and_preserves_unknown_membership(
         vec![serde_json::json!({"kind":"StatefulSet","name":"database","controller":true})],
         vec![owner.clone(), owner.clone()],
         vec![serde_json::json!({"controller":"invalid"})],
+        vec![serde_json::Value::Null],
+        vec![serde_json::json!(7)],
     ] {
         input.pods[0].metadata.owner_references = owners;
         let (_, selection) =

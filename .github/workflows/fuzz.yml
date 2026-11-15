@@ -2,7 +2,7 @@ name: Fuzz
 on:
   push:
     branches: [main]
-    paths: ['src/qty.rs', 'src/transport.rs', 'src/metrics.rs', 'src/model.rs', 'src/work.rs', 'fuzz/**', 'Cargo.toml', 'Cargo.lock', 'scripts/fuzz-smoke.sh', '.github/workflows/fuzz.yml']
+    paths: ['src/qty.rs', 'src/transport.rs', 'src/metrics.rs', 'src/prometheus.rs', 'src/model.rs', 'src/work.rs', 'fuzz/**', 'Cargo.toml', 'Cargo.lock', 'scripts/fuzz-smoke.sh', '.github/workflows/fuzz.yml']
   pull_request:
     paths: ['src/**', 'fuzz/**', 'Cargo.toml', 'Cargo.lock', 'scripts/fuzz-smoke.sh']
   schedule:

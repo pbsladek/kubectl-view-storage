@@ -140,9 +140,11 @@ pub(crate) fn apply_checked<C: Checkpoint>(
                         continue;
                     }
                     let source = Source {
+                        provider: crate::cli::MetricsSource::Kubelet,
                         node: node.clone(),
-                        pod_id: consumer.id.clone(),
+                        pod_id: Some(consumer.id.clone()),
                         volume_name: volume.clone(),
+                        claim: None,
                     };
                     let timestamp = sample.get("time").and_then(Value::as_str);
                     let observed_at = timestamp.and_then(|s| s.parse::<Timestamp>().ok());

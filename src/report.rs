@@ -20,9 +20,14 @@ pub struct Cost {
     pub base_attempts: usize,
     pub node_targets: usize,
     pub node_requests: usize,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub prometheus_requests: usize,
     pub response_bytes: usize,
     pub priority_sequence: Vec<String>,
     pub unresolved_prerequisites: BTreeSet<String>,
+}
+fn is_zero(value: &usize) -> bool {
+    *value == 0
 }
 impl Cost {
     pub fn initial() -> Self {
@@ -198,6 +203,19 @@ pub(crate) fn build_checked<C: Checkpoint>(
         } else if matches!(consumer.statefulset, MetadataValue::Unknown) {
             rendered["statefulset_state"] = json!("unknown");
         }
+        if let Some(owner) = consumer.workload.known() {
+            rendered["workload"] = json!(owner);
+        } else if matches!(consumer.workload, MetadataValue::Unknown) {
+            rendered["workload_state"] = json!("unknown");
+        }
+        if !consumer.workload_chain.is_empty() {
+            let mut chain = vec![];
+            for owner in &consumer.workload_chain {
+                control.checked()?;
+                chain.push(json!(owner));
+            }
+            rendered["workload_chain"] = Value::Array(chain);
+        }
         consumers.push(rendered);
     }
     let mut relationships = vec![];
@@ -245,7 +263,10 @@ pub(crate) fn build_checked<C: Checkpoint>(
     }
     // Move completed containers into the DOM. Feeding a large Vec<Value> back
     // through json! would recursively clone it without processing checkpoints.
-    let mut result = json!({"schema_version":"view-storage/v1alpha1", "query":{"kind":query.kind,"group_by":query.group_by,"filters":query.filters,"utilization":query.utilization,"metrics_source":if query.utilization {Some("kubelet")} else {None},"max_metrics_age_seconds":duration_seconds(query.max_metrics_age),"warn_used_percent":query.warn_used.to_string(),"critical_used_percent":query.critical_used.to_string(),"require_metrics":query.require_metrics,"fail_on":query.fail_on,"sort":query.sort.to_string()}});
+    let mut result = json!({"schema_version":"view-storage/v1alpha1", "query":{"kind":query.kind,"group_by":query.group_by,"filters":query.filters,"utilization":query.utilization,"metrics_source":if query.utilization {Some(query.metrics_source.as_str())} else {None},"max_metrics_age_seconds":duration_seconds(query.max_metrics_age),"warn_used_percent":query.warn_used.to_string(),"critical_used_percent":query.critical_used.to_string(),"require_metrics":query.require_metrics,"fail_on":query.fail_on,"sort":query.sort.to_string()}});
+    if query.metrics_source == crate::cli::MetricsSource::Prometheus {
+        result["query"]["prometheus_cluster"] = json!(query.prometheus_cluster);
+    }
     result["records"] = Value::Array(records);
     result["consumers"] = Value::Array(consumers);
     result["relationships"] = Value::Array(relationships);
@@ -272,7 +293,9 @@ fn timestamp(value: Option<Timestamp>) -> Option<String> {
     value.map(|t| t.to_string())
 }
 fn source(value: Option<&Source>) -> Value {
-    value.map(|s|json!({"provider":"kubelet","node":s.node,"pod_id":s.pod_id.as_str(),"volume_name":s.volume_name})).unwrap_or(Value::Null)
+    value.map(|s| if s.provider == crate::cli::MetricsSource::Prometheus {
+        json!({"provider":"prometheus","node":if s.node.is_empty() {None} else {Some(&s.node)},"pod_id":null,"volume_name":null,"namespace":s.claim.as_ref().map(|c|&c.namespace),"pvc":s.claim.as_ref().map(|c|&c.name)})
+    } else {json!({"provider":"kubelet","node":s.node,"pod_id":s.pod_id.as_ref().map(ConsumerId::as_str),"volume_name":s.volume_name})}).unwrap_or(Value::Null)
 }
 fn percentage(value: Option<ExactRatio>) -> Value {
     value
@@ -517,6 +540,9 @@ fn collection_checked<C: Checkpoint>(
     }
     result["sources"] = Value::Array(sources);
     let mut rendered_cost = json!({"enrichment_budget":cost.enrichment_budget,"enrichment_attempts":cost.enrichment_attempts,"base_attempts":cost.base_attempts,"node_targets":cost.node_targets,"node_requests":cost.node_requests,"response_bytes":cost.response_bytes});
+    if cost.prometheus_requests > 0 {
+        rendered_cost["prometheus_requests"] = json!(cost.prometheus_requests);
+    }
     let mut strategy = serde_json::Map::new();
     for (key, value) in &cost.enrichment_strategy {
         control.step()?;

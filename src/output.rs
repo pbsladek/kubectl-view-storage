@@ -41,12 +41,24 @@ impl Checkpoint for WriterControl<'_> {
 /// Render on the caller's owned blocking worker. The writer must also honor
 /// cancellation while waiting for its destination to accept bytes.
 pub fn write_text(
+    writer: impl Write,
+    report: &Report,
+    view: View,
+    wide: bool,
+    color: bool,
+    cancel: &CancellationToken,
+) -> io::Result<()> {
+    write_text_refresh(writer, report, view, wide, color, cancel, false)
+}
+
+pub fn write_text_refresh(
     mut writer: impl Write,
     report: &Report,
     view: View,
     wide: bool,
     color: bool,
     cancel: &CancellationToken,
+    clear: bool,
 ) -> io::Result<()> {
     check_cancel(cancel)?;
     let rendered = text_checked(
@@ -60,6 +72,9 @@ pub fn write_text(
         },
     )?;
     check_cancel(cancel)?;
+    if clear {
+        writer.write_all(b"\x1b[2J\x1b[H")?;
+    }
     writer.write_all(rendered.as_bytes())?;
     writer.flush()
 }
@@ -371,6 +386,16 @@ fn text_checked<C: Checkpoint>(
         }
     );
     let mut records = BTreeMap::new();
+    if let Some(cycle) = value.get("watch") {
+        let _ = writeln!(
+            out,
+            "Collection cycle {}: {} to {} (refresh every {}s)\n",
+            cell(&cycle["cycle"]),
+            cell(&value["collection"]["started_at"]),
+            cell(&value["collection"]["finished_at"]),
+            cell(&cycle["interval_seconds"])
+        );
+    }
     for record in items(&value["records"]) {
         control.step()?;
         if let Some(id) = record["id"].as_str() {
@@ -571,7 +596,10 @@ fn empty(out: &mut String, report: &Value) {
 fn group_label(group: &Value) -> String {
     let label = if group["value_state"] == "known" {
         let raw = cell(&group["value"]);
-        if group["dimension"] == "pod" || group["dimension"] == "statefulset" {
+        if matches!(
+            group["dimension"].as_str(),
+            Some("pod" | "statefulset" | "workload")
+        ) {
             raw.rsplit_once('@')
                 .map(|(name, _)| name.to_owned())
                 .unwrap_or(raw)

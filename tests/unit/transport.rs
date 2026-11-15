@@ -19,6 +19,30 @@ fn limits_and_unknown_fields() {
 }
 
 #[test]
+fn optional_pod_volumes_remain_valid_and_volume_checks_are_interruptible() {
+    let mut pod: Object = serde_json::from_value(serde_json::json!({
+        "metadata":{"name":"app","uid":"app-uid","namespace":"demo"},
+        "spec":{}, "status":{"phase":"Running"}
+    }))
+    .unwrap();
+    let scope = ApiScope::Namespace("demo".into());
+    for spec in [
+        serde_json::json!({}),
+        serde_json::json!({"volumes":null}),
+        serde_json::json!({"volumes":[]}),
+        serde_json::json!({"volumes":[{"name":"config","configMap":{"name":"settings"},"persistentVolumeClaim":null}]}),
+    ] {
+        pod.spec = spec;
+        assert!(pod.valid_api_object("pods", &scope));
+    }
+    pod.spec = serde_json::json!({"volumes":vec![serde_json::json!({"name":"config","configMap":{"name":"settings"}}); 10000]});
+    assert!(matches!(
+        pod.valid_api_object_checked("pods", &scope, &mut Budget(64)),
+        Err("cancelled")
+    ));
+}
+
+#[test]
 fn exact_nesting_limit_accepts_boundary_and_rejects_excess() {
     let boundary = format!(
         "{}0{}",

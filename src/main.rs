@@ -60,6 +60,7 @@ async fn run(cli: Cli) -> Exit {
 }
 
 async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
+    let configured_timeout = cli.timeout;
     if exec_supervisor::worker_parent().is_some()
         && let Err(message) = exec_supervisor::wait_ready(&cancel).await
     {
@@ -83,7 +84,7 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         let _ = error_message(cancel, &message).await;
         return Exit::Invalid;
     }
-    let baseline = if let Some(path) = cli.compare.clone() {
+    let mut baseline = if let Some(path) = cli.compare.clone() {
         match tokio::task::spawn_blocking(move || {
             kubectl_view_storage::calculations::Baseline::load(&path)
         })
@@ -138,65 +139,114 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         .await;
         return Exit::Fatal;
     }
-    cli.timeout = cli.timeout.saturating_sub(started.elapsed());
-    if cli.timeout.is_zero() {
+    let cycle_timeout = configured_timeout;
+    let first_timeout = cli.timeout.saturating_sub(started.elapsed());
+    if first_timeout.is_zero() {
         let _ = error_message(cancel, "collection deadline exceeded before inventory").await;
         return Exit::Fatal;
     }
-    let mut query = match cli.query(&namespace) {
-        Ok(query) => query,
-        Err(message) => {
-            let _ = error_message(cancel, &message).await;
-            return Exit::Invalid;
-        }
-    };
-    query.baseline = baseline;
-    let collected = match collect::collect(
-        Arc::new(client),
-        Arc::new(SystemClock),
-        cancel.clone(),
-        &cli,
-        &query,
-        context,
-    )
-    .await
-    {
-        Ok(collected) => collected,
-        Err(Failure::Cancelled) => return Exit::Interrupted,
-        Err(error) => {
-            let _ = error_message(cancel, &format!("required Kubernetes collection failed ({error}); check credentials, permissions, API availability, and timeouts")).await;
-            return Exit::Fatal;
-        }
-    };
-    let report = match pipeline::finish_cancellable(collected, &query, cancel.clone()).await {
-        Ok(report) => report,
-        Err(pipeline::FinishError::Interrupted) => return Exit::Interrupted,
-        Err(error) => {
-            let _ = error_message(cancel, &format!("cannot build report: {error}")).await;
-            return Exit::Fatal;
-        }
-    };
-    let worker_cancel = cancel.clone();
-    let result =
-        tokio::task::spawn_blocking(move || write_report(report, cli, worker_cancel)).await;
-    match result {
-        Ok(Ok(exit)) => exit,
-        _ if cancel.is_cancelled() => Exit::Interrupted,
-        Ok(Err(error)) => {
-            if error.kind() != io::ErrorKind::BrokenPipe {
-                let _ =
-                    error_message(cancel, &format!("cannot write report ({})", error.kind())).await;
+    let client = Arc::new(client);
+    let mut cycle = 0u64;
+    loop {
+        cycle += 1;
+        cli.timeout = if cycle == 1 {
+            first_timeout
+        } else {
+            cycle_timeout
+        };
+        let mut query = match cli.query(&namespace) {
+            Ok(query) => query,
+            Err(message) => {
+                let _ = error_message(cancel, &message).await;
+                return Exit::Invalid;
             }
-            Exit::Fatal
+        };
+        query.baseline = baseline.clone();
+        let collected = match collect::collect(
+            client.clone(),
+            Arc::new(SystemClock),
+            cancel.clone(),
+            &cli,
+            &query,
+            context.clone(),
+        )
+        .await
+        {
+            Ok(collected) => collected,
+            Err(Failure::Cancelled) => return Exit::Interrupted,
+            Err(error) => {
+                let _ = error_message(cancel, &format!("required Kubernetes collection failed ({error}); check credentials, permissions, API availability, and timeouts")).await;
+                return Exit::Fatal;
+            }
+        };
+        let mut report = match pipeline::finish_cancellable(collected, &query, cancel.clone()).await
+        {
+            Ok(report) => report,
+            Err(pipeline::FinishError::Interrupted) => return Exit::Interrupted,
+            Err(error) => {
+                let _ = error_message(cancel, &format!("cannot build report: {error}")).await;
+                return Exit::Fatal;
+            }
+        };
+        if let Some(interval) = cli.watch {
+            report.document["watch"] = serde_json::json!({"cycle":cycle,"interval_seconds":interval.as_secs_f64(),"automatic_history":query.statistics});
         }
-        Err(_) => {
-            let _ = error_message(cancel, "output worker failed").await;
-            Exit::Fatal
+        let worker_cancel = cancel.clone();
+        let output_cli = cli.clone();
+        let remember = cli.watch.is_some() && query.statistics;
+        let result = tokio::task::spawn_blocking(move || {
+            let exit = write_report(&report, &output_cli, worker_cancel)?;
+            let next = if remember {
+                Some(
+                    kubectl_view_storage::calculations::Baseline::from_document(report.document)
+                        .map_err(io::Error::other)?,
+                )
+            } else {
+                None
+            };
+            Ok::<_, io::Error>((exit, next))
+        })
+        .await;
+        let exit = match result {
+            Ok(Ok((exit, next))) => {
+                baseline = next.map(Arc::new);
+                exit
+            }
+            _ if cancel.is_cancelled() => return Exit::Interrupted,
+            Ok(Err(error)) => {
+                if error.kind() != io::ErrorKind::BrokenPipe {
+                    let _ =
+                        error_message(cancel, &format!("cannot write report ({})", error.kind()))
+                            .await;
+                }
+                return Exit::Fatal;
+            }
+            Err(_) => {
+                let _ = error_message(cancel, "output worker failed").await;
+                return Exit::Fatal;
+            }
+        };
+        if exit != Exit::Success
+            || cli.watch.is_none()
+            || cli
+                .watch_count
+                .is_some_and(|count| cycle >= u64::from(count))
+        {
+            return exit;
+        }
+        tokio::select! {
+            biased;
+            _ = cancel.cancelled() => return Exit::Interrupted,
+            _ = tokio::time::sleep(cli.watch.unwrap_or_default()) => {}
         }
     }
 }
 
-fn write_report(report: pipeline::Report, cli: Cli, cancel: CancellationToken) -> io::Result<Exit> {
+fn write_report(
+    report: &pipeline::Report,
+    cli: &Cli,
+    cancel: CancellationToken,
+) -> io::Result<Exit> {
     let stdout = io::stdout();
     let color = output::use_color(
         cli.color,
@@ -204,9 +254,21 @@ fn write_report(report: pipeline::Report, cli: Cli, cancel: CancellationToken) -
         std::env::var_os("NO_COLOR").is_some(),
     );
     stdio::with_writer(stdout, cancel.clone(), |writer| match cli.output {
+        Output::Json if cli.watch.is_some() => {
+            serde_json::to_writer(&mut *writer, &report.document).map_err(io::Error::other)?;
+            writeln!(writer)
+        }
         Output::Json => output::write_json(writer, &report.document),
         Output::Csv => csv_output::write(writer, &report.document, &cancel),
-        Output::Text => output::write_text(writer, &report, cli.view, cli.wide, color, &cancel),
+        Output::Text => output::write_text_refresh(
+            writer,
+            report,
+            cli.view,
+            cli.wide,
+            color,
+            &cancel,
+            cli.watch.is_some() && io::stdout().is_terminal(),
+        ),
     })?;
     let has_diagnostics = report.document["diagnostics"]
         .as_array()

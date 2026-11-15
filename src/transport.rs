@@ -55,6 +55,10 @@ pub struct Metadata {
 }
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Object {
+    #[serde(default, rename = "apiVersion")]
+    pub api_version: Option<String>,
+    #[serde(default)]
+    pub kind: Option<String>,
     pub metadata: Metadata,
     #[serde(default)]
     pub spec: Value,
@@ -108,11 +112,19 @@ impl Object {
         {
             return Ok(false);
         }
-        let namespaced = matches!(resource, "persistentvolumeclaims" | "pods");
+        if resource == "pods" && !self.valid_pod_volumes_checked(control)? {
+            return Ok(false);
+        }
+        let owner_resource = matches!(
+            resource,
+            "deployments" | "replicasets" | "daemonsets" | "statefulsets" | "jobs" | "cronjobs"
+        );
+        let namespaced = matches!(resource, "persistentvolumeclaims" | "pods") || owner_resource;
         if matches!(
             resource,
             "persistentvolumeclaims" | "persistentvolumes" | "pods"
-        ) {
+        ) || owner_resource
+        {
             let Some(uid) = self.metadata.uid.as_deref() else {
                 return Ok(false);
             };
@@ -126,6 +138,39 @@ impl Object {
             };
             if !valid_text(namespace, control)? || !scope.accepts_namespace(namespace) {
                 return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    fn valid_pod_volumes_checked<C: Checkpoint>(&self, control: &mut C) -> Result<bool, C::Error> {
+        if !self.spec.is_object() {
+            return Ok(false);
+        }
+        let Some(raw) = self.spec.get("volumes").filter(|value| !value.is_null()) else {
+            return Ok(true);
+        };
+        let Some(volumes) = raw.as_array() else {
+            return Ok(false);
+        };
+        for volume in volumes {
+            control.step()?;
+            let Some(name) = volume.get("name").and_then(Value::as_str) else {
+                return Ok(false);
+            };
+            if !valid_text(name, control)? {
+                return Ok(false);
+            }
+            if let Some(claim) = volume
+                .get("persistentVolumeClaim")
+                .filter(|value| !value.is_null())
+            {
+                let Some(name) = claim.get("claimName").and_then(Value::as_str) else {
+                    return Ok(false);
+                };
+                if !valid_text(name, control)? {
+                    return Ok(false);
+                }
             }
         }
         Ok(true)
@@ -165,6 +210,8 @@ impl Object {
             }
         }
         Ok(Self {
+            api_version: optional_string(object.get("apiVersion"), control)?,
+            kind: optional_string(object.get("kind"), control)?,
             metadata: Metadata {
                 name: work::clone_string(name, control).map_err(CheckedError::Interrupted)?,
                 uid: optional_string(metadata.get("uid"), control)?,
@@ -233,6 +280,8 @@ pub struct Inventory {
     pub pods: Vec<Object>,
     #[serde(default)]
     pub storage_classes: Vec<Object>,
+    #[serde(default)]
+    pub workloads: Vec<Object>,
 }
 
 /// A lexical guard before Serde: strings do not contribute nesting and escaped

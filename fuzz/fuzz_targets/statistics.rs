@@ -11,9 +11,11 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|data: &[u8]| {
     if let Ok(value) = transport::decode_json(data) {
         let source = Source {
+            provider: kubectl_view_storage::cli::MetricsSource::Kubelet,
             node: "node".into(),
-            pod_id: ConsumerId::new("pod").expect("fixed valid UID"),
+            pod_id: Some(ConsumerId::new("pod").expect("fixed valid UID")),
             volume_name: "data".into(),
+            claim: None,
         };
         let id = RecordId::new(Kind::Pvc, "claim").expect("fixed valid UID");
         let mut diagnostics = Vec::new();

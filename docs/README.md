@@ -8,6 +8,7 @@ Start with [usage examples](../examples/README.md) or `kubectl view-storage --he
 - [Specification](SPEC.md): CLI, accounting, report semantics, exit codes, and acceptance cases.
 - [Report schema](schema/report.schema.json): the machine-readable JSON contract.
 - [Storage calculations](CALCULATIONS.md): sums, units, class/type statistics, StatefulSet scope and observed growth.
+- [Watch, Prometheus and workloads](OBSERVATION.md): continuous collection, automatic history, provider credentials and verified controller ownership.
 - [Real command output](../examples/live/README.md): captured text views, JSON, CSV, and strict checks from disposable clusters.
 - [Contract scenarios](../examples/contract/README.md): sample inputs, complete reports, and text views.
 - [Lessons from df-pv](DF_PV_LESSONS.md): implementation and support issues addressed by this project.

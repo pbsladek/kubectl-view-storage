@@ -321,7 +321,7 @@ pub(crate) fn build_checked<C: Checkpoint>(
     let references = query.group_by.iter().any(|dimension| {
         matches!(
             dimension,
-            Dimension::Node | Dimension::Pod | Dimension::Statefulset
+            Dimension::Node | Dimension::Pod | Dimension::Statefulset | Dimension::Workload
         )
     });
     let mut paths: BTreeSet<PathEntry> = BTreeSet::new();
@@ -417,6 +417,20 @@ fn dimension_value(
                 MetadataValue::Known(owner) => MetadataValue::Known(format!(
                     "{}/{}@{}",
                     consumer.namespace, owner.name, owner.uid
+                )),
+                MetadataValue::Unknown => MetadataValue::Unknown,
+                _ => MetadataValue::Absent,
+            },
+            None if matches!(record.consumer_visibility, ConsumerVisibility::Complete) => {
+                MetadataValue::Absent
+            }
+            None => MetadataValue::Unknown,
+        },
+        Dimension::Workload => match consumer {
+            Some(consumer) => match &consumer.workload {
+                MetadataValue::Known(owner) => MetadataValue::Known(format!(
+                    "{}/{}/{}@{}",
+                    consumer.namespace, owner.kind, owner.name, owner.uid
                 )),
                 MetadataValue::Unknown => MetadataValue::Unknown,
                 _ => MetadataValue::Absent,

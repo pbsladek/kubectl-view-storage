@@ -1874,6 +1874,57 @@ async fn malformed_statistics_are_explicit_invalid_metrics_with_inventory_retain
 }
 
 #[tokio::test(start_paused = true)]
+async fn malformed_pod_volumes_never_prove_an_empty_workload_selection() {
+    for volumes in [
+        serde_json::Value::Null,
+        serde_json::json!(7),
+        serde_json::json!([null]),
+        serde_json::json!([{"name":7,"persistentVolumeClaim":{"claimName":"data"}}]),
+        serde_json::json!([{"name":"data","persistentVolumeClaim":7}]),
+        serde_json::json!([{"name":"data","persistentVolumeClaim":{}}]),
+        serde_json::json!([{"name":"data","persistentVolumeClaim":{"claimName":""}}]),
+    ] {
+        for filter in ["--node", "--statefulset"] {
+            let transport = fixture_transport();
+            let path = "/api/v1/namespaces/demo/pods?limit=500";
+            let mut page: Value = serde_json::from_slice(
+                &transport.replies.lock().unwrap().get(path).unwrap()[0].body,
+            )
+            .unwrap();
+            if volumes.is_null() {
+                page["items"][0]["spec"] = serde_json::Value::Null;
+            } else {
+                page["items"][0]["spec"]["volumes"] = volumes.clone();
+            }
+            transport
+                .replies
+                .lock()
+                .unwrap()
+                .insert(path.into(), vec![response(page)]);
+            let cli =
+                Cli::try_parse_from(["cmd", filter, "worker-a", "--require-metrics"]).unwrap();
+            let query = cli.query("demo").unwrap();
+            let result = collect(
+                transport,
+                clock(),
+                CancellationToken::new(),
+                &cli,
+                &query,
+                "example".into(),
+            )
+            .await
+            .unwrap();
+            assert!(!result.selection.complete, "{filter}: {volumes}");
+            assert_eq!(result.selection.unknown_count, 1);
+            assert_eq!(
+                crate::pipeline::finish(result, &query).unwrap().exit,
+                crate::policy::Exit::Inconclusive
+            );
+        }
+    }
+}
+
+#[tokio::test(start_paused = true)]
 async fn malformed_pod_node_or_timestamp_never_proves_an_empty_node_selection() {
     for field in ["node", "timestamp"] {
         let transport = fixture_transport();

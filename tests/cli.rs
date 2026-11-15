@@ -13,7 +13,9 @@ fn help_and_version_succeed_without_configuration_or_network() {
         let output = command().arg(flag).output().unwrap();
         assert!(output.status.success());
         assert!(!output.stdout.is_empty());
-        assert!(!String::from_utf8_lossy(&output.stdout).contains("--metrics-source"));
+        if flag == "--help" {
+            assert!(String::from_utf8_lossy(&output.stdout).contains("--metrics-source"));
+        }
         assert!(output.stderr.is_empty());
     }
 }
@@ -32,6 +34,9 @@ fn invalid_invocations_fail_before_configuration() {
         vec!["--view", "stats", "--compare", "/nonexistent/report.json"],
         vec!["-A", "--statefulset", "database"],
         vec!["--statefulset", ""],
+        vec!["--watch", "1s", "-o", "csv"],
+        vec!["--watch-count", "2"],
+        vec!["--watch", "0s"],
     ] {
         let output = command().args(&args).output().unwrap();
         assert_eq!(output.status.code(), Some(2), "{args:?}");

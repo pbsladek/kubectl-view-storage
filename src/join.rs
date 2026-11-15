@@ -119,6 +119,8 @@ pub(crate) fn normalize_checked<C: Checkpoint>(
         relationships: vec![],
         diagnostics: vec![],
     };
+    let workload_index =
+        crate::workloads::index(&input.workloads, control).map_err(CheckedError::Interrupted)?;
     let mut pvs = BTreeMap::new();
     for pv in &input.pvs {
         control.checked()?;
@@ -461,6 +463,12 @@ pub(crate) fn normalize_checked<C: Checkpoint>(
             }
             _ => ReferenceState::Unknown,
         };
+        let (workload, workload_chain) = if query.needs_workloads() {
+            crate::workloads::resolve(pod, &workload_index, control)
+                .map_err(CheckedError::Interrupted)?
+        } else {
+            (MetadataValue::Absent, vec![])
+        };
         graph.consumers.push(Consumer {
             id: id.clone(),
             uid: uid.to_owned(),
@@ -473,6 +481,8 @@ pub(crate) fn normalize_checked<C: Checkpoint>(
                 .map(str::to_owned),
             state,
             statefulset: statefulset_owner(pod, control).map_err(CheckedError::Interrupted)?,
+            workload,
+            workload_chain,
         });
         for (record_index, volume_names) in refs {
             control.checked()?;
@@ -717,6 +727,9 @@ fn statefulset_owner<C: Checkpoint>(
     let mut controllers = 0;
     for reference in &pod.metadata.owner_references {
         control.step()?;
+        if !reference.is_object() {
+            return Ok(MetadataValue::Unknown);
+        }
         if reference
             .get("controller")
             .is_some_and(|value| !value.is_boolean())
@@ -838,6 +851,29 @@ pub(crate) fn matches_checked<C: Checkpoint>(
             Predicate::Match
         } else if !matches!(record.consumer_visibility, ConsumerVisibility::Complete) || uncertain {
             Predicate::Unknown(BTreeSet::from(["statefulset".into()]))
+        } else {
+            Predicate::NoMatch
+        });
+    }
+    if let Some(filter) = &query.filters.workload {
+        let (mut known, mut uncertain) = (false, false);
+        for id in &record.consumers {
+            control.step()?;
+            if let Some(consumer) = consumers.get(id) {
+                if consumer.state.live() {
+                    for owner in &consumer.workload_chain {
+                        control.step()?;
+                        known |= format!("{}/{}", owner.kind, owner.name) == *filter;
+                    }
+                    uncertain |= matches!(consumer.workload, MetadataValue::Unknown);
+                }
+                uncertain |= consumer.state == ReferenceState::Unknown;
+            }
+        }
+        result = result.and(if known {
+            Predicate::Match
+        } else if uncertain || !matches!(record.consumer_visibility, ConsumerVisibility::Complete) {
+            Predicate::Unknown(BTreeSet::from(["workload".into()]))
         } else {
             Predicate::NoMatch
         });

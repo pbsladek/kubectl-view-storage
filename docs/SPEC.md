@@ -66,7 +66,7 @@ Defaults are PVC inventory, the selected kubeconfig context's namespace (or `def
 
 Durations accept positive integers followed by `ms`, `s`, `m`, or `h`. Thresholds accept ordinary decimal percentages with at most six fractional digits and MUST satisfy `0 < warning < critical <= 100`. Exponents, NaN, and infinity are invalid threshold inputs. Store thresholds as canonical decimal strings in JSON query metadata, with unnecessary trailing fractional zeros removed. Invalid flags or combinations MUST fail before network access.
 
-P1 reserves `--metrics-source kubelet|prometheus`, `--prometheus-url URL`, `--prometheus-cluster LABEL=VALUE`, `--prometheus-token-file PATH`, `--prometheus-ca-file PATH`, and `--watch DURATION`. These MUST NOT appear as supported P0 flags. The Prometheus options imply `-u` and select Prometheus explicitly. P0 utilization always uses kubelet observations.
+The P1 extension implements `--metrics-source kubelet|prometheus`, `--prometheus-url URL`, `--prometheus-cluster LABEL=VALUE`, `--prometheus-single-cluster`, `--prometheus-token-file PATH`, `--prometheus-ca-file PATH`, `--watch DURATION`, `--watch-count N` and `--workload KIND/NAME`. Selecting Prometheus implies `-u`; its configuration requires that explicit provider selection. The default provider remains kubelet. [Observation modes](OBSERVATION.md) defines their scope, credentials, history, ownership and failure behavior.
 
 ### Examples
 
@@ -93,7 +93,7 @@ Calculations MUST preserve selected UID-union accounting, separate capacities, m
 
 Two-report growth MUST use actual sample intervals, matched stable identities and unchanged capacity. Nonpositive growth MUST NOT fabricate a future-full estimate; zero available bytes is full now. Group earliest-full time MUST be the minimum individual estimate, independent of aggregate growth sign. Unusable pairs and arithmetic overflow MUST be explicit, with no invented zero or successful completeness. Loading a baseline MUST be bounded to 32 MiB and regular files; malformed local inputs MUST fail before Kubernetes configuration. Comparison scope/filter errors MUST fail without emitting a success report. Existing strict policies govern current collection only.
 
-The optional `calculations` object has its own `view-storage/calculations/v1alpha1` version within the existing report schema. Comparison does not enable the reserved watch/Prometheus flags. Validation MUST include real HTTP/executable exports, an independent arithmetic oracle, the 90% calculation-module coverage floor, and a disposable CSI write/StatefulSet gate.
+The optional `calculations` object has its own `view-storage/calculations/v1alpha1` version within the existing report schema. Comparison alone does not select watch or Prometheus. Validation MUST include real HTTP/executable exports, an independent arithmetic oracle, the 90% calculation-module coverage floor, and a disposable CSI write/StatefulSet gate.
 
 ## Collection contract
 

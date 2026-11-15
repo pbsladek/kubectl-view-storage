@@ -57,21 +57,26 @@ impl Unit {
         if denominator == 0 {
             return "--".into();
         }
+        self.format_parts(
+            numerator / denominator,
+            numerator % denominator,
+            denominator,
+        )
+    }
+    fn format_parts(self, whole: u128, remainder: u128, denominator: u128) -> String {
         let mut unit = self;
         if self == Self::Auto {
             unit = Self::B;
             for candidate in [Self::Kib, Self::Mib, Self::Gib, Self::Tib, Self::Pib] {
-                if numerator / denominator >= candidate.scale() {
+                if whole >= candidate.scale() {
                     unit = candidate;
                 }
             }
         }
-        denominator
-            .checked_mul(unit.scale())
-            .and_then(|d| {
-                let ordinary = decimal(numerator, d)?;
-                if numerator != 0 && ordinary == "0.00" {
-                    let precise = decimal_places(numerator, d, 6)?;
+        scaled_decimal(whole, remainder, denominator, unit.scale(), 2)
+            .and_then(|ordinary| {
+                if (whole != 0 || remainder != 0) && ordinary == "0.00" {
+                    let precise = scaled_decimal(whole, remainder, denominator, unit.scale(), 6)?;
                     Some(if precise == "0.000000" {
                         "<0.000001".into()
                     } else {
@@ -116,26 +121,40 @@ impl FromStr for Unit {
 }
 
 fn decimal(n: u128, d: u128) -> Option<String> {
-    decimal_places(n, d, 2)
-}
-fn decimal_places(n: u128, d: u128, places: u32) -> Option<String> {
     if d == 0 {
         return None;
     }
-    let whole = n / d;
-    let mut remainder = n % d;
-    let scale = 10u128.pow(places);
+    scaled_decimal(n / d, n % d, d, 1, 2)
+}
+// Keep the integer and fractional remainders separate. Multiplying a large
+// denominator by a display unit can overflow even for a tiny, valid value.
+fn scaled_decimal(
+    whole: u128,
+    mut remainder: u128,
+    denominator: u128,
+    unit_scale: u128,
+    places: u32,
+) -> Option<String> {
+    let mut unit_remainder = whole % unit_scale;
+    let whole = whole / unit_scale;
+    let decimal_scale = 10u128.pow(places);
     let mut digits = 0u128;
     for _ in 0..places {
-        let (digit, rest) = crate::qty::decimal_step(remainder, d);
-        digits = digits * 10 + u128::from(digit);
+        let (digit, rest) = crate::qty::decimal_step(remainder, denominator);
+        // All supported display units are at most PiB, so this fits in u128.
+        let shifted = unit_remainder * 10 + u128::from(digit);
+        digits = digits * 10 + shifted / unit_scale;
+        unit_remainder = shifted % unit_scale;
         remainder = rest;
     }
-    let rounded = digits + u128::from(remainder >= d / 2 + d % 2);
+    let round_up = unit_remainder > unit_scale / 2
+        || unit_remainder == unit_scale / 2
+            && (unit_scale.is_multiple_of(2) || remainder >= denominator / 2 + denominator % 2);
+    let rounded = digits + u128::from(round_up);
     Some(format!(
         "{}.{:0width$}",
-        whole.checked_add(rounded / scale)?,
-        rounded % scale,
+        whole.checked_add(rounded / decimal_scale)?,
+        rounded % decimal_scale,
         width = places as usize,
     ))
 }
@@ -217,7 +236,13 @@ impl Baseline {
     }
     fn validate_scope(&self, current: &Value) -> Result<(), String> {
         let old = &self.document;
-        for pointer in ["/query/kind", "/collection/context", "/collection/scope"] {
+        for pointer in [
+            "/query/kind",
+            "/collection/context",
+            "/collection/scope",
+            "/query/metrics_source",
+            "/query/prometheus_cluster",
+        ] {
             if old.pointer(pointer) != current.pointer(pointer) {
                 return Err(
                     "comparison requires the same context, scope and inventory kind".into(),
@@ -232,6 +257,7 @@ impl Baseline {
             "driver",
             "node",
             "statefulset",
+            "workload",
         ] {
             if old["query"]["filters"][key] != current["query"]["filters"][key] {
                 return Err("comparison requires the same selection filters".into());
@@ -323,9 +349,39 @@ pub fn format_fraction(value: &Value, unit: Unit) -> String {
 }
 pub fn format_hourly_rate(value: &Value, unit: Unit) -> String {
     fraction(value)
-        .and_then(|v| v.n.checked_mul(3600).map(|n| (v, n)))
-        .map(|(v, n)| signed_amount(v.negative, unit.format(n, v.d)))
+        .and_then(|v| hourly_parts(v).map(|(whole, remainder)| (v, whole, remainder)))
+        .map(|(v, whole, remainder)| {
+            signed_amount(v.negative, unit.format_parts(whole, remainder, v.d))
+        })
         .unwrap_or_else(|| "--".into())
+}
+fn hourly_parts(value: Fraction) -> Option<(u128, u128)> {
+    let (mut quotient, mut remainder) = (0u128, 0u128);
+    let original = value.n % value.d;
+    // Binary multiplication tracks quotient/remainder without forming n*3600.
+    // The fractional quotient is bounded by 3600; additions use subtraction
+    // to avoid overflowing a remainder close to u128::MAX.
+    for bit in (0..12).rev() {
+        quotient *= 2;
+        if remainder >= value.d - remainder {
+            remainder -= value.d - remainder;
+            quotient += 1;
+        } else {
+            remainder *= 2;
+        }
+        if 3600u32 & (1 << bit) != 0 {
+            if remainder >= value.d - original {
+                remainder -= value.d - original;
+                quotient += 1;
+            } else {
+                remainder += original;
+            }
+        }
+    }
+    let whole = (value.n / value.d)
+        .checked_mul(3600)?
+        .checked_add(quotient)?;
+    Some((whole, remainder))
 }
 fn signed_amount(negative: bool, amount: String) -> String {
     if negative && amount.starts_with('<') {
@@ -397,7 +453,10 @@ struct Rate {
 fn sample(record: &Value) -> Option<(u128, u128, u128, Timestamp)> {
     let fs = &record["filesystem"];
     if fs["status"] != "ok"
-        || fs["source"]["provider"] != "kubelet"
+        || !matches!(
+            fs["source"]["provider"].as_str(),
+            Some("kubelet" | "prometheus")
+        )
         || record["overlapping_filesystem"] == true
         || record["volume_mode"] != "Filesystem"
     {
@@ -595,7 +654,10 @@ fn groups<C: Checkpoint>(
                 Some("unassigned") => "(unassigned)",
                 _ => "(unknown)",
             });
-        let value = if group["dimension"] == "statefulset" || group["dimension"] == "pod" {
+        let value = if matches!(
+            group["dimension"].as_str(),
+            Some("statefulset" | "pod" | "workload")
+        ) {
             raw.rsplit_once('@').map(|(name, _)| name).unwrap_or(raw)
         } else {
             raw

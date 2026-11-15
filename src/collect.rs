@@ -29,10 +29,19 @@ pub type ResponseFuture<'a> = Pin<Box<dyn Future<Output = Result<Response, Failu
 pub trait Transport: Send + Sync + 'static {
     /// Implementations enforce the body cap while streaming, including errors.
     fn get(&self, path: String) -> ResponseFuture<'_>;
+    fn prometheus_get(&self, _path: String) -> ResponseFuture<'_> {
+        Box::pin(async { Err(Failure::Transport) })
+    }
     /// Cumulative bytes consumed from response streams, including interrupted
     /// and rejected bodies. Real streaming adapters expose this counter.
     fn response_bytes(&self) -> Option<usize> {
         None
+    }
+}
+struct PrometheusTransport<T>(Arc<T>);
+impl<T: Transport> Transport for PrometheusTransport<T> {
+    fn get(&self, path: String) -> ResponseFuture<'_> {
+        self.0.prometheus_get(path)
     }
 }
 #[derive(Debug, Clone)]
@@ -721,6 +730,7 @@ pub async fn collect<T: Transport>(
     // drivers as candidates, but do not enrich a known inventory nonmatch.
     inventory_query.filters.node = None;
     inventory_query.filters.statefulset = None;
+    inventory_query.filters.workload = None;
     let (restored, relevant) = candidates(
         inventory,
         &inventory_query,
@@ -763,11 +773,14 @@ pub async fn collect<T: Transport>(
         let mut driver_query = query.clone();
         driver_query.filters.node = None;
         driver_query.filters.statefulset = None;
+        driver_query.filters.workload = None;
         let (restored, matches) = candidates(
             inventory,
             &driver_query,
             false,
-            query.filters.node.is_some() || query.filters.statefulset.is_some(),
+            query.filters.node.is_some()
+                || query.filters.statefulset.is_some()
+                || query.filters.workload.is_some(),
             RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
         )
         .await?;
@@ -817,11 +830,14 @@ pub async fn collect<T: Transport>(
             let mut driver_query = query.clone();
             driver_query.filters.node = None;
             driver_query.filters.statefulset = None;
+            driver_query.filters.workload = None;
             let (restored, matches) = candidates(
                 inventory,
                 &driver_query,
                 false,
-                query.filters.node.is_some() || query.filters.statefulset.is_some(),
+                query.filters.node.is_some()
+                    || query.filters.statefulset.is_some()
+                    || query.filters.workload.is_some(),
                 RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
             )
             .await?;
@@ -844,7 +860,20 @@ pub async fn collect<T: Transport>(
     {
         return Err(error.clone());
     }
-    if query.filters.node.is_some() || query.filters.statefulset.is_some() {
+    if query.needs_workloads() {
+        enrich_workloads(
+            &mut collector,
+            &mut inventory,
+            query,
+            &relevant,
+            pods_complete.is_ok(),
+        )
+        .await?;
+    }
+    if query.filters.node.is_some()
+        || query.filters.statefulset.is_some()
+        || query.filters.workload.is_some()
+    {
         let (restored, matches) = candidates(
             inventory,
             query,
@@ -874,7 +903,9 @@ pub async fn collect<T: Transport>(
                 join::normalize_checked(&inventory, &cpu_query, pods_complete.is_ok(), control)?;
             let (graph, selection) = crate::report::select_checked(graph, &cpu_query, control)
                 .map_err(CheckedError::Interrupted)?;
-            let targets = if cpu_query.utilization {
+            let targets = if cpu_query.utilization
+                && cpu_query.metrics_source == crate::cli::MetricsSource::Kubelet
+            {
                 metrics::node_targets_checked(&graph, control).map_err(CheckedError::Interrupted)?
             } else {
                 BTreeSet::new()
@@ -898,7 +929,66 @@ pub async fn collect<T: Transport>(
     graph.diagnostics.extend(collector.diagnostics);
     let mut responses = BTreeMap::new();
     let mut failures: BTreeMap<String, String> = BTreeMap::new();
-    if query.utilization {
+    let mut prometheus_response = None;
+    let mut prometheus_failure = "no_sample".to_owned();
+    if query.utilization
+        && query.metrics_source == crate::cli::MetricsSource::Prometheus
+        && graph
+            .records
+            .iter()
+            .any(|record| record.volume_mode == VolumeMode::Filesystem)
+    {
+        let request = RequestContext {
+            transport: Arc::new(PrometheusTransport(collector.request.transport.clone())),
+            clock: clock.clone(),
+            cancel: cancel.child_token(),
+            deadline: overall,
+            request_timeout: cli.request_timeout,
+            totals: Arc::new(AtomicAttempts::default()),
+        };
+        let cpu_query = query.clone();
+        let path = work::run(
+            RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
+            move |control| {
+                crate::prometheus::query_path(&cpu_query, control)
+                    .map_err(CheckedError::Interrupted)
+            },
+        )
+        .await
+        .map_err(processing_failure)?;
+        let (response, _) = node_request(&request, path).await;
+        let response = match response {
+            Ok(body) => decode_document(&request, body).await,
+            Err(error) => Err(error),
+        };
+        match response {
+            Ok(value) => prometheus_response = Some(value),
+            Err(error) => {
+                if matches!(error, Failure::Cancelled | Failure::Worker) {
+                    return Err(error);
+                }
+                prometheus_failure = error.reason().into();
+            }
+        }
+        collector.cost.prometheus_requests = request.totals.count.load(Ordering::Relaxed);
+        collector.cost.response_bytes += request.totals.bytes.load(Ordering::Relaxed);
+        collector.sources.push(SourceCollection {
+            resource: "prometheus/query".into(),
+            scope: query
+                .prometheus_cluster
+                .clone()
+                .unwrap_or_else(|| "single-cluster".into()),
+            verb: "get".into(),
+            status: if prometheus_response.is_some() {
+                "complete"
+            } else {
+                "unavailable"
+            }
+            .into(),
+            resource_version: None,
+        });
+    }
+    if query.utilization && query.metrics_source == crate::cli::MetricsSource::Kubelet {
         collector.cost.node_targets = targets.len();
         let request = RequestContext {
             deadline: collector.overall,
@@ -978,7 +1068,7 @@ pub async fn collect<T: Transport>(
     }
     let finished_at = clock.utc();
     let cpu_query = query.clone();
-    graph = work::run(
+    let (graph, valid_prometheus) = work::run(
         RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
         move |control| {
             for node in targets {
@@ -998,11 +1088,23 @@ pub async fn collect<T: Transport>(
                     message: "Node statistics could not be collected; inspect proxy permissions, response validity, and timeouts.".into(),
                 });
             }
-            metrics::apply_checked(&mut graph, &responses, &failures, &cpu_query, finished_at, control)
-                .map_err(CheckedError::Interrupted)?;
-            Ok(graph)
+            let valid_prometheus = if cpu_query.metrics_source == crate::cli::MetricsSource::Prometheus {
+                crate::prometheus::apply_checked(&mut graph,prometheus_response.as_ref(),&prometheus_failure,&cpu_query,finished_at,control).map_err(CheckedError::Interrupted)?
+            } else {
+                metrics::apply_checked(&mut graph, &responses, &failures, &cpu_query, finished_at, control)
+                    .map_err(CheckedError::Interrupted)?;
+                true
+            };
+            Ok((graph, valid_prometheus))
         },
     ).await.map_err(processing_failure)?;
+    if !valid_prometheus {
+        for source in &mut collector.sources {
+            if source.resource == "prometheus/query" {
+                source.status = "unavailable".into();
+            }
+        }
+    }
     if let (Some(start), Some(end)) = (initial_bytes, stream_counter.response_bytes()) {
         collector.cost.response_bytes = end.checked_sub(start).ok_or(Failure::Worker)?;
     }
@@ -1042,6 +1144,125 @@ async fn inventory_job<T: Transport, R: Send + 'static>(
     .map_err(processing_failure)?;
     *inventory = restored;
     Ok(result)
+}
+
+async fn enrich_workloads<T: Transport>(
+    collector: &mut Collector<T>,
+    inventory: &mut Inventory,
+    query: &Query,
+    relevant: &Arc<BTreeSet<RecordId>>,
+    pods_complete: bool,
+) -> Result<(), Failure> {
+    let cpu_query = query.clone();
+    let selected = relevant.clone();
+    let planned = inventory_job(inventory, &collector.request, move |inventory, control| {
+        let graph = join::normalize_checked(inventory, &cpu_query, pods_complete, control)?;
+        let mut consumers = BTreeSet::new();
+        for record in &graph.records {
+            control.checked()?;
+            if selected.contains(&record.id) {
+                for consumer in &record.consumers {
+                    control.checked()?;
+                    consumers.insert(consumer.as_str());
+                }
+            }
+        }
+        let mut pending = BTreeSet::new();
+        for pod in &inventory.pods {
+            control.checked()?;
+            if !pod
+                .metadata
+                .uid
+                .as_ref()
+                .is_some_and(|uid| consumers.contains(format!("pod:{uid}").as_str()))
+                || matches!(pod.status["phase"].as_str(), Some("Succeeded" | "Failed"))
+            {
+                continue;
+            }
+            if let MetadataValue::Known(owner) =
+                crate::workloads::controller(pod, control).map_err(CheckedError::Interrupted)?
+            {
+                pending.insert((pod.metadata.namespace.clone().unwrap_or_default(), owner));
+            }
+        }
+        Ok(pending)
+    })
+    .await?;
+    let mut pending: std::collections::VecDeque<_> = planned.into_iter().collect();
+    let mut seen = BTreeSet::new();
+    while let Some((namespace, owner)) = pending.pop_front() {
+        tokio::task::yield_now().await;
+        if collector.request.cancel.is_cancelled() {
+            return Err(Failure::Cancelled);
+        }
+        if !seen.insert((namespace.clone(), owner.clone())) {
+            continue;
+        }
+        let Some((version, resource, kind)) = crate::workloads::resource(&owner.kind) else {
+            continue;
+        };
+        let ns = namespace.clone();
+        let name = owner.name.clone();
+        let path = work::run(
+            RunControl::retained_inventory(
+                collector.request.cancel.clone(),
+                collector.request.clock.clone(),
+                collector.overall,
+            ),
+            move |control| {
+                let mut path = format!("/apis/{version}/namespaces/");
+                append_encoded(&mut path, &ns, control).map_err(CheckedError::Interrupted)?;
+                path.push_str(&format!("/{resource}/"));
+                append_encoded(&mut path, &name, control).map_err(CheckedError::Interrupted)?;
+                Ok(path)
+            },
+        )
+        .await
+        .map_err(processing_failure)?;
+        let result = collector
+            .object(resource, &ApiScope::Namespace(namespace.clone()), &path)
+            .await;
+        match result {
+            Ok(object)
+                if object.metadata.name == owner.name
+                    && object.metadata.uid.as_deref() == Some(owner.uid.as_str())
+                    && object.api_version.as_deref() == Some(version)
+                    && object.kind.as_deref() == Some(kind) =>
+            {
+                let (object, parent) = work::run(
+                    RunControl::retained_inventory(
+                        collector.request.cancel.clone(),
+                        collector.request.clock.clone(),
+                        collector.overall,
+                    ),
+                    move |control| {
+                        let parent = crate::workloads::controller(&object, control)
+                            .map_err(CheckedError::Interrupted)?;
+                        Ok((object, parent))
+                    },
+                )
+                .await
+                .map_err(processing_failure)?;
+                if matches!(owner.kind.as_str(), "replicaset" | "job")
+                    && let MetadataValue::Known(parent) = parent
+                {
+                    pending.push_back((namespace, parent));
+                }
+                inventory.workloads.push(object);
+            }
+            Ok(_) => collector.diagnose(resource, &path, &Failure::Invalid),
+            Err(error) => {
+                if error.fatal() || matches!(error, Failure::Cancelled) {
+                    return Err(error);
+                }
+                collector.diagnose(resource, &path, &error);
+                if matches!(error, Failure::Budget | Failure::Deadline) {
+                    break;
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn selected_uids<'a, C: Checkpoint>(

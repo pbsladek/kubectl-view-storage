@@ -13,11 +13,13 @@ pub mod model;
 pub mod output;
 pub mod pipeline;
 pub mod policy;
+pub mod prometheus;
 pub mod qty;
 pub mod report;
 pub mod sort;
 pub mod transport;
 pub(crate) mod work;
+pub mod workloads;
 
 #[cfg(test)]
 #[path = "../tests/unit/performance.rs"]

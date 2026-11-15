@@ -54,6 +54,28 @@
     },
     "calculations": {
       "$ref": "#/$defs/calculations"
+    },
+    "watch": {
+      "type": "object",
+      "properties": {
+        "cycle": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "interval_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "automatic_history": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "cycle",
+        "interval_seconds",
+        "automatic_history"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -114,6 +136,14 @@
               "type": "null"
             }
           ]
+        },
+        "namespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pvc": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -147,7 +177,8 @@
             "forbidden",
             "timeout",
             "budget_exhausted",
-            "not_requested"
+            "not_requested",
+            "unavailable"
           ]
         },
         "resource_version": {
@@ -226,6 +257,10 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "prometheus_requests": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "required": [
@@ -323,7 +358,8 @@
               "accessmode",
               "volumemode",
               "statefulset",
-              "phase"
+              "phase",
+              "workload"
             ]
           }
         },
@@ -395,6 +431,12 @@
                 "string",
                 "null"
               ]
+            },
+            "workload": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
@@ -453,6 +495,12 @@
         },
         "sort": {
           "type": "string"
+        },
+        "prometheus_cluster": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
@@ -1296,6 +1344,19 @@
         },
         "statefulset_state": {
           "const": "unknown"
+        },
+        "workload": {
+          "$ref": "#/$defs/workload"
+        },
+        "workload_state": {
+          "const": "unknown"
+        },
+        "workload_chain": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/workload"
+          }
         }
       },
       "required": [
@@ -1817,7 +1878,8 @@
             "accessmode",
             "volumemode",
             "statefulset",
-            "phase"
+            "phase",
+            "workload"
           ]
         },
         "value": {
@@ -2803,6 +2865,35 @@
           }
         }
       ]
+    },
+    "workload": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "deployment",
+            "replicaset",
+            "daemonset",
+            "statefulset",
+            "job",
+            "cronjob"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "name",
+        "uid"
+      ],
+      "additionalProperties": false
     }
   }
 }

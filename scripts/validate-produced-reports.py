@@ -6,6 +6,7 @@
 """Validate actual Rust pipeline reports against the schema and independent oracle."""
 import argparse
 import copy
+from decimal import Decimal
 from pathlib import Path
 import runpy
 
@@ -36,6 +37,24 @@ def main():
         for name in ("classes", "types", "statefulset", "before", "comparison"):
             calculations["validate"](load(directory / f"{name}.json"), baseline)
         print("PASS five real HTTP calculation reports against independent integer/Fraction arithmetic and schema")
+        integrations = args.directory / "integrations"
+        for name in ("prometheus", "workload-deployment", "workload-daemonset", "workload-statefulset", "workload-job", "workload-cronjob", "watch-1", "watch-2", "watch-3"):
+            report = load(integrations / f"{name}.json")
+            schema.validate(report)
+            oracle["check_semantics"](report, 0)
+            if name.startswith("watch-"):
+                cycle = int(name.split('-')[1])
+                assert report['watch']['cycle'] == cycle
+                previous = load(integrations / f"watch-{cycle-1}.json") if cycle > 1 else None
+                calculations['validate'](report, previous)
+        prom = load(integrations / 'prometheus.json')
+        raw = load(integrations / 'prometheus-input.json')
+        for field in ('capacity_bytes', 'used_bytes', 'available_bytes'):
+            values = {int(Decimal(series['values'][-1][1])) for series in raw['data']['result']
+                      if series['metric']['__name__'] == 'kubelet_volume_stats_' + field}
+            assert len(values) == 1
+            assert prom['summary']['filesystem'][field] == str(values.pop()), 'Prometheus replicas multiplied accounting'
+        print("PASS nine real HTTP watch/Prometheus/workload reports against schema, arithmetic and relationship checks")
         print("PASS nine real HTTP/executable reports against the independent schema/input/accounting oracle")
         return
     overlap = load(args.directory / "known-overlap.json")

@@ -51,6 +51,8 @@ This scope describes currently referenced storage. Retained claims without a liv
 
 Save a utilization report, then compare a later collection with it:
 
+For automatic sampling and one-report in-memory history, use `--view stats --watch 10s`; see [observation modes](OBSERVATION.md). This also works with the explicit Prometheus provider. Baselines must use the same metrics provider and Prometheus cluster selector.
+
 ```sh
 kubectl view-storage -n database --statefulset postgres -u -o json > before.json
 
@@ -74,7 +76,7 @@ time to full       = current available bytes / positive growth bytes/second
 
 Negative growth means observed shrinkage; zero means steady. Neither yields a future-full estimate when available space remains. Within a usable pair, zero available bytes means full now. Group growth sums rates over paired records only and exposes completeness. `FIRST FULL IN` is the earliest individual claim estimate, so a shrinking claim cannot hide another claim approaching full. It is never combined free space divided by a combined rate.
 
-These are two-sample linear projections, not trend fitting, guarantees or forecasts of physical backend exhaustion. Cleanup, workload bursts, filesystem reserves and a driver reporting its backing filesystem can change their meaning. No Prometheus connection, background watcher, automatic sampling delay or on-disk history database is introduced. Current collection exit policies remain unchanged; `--require-metrics` checks current metrics, not the completeness of historical pairs.
+These are two-sample linear projections, not trend fitting, guarantees or forecasts of physical backend exhaustion. Cleanup, workload bursts, filesystem reserves and a driver reporting its backing filesystem can change their meaning. Single collections introduce no automatic sampling delay or on-disk history database. Current collection exit policies remain unchanged; `--require-metrics` checks current metrics, not the completeness of historical pairs.
 
 ## Exports and validation
 

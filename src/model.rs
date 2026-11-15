@@ -226,6 +226,15 @@ pub struct Consumer {
     pub node: Option<String>,
     pub state: ReferenceState,
     pub statefulset: MetadataValue<StatefulSet>,
+    pub workload: MetadataValue<Workload>,
+    pub workload_chain: Vec<Workload>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
+pub struct Workload {
+    pub kind: String,
+    pub name: String,
+    pub uid: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -266,9 +275,17 @@ pub struct Relationship {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Source {
+    pub provider: crate::cli::MetricsSource,
     pub node: String,
-    pub pod_id: ConsumerId,
+    pub pod_id: Option<ConsumerId>,
     pub volume_name: String,
+    pub claim: Option<Box<ClaimIdentity>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ClaimIdentity {
+    pub namespace: String,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

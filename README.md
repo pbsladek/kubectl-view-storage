@@ -13,6 +13,9 @@ A Rust kubectl plugin for inspecting Kubernetes persistent volumes, claims, cons
 - Useful inventory with limited permissions and explicit reasons for missing data.
 - Deterministic JSON and CSV output.
 - Storage sums and statistics by class, volume/access mode and StatefulSet; observed growth from saved reports.
+- Sequential watch mode with automatic growth history and newline-delimited JSON.
+- Explicit Prometheus telemetry with separate authentication and preserved sample timestamps.
+- Verified Deployment, DaemonSet, StatefulSet, Job and CronJob ownership, filtering and grouping.
 
 ## Build from source
 
@@ -54,6 +57,8 @@ By default, inventory is grouped by storage class → namespace → PVC. Usage c
 See [real command output in all views, JSON, and CSV](examples/README.md) and the [CLI specification](docs/SPEC.md).
 
 For totals and size statistics, use `kubectl view-storage -A --view stats --units GB`. See [calculations](docs/CALCULATIONS.md) for workload scope, units and fill-rate comparisons.
+
+For continuous observation, use `kubectl view-storage -n database --view stats --watch 10s`. Select a workload with `--workload deployment/api`, or group all visible claims with `-A -g workload`. See [watch, Prometheus and workload attribution](docs/OBSERVATION.md) for provider configuration, permissions and examples.
 
 ## Documentation
 

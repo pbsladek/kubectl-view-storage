@@ -32,6 +32,20 @@ pub enum Color {
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Serialize)]
 #[serde(rename_all = "lowercase")]
+pub enum MetricsSource {
+    Kubelet,
+    Prometheus,
+}
+impl MetricsSource {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Kubelet => "kubelet",
+            Self::Prometheus => "prometheus",
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Severity {
     Info,
     Warning,
@@ -51,6 +65,7 @@ pub enum Dimension {
     Accessmode,
     Volumemode,
     Statefulset,
+    Workload,
     Phase,
 }
 impl FromStr for Dimension {
@@ -67,6 +82,7 @@ impl FromStr for Dimension {
             "accessmode" | "access-mode" => Ok(Self::Accessmode),
             "volumemode" | "volume-mode" => Ok(Self::Volumemode),
             "statefulset" | "sts" => Ok(Self::Statefulset),
+            "workload" => Ok(Self::Workload),
             "phase" => Ok(Self::Phase),
             _ => Err(format!("unsupported grouping dimension: {s}")),
         }
@@ -85,6 +101,7 @@ impl fmt::Display for Dimension {
             Self::Accessmode => "accessmode",
             Self::Volumemode => "volumemode",
             Self::Statefulset => "statefulset",
+            Self::Workload => "workload",
             Self::Phase => "phase",
         })
     }
@@ -180,6 +197,8 @@ pub struct Filters {
     pub node: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statefulset: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub workload: Option<String>,
 }
 
 #[derive(Debug, Clone, Parser)]
@@ -199,6 +218,21 @@ pub struct Cli {
     pub kubeconfig: Option<PathBuf>,
     #[arg(short = 'u', long)]
     pub utilization: bool,
+    #[arg(long, value_enum, default_value = "kubelet")]
+    pub metrics_source: MetricsSource,
+    /// Explicit Prometheus base URL; Kubernetes credentials are never reused.
+    #[arg(long)]
+    pub prometheus_url: Option<String>,
+    #[arg(long)]
+    pub prometheus_token_file: Option<PathBuf>,
+    #[arg(long)]
+    pub prometheus_ca_file: Option<PathBuf>,
+    /// Exact cluster label selector, e.g. cluster=production.
+    #[arg(long)]
+    pub prometheus_cluster: Option<String>,
+    /// Assert that the endpoint contains only the selected Kubernetes cluster.
+    #[arg(long, conflicts_with = "prometheus_cluster")]
+    pub prometheus_single_cluster: bool,
     #[arg(short = 'g', long = "group-by", value_delimiter = ',')]
     pub group_by: Option<Vec<Dimension>>,
     #[arg(long, value_enum, default_value = "tree")]
@@ -224,12 +258,21 @@ pub struct Cli {
     /// Select claims referenced by live pods controlled by this StatefulSet.
     #[arg(long, alias = "sts")]
     pub statefulset: Option<String>,
+    /// Select live claims by verified controller, e.g. deployment/api or cronjob/backup.
+    #[arg(long, value_parser=crate::workloads::selector)]
+    pub workload: Option<String>,
     /// Units for the stats view: auto, B, KB..PB, or KiB..PiB (case insensitive).
     #[arg(long, alias = "unit", default_value = "auto")]
     pub units: crate::calculations::Unit,
     /// Earlier JSON report used to calculate observed growth and time to full.
     #[arg(long, value_name = "REPORT.json")]
     pub compare: Option<PathBuf>,
+    /// Refresh after each completed collection; stats keeps the preceding sample.
+    #[arg(long, value_parser=duration)]
+    pub watch: Option<Duration>,
+    /// Stop after this many watch cycles (otherwise continue until interrupted).
+    #[arg(long, requires = "watch", value_parser=clap::value_parser!(u32).range(1..))]
+    pub watch_count: Option<u32>,
     #[arg(long, default_value = "name:asc")]
     pub sort: Sort,
     #[arg(long, value_parser=duration, default_value="10s")]
@@ -259,6 +302,8 @@ pub struct Query {
     pub group_by: Vec<Dimension>,
     pub filters: Filters,
     pub utilization: bool,
+    pub metrics_source: MetricsSource,
+    pub prometheus_cluster: Option<String>,
     pub max_metrics_age: Duration,
     pub warn_used: Threshold,
     pub critical_used: Threshold,
@@ -280,10 +325,19 @@ fn fail_level(value: &str) -> Result<Severity, String> {
 
 impl Cli {
     pub fn validate(&self) -> Result<(), String> {
+        crate::prometheus::validate_options(self)?;
+        if self.watch.is_some() && self.output == Output::Csv {
+            return Err(
+                "--watch supports text and newline-delimited JSON; CSV is unavailable".into(),
+            );
+        }
         if self.view != View::Stats
             && (self.compare.is_some() || self.units != crate::calculations::Unit::Auto)
         {
             return Err("--units and --compare require --view stats".into());
+        }
+        if self.workload.is_some() && (self.all_namespaces || self.kind == Kind::Pv) {
+            return Err("--workload requires PVC mode in a single namespace".into());
         }
         if self.all_namespaces && self.statefulset.is_some() {
             return Err("--statefulset requires a single namespace; use -n NAMESPACE".into());
@@ -364,8 +418,15 @@ impl Cli {
                 driver: self.driver.clone(),
                 node: self.node.clone(),
                 statefulset: self.statefulset.clone(),
+                workload: self.workload.clone(),
             },
-            utilization: self.utilization || self.require_metrics || self.compare.is_some(),
+            utilization: self.utilization
+                || self.require_metrics
+                || self.compare.is_some()
+                || self.metrics_source == MetricsSource::Prometheus
+                || self.watch.is_some() && self.view == View::Stats,
+            metrics_source: self.metrics_source,
+            prometheus_cluster: self.prometheus_cluster.clone(),
             max_metrics_age: self.max_metrics_age,
             warn_used: self.warn_used,
             critical_used: self.critical_used,
@@ -376,6 +437,12 @@ impl Cli {
             units: self.units,
             baseline: None,
         })
+    }
+}
+
+impl Query {
+    pub fn needs_workloads(&self) -> bool {
+        self.filters.workload.is_some() || self.group_by.contains(&Dimension::Workload)
     }
 }
 

@@ -721,8 +721,10 @@ dependencies = [
 name = "kubectl-view-storage-fuzz"
 version = "0.0.0"
 dependencies = [
+ "clap",
  "kubectl-view-storage",
  "libfuzzer-sys",
+ "serde_json",
 ]
 
 [[package]]

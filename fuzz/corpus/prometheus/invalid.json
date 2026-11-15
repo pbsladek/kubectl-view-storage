@@ -1,0 +1,1 @@
+{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"kubelet_volume_stats_used_bytes","namespace":"demo","persistentvolumeclaim":"data"},"values":[[1e9999,"1e9999"]]}]}}
