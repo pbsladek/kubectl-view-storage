@@ -33,3 +33,19 @@ Nix 0.31.3 replaces the earlier Rustix selection. This retains one Unix syscall 
 The change addresses measured failures: a synchronous SDK helper exceeded a 25 ms configuration budget, SDK refresh jobs could hold runtime shutdown open, and plain thread/future cancellation could not terminate those subprocesses. Current executable tests prove bounded timeout/Ctrl-C cleanup, no surviving owned processes/private startup state, inherited descriptor restoration and retained partial reports. Real PTY checks exercise Always/IfAvailable input, foreground handoff/restoration and a signal-ignoring helper. These are process-lifetime controls; kube retains credential parsing, TLS and authentication.
 
 The kube 5 default retry layer is explicitly disabled. The collector owns retry/backoff, budgets and consumed-byte accounting, and actual HTTP tests verify 429/503/504 attempts against wire requests. Otherwise SDK retries could occur underneath one reported adapter attempt. Current per-target size/features and the earlier cold-build checkpoints remain separately recorded; warm source-correction timings are not presented as cold builds.
+
+## Completion and build metadata tooling (2026-11-14)
+
+`clap_complete =4.6.11` is a dev dependency with default features disabled. Its
+maintained ahead-of-time generators produce Bash, Zsh and Fish assets from the
+shared Clap command. The application embeds these assets; generation adds no
+runtime crate. Locked resolution adds one dev package and reuses Clap. Tests
+compare checked-in assets with fresh generator output so CLI changes cannot
+silently leave completion files stale. `make completions` updates them.
+
+The std-only `build.rs` runs local `rustc --version` and Git metadata commands;
+it has no build dependencies or network access. It records the full revision and
+marks modified checkouts. Source archives without Git report `unknown` unless
+`VIEW_STORAGE_BUILD_REVISION` supplies a hexadecimal revision. This is descriptive
+provenance, not an artifact attestation. The thirteen-runtime-package policy stays
+unchanged. Source-copy and fingerprint scripts include the new build inputs.

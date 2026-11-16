@@ -238,6 +238,31 @@ async fn every_contract_scenario_runs_through_real_http_and_all_six_outputs() {
                 .replacen("Context: example", "Context: fixture", 1);
             let actual = String::from_utf8(output.stdout).unwrap();
             assert!(actual.ends_with('\n'));
+            if extra.contains(&"--wide") {
+                let cost = &document["collection"]["cost"];
+                let count = |field: &str| cost[field].as_u64().unwrap_or(0);
+                let attempts = count("base_attempts")
+                    + count("enrichment_attempts")
+                    + count("node_requests")
+                    + count("prometheus_requests");
+                assert!(actual.contains(&format!("Collection cost: {attempts} requests (base {}, enrichment {}/{}, kubelet {}, Prometheus {}); ",
+                    count("base_attempts"), count("enrichment_attempts"), count("enrichment_budget"), count("node_requests"), count("prometheus_requests"))));
+                let duration = actual
+                    .lines()
+                    .find_map(|line| line.strip_prefix("Collection duration: "))
+                    .unwrap();
+                assert!(duration.strip_suffix('s').unwrap().parse::<f64>().unwrap() >= 0.0);
+                let bytes = actual
+                    .lines()
+                    .find_map(|line| line.strip_prefix("Collection cost: "))
+                    .unwrap()
+                    .split_once("); ")
+                    .unwrap()
+                    .1
+                    .strip_suffix(" bytes read.")
+                    .unwrap();
+                assert!(bytes.parse::<u64>().unwrap() > 0);
+            }
             if let Some(timestamp) =
                 document["summary"]["filesystem"]["newest_observed_at"].as_str()
             {
@@ -271,9 +296,15 @@ async fn every_contract_scenario_runs_through_real_http_and_all_six_outputs() {
             // diagnostics. The text fixture fixes data rows, scope, coverage,
             // finding subjects/severities/codes and their order; its older
             // illustrative diagnostic/evidence prose is not an exact API.
+            // HTTP costs are checked against its independently validated JSON
+            // above: live collection can skip optional fixture-only work, and
+            // rebased timestamps change body lengths. Monotonic duration also
+            // has no fixed golden value.
             let normalize = |text: &str| {
                 text.lines()
                     .filter(|line| !line.starts_with("Collection note ["))
+                    .filter(|line| !line.starts_with("Collection duration:"))
+                    .filter(|line| !line.starts_with("Collection cost:"))
                     .filter(|line| view != "issues" || !line.starts_with("  "))
                     .map(|line| {
                         if line.starts_with("Latest sample:") {

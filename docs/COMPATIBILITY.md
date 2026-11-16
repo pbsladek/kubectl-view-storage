@@ -1,10 +1,10 @@
 # Compatibility and support evidence
 
-Updated 2026-11-10. Actual tests, builds and live profiles below have different scopes. Native artifact validation passed at `0695641`; the expanded storage workflow passed its full native Linux matrix at `0ee4e9d`. Contract validation supplements live evidence and does not certify a CSI implementation.
+Updated 2026-11-15. Actual tests, builds and live profiles below have different scopes. Native artifact validation passed at `0695641`; the expanded storage workflow passed its full native Linux matrix at `0ee4e9d`. Contract validation supplements live evidence and does not certify a CSI implementation.
 
 | Environment | Capability | Current evidence |
 | --- | --- | --- |
-| Native macOS ARM64 | Models, SDK/HTTP, reports, CLI, credential/process/terminal handling | 171 locked Rust tests; nineteen pipeline and nine HTTP reports independently verified; full-source coverage 93.74%; Clippy, fuzz smoke, installed Krew configured-query and PTY checks pass |
+| Native macOS ARM64 | Models, SDK/HTTP, reports, CLI, credential/process/terminal handling | 2026-11-14 checkpoint: 230 locked Rust tests; nineteen pipeline, nine HTTP, five calculation and nine watch/provider/workload reports independently verified; production line coverage 94.50%; formatting, Clippy, complexity, workflow, kubectl configured-query and PTY checks pass |
 | Linux ARM64 musl, native ARM64 container on Docker Desktop ARM64 VM | SDK/HTTP/executable/process/terminal handling and static release build | 169 locked Rust tests and three PTY cases pass; owned container removed |
 | Linux AMD64 musl, emulated on Docker Desktop ARM64 VM | Same container tests and static release build | 168 tests and three PTY cases pass before one test-only addition; native AMD64 tests/installations subsequently passed in the four-target CI run linked below |
 | Native macOS AMD64/ARM64 and Linux AMD64/ARM64 | Release artifacts and installed Krew checks | [Four-target native distribution run at `0695641`](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060) passed; separate from live storage compatibility |
@@ -16,6 +16,31 @@ Updated 2026-11-10. Actual tests, builds and live profiles below have different 
 | Live raw block, cloud CSI, Rook Ceph, Longhorn, OpenEBS | Provider-specific capabilities | Unverified; Block logical/n/a behavior has actual HTTP/executable coverage |
 
 The initial API target is Kubernetes 1.35–1.37. Inventory, byte metrics, inode metrics and Block handling are separate capabilities. Hostpath demo counters do not establish per-claim physical isolation. Earlier live runs preceded the final credential/retry corrections; final release-binary reruns are recorded separately.
+
+## Release compiler checkpoint (2026-11-15)
+
+Rust/Cargo 1.100.0 is the tested release pin, verified against the official stable
+channel. The v0.1.0 preparation passes 232 Rust tests on native macOS ARM64,
+formatting, Clippy, independent report oracles and a fresh dependency audit.
+Matching LLVM coverage is 8662/9772 lines (88.64%); all required core modules
+exceed their 90% floor. Earlier coverage/platform/driver results below keep their original compiler and
+source scopes. Native release archives and installed commands are checked by the
+Release workflow for the tagged commit before publication.
+
+## Local usability and code quality checkpoint (2026-11-14)
+
+The 2026-11-14 checkout passed `make verify` on native macOS ARM64 with
+the pinned Rust 1.99.1 toolchain. It includes 167 library, six executable-module,
+eleven randomized-property, three CLI, 42 HTTP/executable and one completion
+freshness tests (230 total). Production coverage is 8952/9473 lines (94.50%);
+every core module exceeds its 90% floor. All 464 measured production functions
+meet the cyclomatic complexity ceiling of 20.
+
+This checkpoint adds text units across views, collection cost/timing, actionable
+usage guidance, offline completion assets and build information. Local JSON/CSV
+schema and independent accounting checks pass. These checks do not refresh the
+earlier native release, installed Krew, fuzz, or live-driver receipts. Other
+platform counts in the table describe those earlier checkpoints.
 
 ## Calculation extension
 
@@ -36,7 +61,7 @@ Sanitized reports and receipts are under corresponding ignored `artifacts/run-ID
 
 ## Shared local/CI storage suite
 
-The [storage E2E harness](STORAGE_E2E.md) adds bounded writes and pod-replacement persistence to local-path, retains the existing CSI telemetry gate, and adds a required cross-node NFS CSI gate. On the current Mac, local-path passed in 87.75 seconds (`fe10fc22-b639-47e4-9934-4dacbb779ace`) and CSI hostpath passed in 171.01 seconds (`63c3e820-ed3c-444b-807d-031177998ab4`), including owned cleanup. NFS CSI passed with Ganesha 9.14 in 233.86 seconds (`da75058e-0b0c-42bc-a6f2-5fb0f8c12f88`), including cleanup. The older Ganesha image failed its real metadata/telemetry gate and was replaced. The final local-path usage rerun also passed (`74c1ab03-e851-42e8-880e-3d4e0c153c69`, 88.90 seconds). A complete default three-backend suite then passed on Kubernetes 1.36.4 in 452.27 seconds (`storage-e2e-3ad4eb12-37fd-42ed-9e8d-09b6b46879da`): local-path 80.67 seconds, CSI hostpath 141.82 seconds, NFS CSI 229.78 seconds, with all owned clusters deleted and user kubeconfigs unchanged. The complete suite also passed on Kubernetes 1.35.8 in 472.72 seconds (`storage-e2e-9a13eeb5-4ae5-42eb-829d-5b887d647516`), including all cleanup and kubeconfig checks. The final cross-node accounting assertions pass on real reports, and the unchanged production source fingerprint matches the captured release binary. The separate [native GitHub matrix](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42900675127) now supplies that evidence; its uploaded receipts verify all six cells independently of the local runs.
+The [storage E2E harness](STORAGE_E2E.md) adds bounded writes and pod-replacement persistence to local-path, retains the existing CSI telemetry gate, and adds a required cross-node NFS CSI gate. On the current Mac, local-path passed in 87.75 seconds (`fe10fc22-b639-47e4-9934-4dacbb779ace`) and CSI hostpath passed in 171.01 seconds (`63c3e820-ed3c-444b-807d-031177998ab4`), including owned cleanup. NFS CSI passed with Ganesha 9.14 in 233.86 seconds (`da75058e-0b0c-42bc-a6f2-5fb0f8c12f88`), including cleanup. The older Ganesha image failed its real metadata/telemetry gate and was replaced. The final local-path usage rerun also passed (`74c1ab03-e851-42e8-880e-3d4e0c153c69`, 88.90 seconds). A complete default three-backend suite then passed on Kubernetes 1.36.4 in 452.27 seconds (`storage-e2e-3ad4eb12-37fd-42ed-9e8d-09b6b46879da`): local-path 80.67 seconds, CSI hostpath 141.82 seconds, NFS CSI 230.78 seconds, with all owned clusters deleted and user kubeconfigs unchanged. The complete suite also passed on Kubernetes 1.35.8 in 472.72 seconds (`storage-e2e-9a13eeb5-4ae5-42eb-829d-5b887d647516`), including all cleanup and kubeconfig checks. The final cross-node accounting assertions pass on real reports, and the unchanged production source fingerprint matches the captured release binary. The separate [native GitHub matrix](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42900675127) now supplies that evidence; its uploaded receipts verify all six cells independently of the local runs.
 
 ## Recording results
 

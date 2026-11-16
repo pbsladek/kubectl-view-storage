@@ -26,3 +26,6 @@ Bytes unavailable: 1 max age exceeded, 1 no sample
 Inodes unavailable: 1 max age exceeded, 1 no sample
 Findings: 2 info (details: --view issues)
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 6 requests (base 1, enrichment 4/256, kubelet 1, Prometheus 0); 2872 bytes read.
+Next: Check CSI statistics refresh and node clocks; increase --max-metrics-age only if older observations are acceptable.
+Next: Confirm the claim is mounted and its CSI driver reports volume statistics, then retry after the kubelet statistics refresh.

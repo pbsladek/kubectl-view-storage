@@ -72,3 +72,11 @@ python3 scripts/verify-prometheus-live.py \
 ```
 
 This starts only an owned native Prometheus and loopback fixture, validates trusted/untrusted TLS, actual scrape/query timestamps, workload selection and automatic growth arithmetic, then cleans up its processes and temporary files. It uses no user kubeconfig or Docker daemon. Evidence goes to `artifacts/prometheus-live`. This test does not establish compatibility with a live Kubernetes cluster or storage driver.
+
+### Collection duration in watch output
+
+Every text cycle includes its monotonic collection duration. If collection takes
+longer than `--watch`, the line says so. The interval remains a wait after the
+completed cycle; cycles never overlap. Duration excludes configuration,
+finalization, output and that wait. `--wide` also shows duration for a single run.
+This is presentation metadata and does not change the report JSON schema.

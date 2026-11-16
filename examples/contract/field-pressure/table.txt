@@ -26,3 +26,4 @@ Latest sample: 2026-11-06T19:59:50Z
 Bytes unavailable: 1 available bytes missing
 Findings: 3 critical, 1 warning (details: --view issues)
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 6 requests (base 1, enrichment 4/256, kubelet 1, Prometheus 0); 3154 bytes read.

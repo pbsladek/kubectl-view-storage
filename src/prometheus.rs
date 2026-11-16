@@ -229,16 +229,9 @@ fn tuples<C: Checkpoint>(response: &Value, control: &mut C) -> Result<Option<Tup
         let Some(metric) = series["metric"].as_object() else {
             return Ok(None);
         };
-        let mut labels: BTreeMap<String, String> = BTreeMap::new();
-        for (key, value) in metric {
-            control.step()?;
-            let Some(value) = value.as_str() else {
-                return Ok(None);
-            };
-            if key != "__name__" {
-                labels.insert(key.clone(), value.into());
-            }
-        }
+        let Some(labels) = series_labels(metric, control)? else {
+            return Ok(None);
+        };
         let (Some(namespace), Some(claim)) =
             (labels.get("namespace"), labels.get("persistentvolumeclaim"))
         else {
@@ -255,26 +248,10 @@ fn tuples<C: Checkpoint>(response: &Value, control: &mut C) -> Result<Option<Tup
         let Some(values) = series["values"].as_array() else {
             return Ok(None);
         };
-        let mut newest = None;
-        for value in values {
-            control.step()?;
-            let Some(pair) = value.as_array().filter(|pair| pair.len() == 2) else {
-                return Ok(None);
-            };
-            let (Some(time), Some(raw)) = (sample_time(&pair[0]), pair[1].as_str()) else {
-                return Ok(None);
-            };
-            let number = counter_value(raw)
-                .map(Value::from)
-                .unwrap_or(json!("invalid"));
-            match &mut newest {
-                Some((old, previous, conflicting)) if time == *old => {
-                    *conflicting |= *previous != number
-                }
-                Some((old, _, _)) if time < *old => {}
-                _ => newest = Some((time, number, false)),
-            }
-        }
+        let newest = match newest_sample(values, control)? {
+            SeriesSample::Invalid => return Ok(None),
+            SeriesSample::Valid(newest) => newest,
+        };
         if let Some((time, value, conflicting)) = newest {
             if conflicting {
                 return Ok(None);
@@ -310,19 +287,7 @@ pub(crate) fn apply_checked<C: Checkpoint>(
     };
     let mut index: BTreeMap<(&str, &str), Vec<_>> = BTreeMap::new();
     if let Some(tuples) = &tuples {
-        for ((ns, claim, labels, time), values) in tuples {
-            control.step()?;
-            if let Some(expected) = &query.prometheus_cluster
-                && let Ok((label, value)) = cluster(expected)
-                && labels.get(label).map(String::as_str) != Some(value)
-            {
-                continue;
-            }
-            index
-                .entry((ns, claim))
-                .or_default()
-                .push((labels, *time, values));
-        }
+        index = index_tuples(tuples, query, control)?;
     } else if graph
         .records
         .iter()
@@ -332,25 +297,7 @@ pub(crate) fn apply_checked<C: Checkpoint>(
     }
     for record in &mut graph.records {
         control.step()?;
-        if record.volume_mode == VolumeMode::Block {
-            record.filesystem = MetricFamily::NotApplicable;
-            record.inodes = MetricFamily::NotApplicable;
-            continue;
-        }
-        if record.volume_mode != VolumeMode::Filesystem {
-            let reason = if record.volume_mode == VolumeMode::Invalid {
-                "invalid_volume_mode"
-            } else {
-                "unsupported_volume_mode"
-            };
-            record.filesystem = MetricFamily::Unavailable {
-                status: "invalid".into(),
-                reason: reason.into(),
-            };
-            record.inodes = MetricFamily::Unavailable {
-                status: "invalid".into(),
-                reason: reason.into(),
-            };
+        if !crate::metrics::prepare_filesystem_metrics(record) {
             continue;
         }
         let mut bytes = vec![];
@@ -366,42 +313,11 @@ pub(crate) fn apply_checked<C: Checkpoint>(
                 |a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)),
                 control,
             )?;
-            let mut clusters = BTreeSet::new();
-            for (labels, _, _) in &samples {
-                control.step()?;
-                if let Some(cluster) = labels.get("cluster") {
-                    clusters.insert(cluster.as_str());
-                }
-            }
+            let cluster_count = sample_cluster_count(&samples, control)?;
             for (labels, time, values) in samples {
                 control.step()?;
-                let expected_uid = if record.kind == crate::cli::Kind::Pvc {
-                    Some(record.uid.as_str())
-                } else {
-                    record.pvc_uid.as_deref()
-                };
-                let mismatched_uid = ["persistentvolumeclaim_uid", "pvc_uid"]
-                    .iter()
-                    .filter_map(|label| labels.get(*label))
-                    .any(|uid| Some(uid.as_str()) != expected_uid);
-                let eligibility = if record.binding_conflict
-                    || record.claim_created_at.is_none()
-                    || record
-                        .claim_created_at
-                        .is_some_and(|created| time < created)
-                    || mismatched_uid
-                    || clusters.len() > 1
-                {
-                    Eligibility::IdentityUncertain
-                } else if time.as_nanosecond() - now.as_nanosecond() > 30_000_000_000 {
-                    Eligibility::ClockSkew
-                } else if now.as_nanosecond() - time.as_nanosecond()
-                    > query.max_metrics_age.as_nanos() as i128
-                {
-                    Eligibility::Stale
-                } else {
-                    Eligibility::Fresh
-                };
+                let eligibility =
+                    sample_eligibility(record, labels, time, cluster_count, query, now);
                 let node = labels.get("node").cloned().unwrap_or_default();
                 let signature = (
                     node.clone(),
@@ -479,6 +395,129 @@ pub fn read_configuration_file(path: &std::path::Path, maximum: u64) -> Result<V
         return Err("Prometheus configuration file exceeds its size limit".into());
     }
     Ok(bytes)
+}
+
+fn sample_eligibility(
+    record: &Record,
+    labels: &BTreeMap<String, String>,
+    time: Timestamp,
+    cluster_count: usize,
+    query: &Query,
+    now: Timestamp,
+) -> Eligibility {
+    let expected_uid = if record.kind == crate::cli::Kind::Pvc {
+        Some(record.uid.as_str())
+    } else {
+        record.pvc_uid.as_deref()
+    };
+    let mismatched_uid = ["persistentvolumeclaim_uid", "pvc_uid"]
+        .iter()
+        .filter_map(|label| labels.get(*label))
+        .any(|uid| Some(uid.as_str()) != expected_uid);
+    if record.binding_conflict
+        || record.claim_created_at.is_none()
+        || record
+            .claim_created_at
+            .is_some_and(|created| time < created)
+        || mismatched_uid
+        || cluster_count > 1
+    {
+        Eligibility::IdentityUncertain
+    } else if time.as_nanosecond() - now.as_nanosecond() > 30_000_000_000 {
+        Eligibility::ClockSkew
+    } else if now.as_nanosecond() - time.as_nanosecond() > query.max_metrics_age.as_nanos() as i128
+    {
+        Eligibility::Stale
+    } else {
+        Eligibility::Fresh
+    }
+}
+
+enum SeriesSample {
+    Invalid,
+    Valid(Option<(Timestamp, Value, bool)>),
+}
+
+fn newest_sample<C: Checkpoint>(
+    values: &[Value],
+    control: &mut C,
+) -> Result<SeriesSample, C::Error> {
+    let mut newest = None;
+    for value in values {
+        control.step()?;
+        let Some(pair) = value.as_array().filter(|pair| pair.len() == 2) else {
+            return Ok(SeriesSample::Invalid);
+        };
+        let (Some(time), Some(raw)) = (sample_time(&pair[0]), pair[1].as_str()) else {
+            return Ok(SeriesSample::Invalid);
+        };
+        let number = counter_value(raw)
+            .map(Value::from)
+            .unwrap_or(json!("invalid"));
+        match &mut newest {
+            Some((old, previous, conflicting)) if time == *old => {
+                *conflicting |= *previous != number
+            }
+            Some((old, _, _)) if time < *old => {}
+            _ => newest = Some((time, number, false)),
+        }
+    }
+    Ok(SeriesSample::Valid(newest))
+}
+
+fn series_labels<C: Checkpoint>(
+    metric: &serde_json::Map<String, Value>,
+    control: &mut C,
+) -> Result<Option<BTreeMap<String, String>>, C::Error> {
+    let mut labels: BTreeMap<String, String> = BTreeMap::new();
+    for (key, value) in metric {
+        control.step()?;
+        let Some(value) = value.as_str() else {
+            return Ok(None);
+        };
+        if key != "__name__" {
+            labels.insert(key.clone(), value.into());
+        }
+    }
+    Ok(Some(labels))
+}
+
+fn sample_cluster_count<C: Checkpoint>(
+    samples: &[PrometheusSample<'_>],
+    control: &mut C,
+) -> Result<usize, C::Error> {
+    let mut clusters = BTreeSet::new();
+    for (labels, _, _) in samples {
+        control.step()?;
+        if let Some(cluster) = labels.get("cluster") {
+            clusters.insert(cluster.as_str());
+        }
+    }
+    Ok(clusters.len())
+}
+
+type PrometheusSample<'a> = (&'a BTreeMap<String, String>, Timestamp, &'a [Value; 6]);
+type PrometheusIndex<'a> = BTreeMap<(&'a str, &'a str), Vec<PrometheusSample<'a>>>;
+fn index_tuples<'a, C: Checkpoint>(
+    tuples: &'a Tuples,
+    query: &Query,
+    control: &mut C,
+) -> Result<PrometheusIndex<'a>, C::Error> {
+    let mut index: PrometheusIndex<'a> = BTreeMap::new();
+    for ((ns, claim, labels, time), values) in tuples {
+        control.step()?;
+        if let Some(expected) = &query.prometheus_cluster
+            && let Ok((label, value)) = cluster(expected)
+            && labels.get(label).map(String::as_str) != Some(value)
+        {
+            continue;
+        }
+        index
+            .entry((ns, claim))
+            .or_default()
+            .push((labels, *time, values));
+    }
+    Ok(index)
 }
 
 #[cfg(test)]

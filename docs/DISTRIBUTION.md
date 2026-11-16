@@ -1,8 +1,82 @@
-# Local distribution preparation
+# Building and publishing a release
 
-The [phase plan](IMPLEMENTATION_PLAN.md) places publication in phase 6, while A30 remains a phase 5 acceptance gate. This guide covers artifact preparation and an isolated local Krew installation. It does not publish a release or submit an index entry.
+The [phase plan](IMPLEMENTATION_PLAN.md) places publication in phase 6, while A30 remains a phase 5 acceptance gate. This guide covers the Makefile release commands, artifact preparation and isolated local Krew installation. `make release-publish` explicitly publishes to GitHub; the native workflow and other preparation commands do not publish. Krew index submission remains separate.
 
 The [Krew readiness checklist](KREW_READINESS.md) tracks upstream prerequisites and the remaining release steps. Native builds, source-package installation and isolated Krew installation passed on all four platforms at `5f372dc` in [CI run 42975306322](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42975306322). The pinned workspace-local Krew 0.5.0 tool is checksum-verified; local installation uses an owned temporary KREW_ROOT. Fifteen packaging checks include real Cargo file-selection matching, installed-license failures and download-mode command selection. Synthetic header/subprocess fixtures do not establish runtime compatibility. Revalidate the chosen release revision before closing A30; see [implementation evidence](IMPLEMENTATION_STATUS.md) and the [acceptance audit](ACCEPTANCE_STATUS.md).
+
+## Release through Make
+
+Use Python 3.12+, the pinned Cargo toolchain, Git and an authenticated GitHub CLI
+(`gh auth login`). `make release-help` prints the commands. The wrapper selects
+the GitHub repository from `origin`, so Git and gh must both have access there.
+
+For version 0.1.0:
+
+```sh
+make release-prepare VERSION=0.1.0
+make verify
+make coverage
+```
+
+Preparation updates Cargo.toml, the local package version in both Cargo.lock and
+fuzz/Cargo.lock, and generated shell completions. It uses offline Cargo resolution
+and refuses unrelated dependency changes. A failure restores those input files.
+Populate Cargo's dependency caches first if offline resolution reports a missing
+package. Other reviewed source changes remain yours to commit.
+
+Review, commit and push the release inputs, then run:
+
+```sh
+make release VERSION=0.1.0
+```
+
+This requires a clean checkout with matching manifest/lockfile versions. It
+creates an annotated `v0.1.0` tag at HEAD if needed, pushes it to origin, dispatches
+the native Release workflow at that tag, waits for the full workflow including
+four native installation checks, and downloads `verified-local-release-set`.
+It finds its own dispatch by a unique workflow run name, verifies the source
+commit, checks all four archives and SHA-256 values, and writes a receipt linking
+the files to that run. It does not commit source or move existing tags.
+
+The default directory is `artifacts/release-0.1.0`. An existing destination is
+preserved; use a fresh `RELEASE_DIRECTORY` for another download. If the connection
+or watch is interrupted, the printed run ID lets you resume without dispatching
+another build:
+
+```sh
+make release VERSION=0.1.0 RUN_ID=123456789
+```
+
+After reviewing the artifacts, publish that same verified set:
+
+```sh
+make release-publish VERSION=0.1.0
+```
+
+Publication rechecks the remote tag, successful workflow attempt, archive layout,
+manifest, checksums and downloaded-file hashes, then creates a GitHub Release
+with all four archives, `SHA256SUMS` and `view-storage.yaml`. It generates release
+notes unless `docs/releases/vVERSION.md` supplies reviewed notes, and marks
+versions with a prerelease suffix as prereleases. It does not
+rebuild binaries, overwrite existing release assets or submit a Krew index PR.
+
+Use `DRAFT=1` to create an unpublished draft instead:
+
+```sh
+make release-publish VERSION=0.1.0 DRAFT=1
+```
+
+Finish publishing that draft in GitHub. Pass the same `RELEASE_DIRECTORY` override
+to build, verify and publish when using a custom directory. `release-build` is an
+alias for the build step. Existing `release-verify` and `release-smoke` targets
+also accept VERSION to select its directory; without VERSION they retain the
+original `artifacts/release` default. After publication, run the public-URL Krew
+checks below before claiming download-based installation support.
+
+The wrapper tests use synthetic archive fixtures and mocked GitHub operations;
+they exercise version preparation, rollback, source/run identity, failure
+handling and publication arguments without pushing tags or publishing anything.
+A hosted run at the selected revision remains the native execution evidence.
 
 ## Build inputs
 

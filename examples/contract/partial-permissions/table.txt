@@ -19,3 +19,4 @@ Latest sample: 2026-11-06T19:59:50Z
 * Partial capacity: sum of known values; unknown values are excluded.
 Collection note [forbidden]: PV get denied; claim and telemetry remain visible.
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 5 requests (base 1, enrichment 3/256, kubelet 1, Prometheus 0); 1600 bytes read.

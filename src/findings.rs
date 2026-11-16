@@ -71,134 +71,7 @@ pub(crate) fn evaluate_checked<C: Checkpoint>(
     let mut findings = vec![];
     for record in &graph.records {
         control.step()?;
-        let mut add = |code: &str, severity: Severity, evidence: Vec<Evidence>, action: &str| {
-            findings.push(Finding {
-                code: code.into(),
-                severity,
-                subject_id: record.id.clone(),
-                evidence,
-                suggested_action: action.into(),
-            })
-        };
-        match record.phase {
-            Phase::Lost => add(
-                "claim_lost",
-                Severity::Critical,
-                vec![plain("phase", json!("Lost"), None)],
-                "Inspect the claim binding and volume state.",
-            ),
-            Phase::Failed => add(
-                "volume_failed",
-                Severity::Warning,
-                vec![plain("phase", json!("Failed"), None)],
-                "Inspect volume status and storage controller events.",
-            ),
-            Phase::Pending => {
-                let mut evidence = vec![plain("phase", json!("Pending"), None)];
-                if let Some(created) = record.created_at.filter(|created| *created <= now) {
-                    evidence.push(Evidence {
-                        field: "age_seconds".into(),
-                        value: json!(
-                            ((now.as_nanosecond() - created.as_nanosecond()) / 1_000_000_000)
-                                .to_string()
-                        ),
-                        unit: Some("seconds".into()),
-                        observed_at: Some(now),
-                        source: None,
-                    });
-                }
-                if let Some(mode) = &record.volume_binding_mode {
-                    evidence.push(plain("volume_binding_mode", json!(mode), None));
-                }
-                add(
-                    "claim_pending",
-                    Severity::Info,
-                    evidence,
-                    "Inspect provisioning and delayed binding conditions.",
-                );
-            }
-            Phase::Released => add(
-                "volume_released",
-                Severity::Info,
-                vec![
-                    plain("phase", json!("Released"), None),
-                    plain("reclaim_policy", json!(record.reclaim_policy), None),
-                ],
-                "Review reclaim policy and ownership before taking action.",
-            ),
-            _ => {}
-        }
-        if record.binding_conflict {
-            add(
-                "binding_conflict",
-                Severity::Warning,
-                vec![plain("pv_name", json!(record.pv_name), None)],
-                "Inspect claim and volume UIDs; attribution is unverified.",
-            );
-        }
-        if record.active_count == Some(0) && record.terminating_count == Some(0) {
-            add(
-                "no_active_consumer",
-                Severity::Info,
-                vec![
-                    plain("active_consumer_count", json!(0), None),
-                    plain("terminating_consumer_count", json!(0), None),
-                ],
-                "Review visible pod references and ownership; this does not establish deletion safety.",
-            );
-        }
-        family_rules(
-            &record.filesystem,
-            query,
-            ["filesystem_usage_high", "filesystem_space_exhausted"],
-            ["used_bytes", "available_bytes"],
-            "bytes",
-            &mut add,
-        );
-        family_rules(
-            &record.inodes,
-            query,
-            ["inode_usage_high", "filesystem_inodes_exhausted"],
-            ["inodes_used", "inodes_free"],
-            "inodes",
-            &mut add,
-        );
-        let mut notes = BTreeMap::new();
-        family_notes(&record.filesystem, "filesystem", &mut notes);
-        family_notes(&record.inodes, "inodes", &mut notes);
-        for (code, (severity, evidence)) in notes {
-            add(
-                code,
-                severity,
-                evidence,
-                match code {
-                    "metrics_disagreement"
-                        if query.fail_on == Some(Severity::Critical)
-                            && (conflicting_pressure_checked(
-                                &record.filesystem,
-                                query,
-                                control,
-                            )? == Some(Severity::Critical)
-                                || conflicting_pressure_checked(
-                                    &record.inodes,
-                                    query,
-                                    control,
-                                )? == Some(Severity::Critical)) =>
-                    {
-                        "Inspect the conflicting node samples; the critical usage check is inconclusive."
-                    }
-                    "metrics_disagreement" => {
-                        "Inspect the conflicting samples and their provenance; the selected observation is uncertain."
-                    }
-                    "invalid_metrics" => {
-                        "Inspect invalid field diagnostics; valid sibling measurements remain available."
-                    }
-                    _ => {
-                        "Inspect observation provenance, freshness, visibility, and collector diagnostics."
-                    }
-                },
-            );
-        }
+        record_findings(record, query, now, &mut findings, control)?;
     }
     let mut identities = BTreeMap::new();
     for record in &graph.records {
@@ -432,6 +305,138 @@ fn plain(field: &str, value: serde_json::Value, unit: Option<&str>) -> Evidence 
         observed_at: None,
         source: None,
     }
+}
+
+fn record_findings<C: Checkpoint>(
+    record: &Record,
+    query: &Query,
+    now: jiff::Timestamp,
+    findings: &mut Vec<Finding>,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    let mut add = |code: &str, severity: Severity, evidence: Vec<Evidence>, action: &str| {
+        findings.push(Finding {
+            code: code.into(),
+            severity,
+            subject_id: record.id.clone(),
+            evidence,
+            suggested_action: action.into(),
+        })
+    };
+    match record.phase {
+        Phase::Lost => add(
+            "claim_lost",
+            Severity::Critical,
+            vec![plain("phase", json!("Lost"), None)],
+            "Inspect the claim binding and volume state.",
+        ),
+        Phase::Failed => add(
+            "volume_failed",
+            Severity::Warning,
+            vec![plain("phase", json!("Failed"), None)],
+            "Inspect volume status and storage controller events.",
+        ),
+        Phase::Pending => {
+            let mut evidence = vec![plain("phase", json!("Pending"), None)];
+            if let Some(created) = record.created_at.filter(|created| *created <= now) {
+                evidence.push(Evidence {
+                    field: "age_seconds".into(),
+                    value: json!(
+                        ((now.as_nanosecond() - created.as_nanosecond()) / 1_000_000_000)
+                            .to_string()
+                    ),
+                    unit: Some("seconds".into()),
+                    observed_at: Some(now),
+                    source: None,
+                });
+            }
+            if let Some(mode) = &record.volume_binding_mode {
+                evidence.push(plain("volume_binding_mode", json!(mode), None));
+            }
+            add(
+                "claim_pending",
+                Severity::Info,
+                evidence,
+                "Inspect provisioning and delayed binding conditions.",
+            );
+        }
+        Phase::Released => add(
+            "volume_released",
+            Severity::Info,
+            vec![
+                plain("phase", json!("Released"), None),
+                plain("reclaim_policy", json!(record.reclaim_policy), None),
+            ],
+            "Review reclaim policy and ownership before taking action.",
+        ),
+        _ => {}
+    }
+    if record.binding_conflict {
+        add(
+            "binding_conflict",
+            Severity::Warning,
+            vec![plain("pv_name", json!(record.pv_name), None)],
+            "Inspect claim and volume UIDs; attribution is unverified.",
+        );
+    }
+    if record.active_count == Some(0) && record.terminating_count == Some(0) {
+        add(
+            "no_active_consumer",
+            Severity::Info,
+            vec![
+                plain("active_consumer_count", json!(0), None),
+                plain("terminating_consumer_count", json!(0), None),
+            ],
+            "Review visible pod references and ownership; this does not establish deletion safety.",
+        );
+    }
+    family_rules(
+        &record.filesystem,
+        query,
+        ["filesystem_usage_high", "filesystem_space_exhausted"],
+        ["used_bytes", "available_bytes"],
+        "bytes",
+        &mut add,
+    );
+    family_rules(
+        &record.inodes,
+        query,
+        ["inode_usage_high", "filesystem_inodes_exhausted"],
+        ["inodes_used", "inodes_free"],
+        "inodes",
+        &mut add,
+    );
+    let mut notes = BTreeMap::new();
+    family_notes(&record.filesystem, "filesystem", &mut notes);
+    family_notes(&record.inodes, "inodes", &mut notes);
+    for (code, (severity, evidence)) in notes {
+        add(
+            code,
+            severity,
+            evidence,
+            match code {
+                "metrics_disagreement"
+                    if query.fail_on == Some(Severity::Critical)
+                        && (conflicting_pressure_checked(&record.filesystem, query, control)?
+                            == Some(Severity::Critical)
+                            || conflicting_pressure_checked(&record.inodes, query, control)?
+                                == Some(Severity::Critical)) =>
+                {
+                    "Inspect the conflicting node samples; the critical usage check is inconclusive."
+                }
+                "metrics_disagreement" => {
+                    "Inspect the conflicting samples and their provenance; the selected observation is uncertain."
+                }
+                "invalid_metrics" => {
+                    "Inspect invalid field diagnostics; valid sibling measurements remain available."
+                }
+                _ => {
+                    "Inspect observation provenance, freshness, visibility, and collector diagnostics."
+                }
+            },
+        );
+    }
+    Ok(())
 }
 
 #[cfg(test)]

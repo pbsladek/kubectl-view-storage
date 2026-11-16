@@ -3,6 +3,143 @@ use super::*;
 use crate::policy::Exit;
 
 #[test]
+fn explicit_units_apply_to_inventory_metrics_and_issue_evidence_without_changing_data() {
+    let report = Report {
+        document: serde_json::from_str(include_str!(
+            "../../examples/contract/field-pressure/report.json"
+        ))
+        .unwrap(),
+        exit: Exit::Success,
+        strict_conflict: None,
+    };
+    let original = report.document.clone();
+    for view in [View::Tree, View::Table, View::Summary, View::Issues] {
+        let mut options = TextOptions::new(view, false, false);
+        options.units = Unit::Gb;
+        let text = text_with_options(&report, options);
+        assert!(text.contains("GB"), "{view:?}: {text}");
+        assert!(!text.contains("GiB"), "{view:?}: {text}");
+    }
+    let mut options = TextOptions::new(View::Table, false, false);
+    options.units = Unit::B;
+    let text = text_with_options(&report, options);
+    assert!(text.contains("107374182400.00 B"));
+    assert!(text.contains("--")); // Unknown fields retain their presentation state.
+    assert_eq!(report.document, original);
+}
+
+#[test]
+fn compact_json_is_one_complete_line_with_a_trailing_newline() {
+    let document =
+        serde_json::json!({"label":"two\nlines", "bytes":"18446744073709551615", "unknown":null});
+    let mut output = vec![];
+    write_json(&mut output, &document).unwrap();
+    assert_eq!(output.iter().filter(|byte| **byte == b'\n').count(), 1);
+    assert_eq!(output.last(), Some(&b'\n'));
+    assert!(!String::from_utf8_lossy(&output).contains(": "));
+    assert_eq!(serde_json::from_slice::<Value>(&output).unwrap(), document);
+}
+
+#[test]
+fn cost_counts_attempts_and_only_reports_confirmed_budget_exhaustion() {
+    let mut report = serde_json::json!({"collection":{"cost":{
+        "base_attempts":3,"enrichment_attempts":256,"enrichment_budget":256,
+        "node_requests":2,"prometheus_requests":4,"response_bytes":12345
+    }},"diagnostics":[]});
+    let mut text = String::new();
+    details::collection_cost(&mut text, &report, &mut Unbounded).unwrap();
+    assert!(text.contains("265 requests") && text.contains("12345 bytes"));
+    assert!(!text.contains("exhausted"));
+    report["diagnostics"] = serde_json::json!([{"reason":"budget_exhausted"}]);
+    details::collection_cost(&mut text, &report, &mut Unbounded).unwrap();
+    assert_eq!(text.matches("Enrichment budget exhausted").count(), 1);
+    assert!(
+        details::collection_cost(
+            &mut String::new(),
+            &report,
+            &mut Budget {
+                remaining: 0,
+                steps: 0
+            }
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn collection_timing_uses_elapsed_duration_and_marks_watch_overruns() {
+    let mut options = TextOptions::new(View::Table, false, false);
+    options.collection_elapsed = Some(Duration::from_millis(250));
+    let mut text = String::new();
+    details::collection_timing(&mut text, options);
+    assert!(text.is_empty());
+    options.watch_interval = Some(Duration::from_millis(100));
+    details::collection_timing(&mut text, options);
+    assert_eq!(
+        text,
+        "Collection duration: 0.250s (longer than the 0.100s refresh interval)\n"
+    );
+    text.clear();
+    options.watch_interval = Some(Duration::from_millis(250));
+    details::collection_timing(&mut text, options);
+    assert_eq!(text, "Collection duration: 0.250s\n");
+    text.clear();
+    options.watch_interval = None;
+    options.wide = true;
+    details::collection_timing(&mut text, options);
+    assert_eq!(text, "Collection duration: 0.250s\n");
+}
+
+#[test]
+fn metric_guidance_is_deduplicated_provider_specific_and_only_emitted_when_requested() {
+    let mut report = serde_json::json!({"query":{"utilization":true,"metrics_source":"kubelet"},
+        "summary":{"filesystem":{"coverage":{"by_reason":{}}},"inodes":{"coverage":{"by_reason":{}}}}});
+    for (reason, expected) in [
+        ("forbidden", "nodes/proxy"),
+        ("consumers_unknown", "pod-list access"),
+        ("no_live_consumer", "scheduled active or terminating pod"),
+        ("max_age_exceeded", "--max-metrics-age"),
+        ("timeout", "--request-timeout"),
+        ("deadline_exceeded", "--timeout"),
+        ("budget_exhausted", "Narrow the namespace"),
+        ("no_sample", "CSI driver"),
+    ] {
+        let reasons = serde_json::json!({reason:1});
+        for family in ["filesystem", "inodes"] {
+            report["summary"][family]["coverage"]["by_reason"] = reasons.clone();
+        }
+        let text = metric_guidance(&report, &CancellationToken::new()).unwrap();
+        assert!(text.contains(expected), "{reason}: {text}");
+        assert_eq!(text.lines().count(), 1);
+    }
+    report["query"]["metrics_source"] = "prometheus".into();
+    let mut text = String::new();
+    details::metric_hints(&mut text, &report, &mut Unbounded).unwrap();
+    assert!(text.contains("kubelet_volume_stats_*"));
+    report["summary"]["filesystem"]["coverage"]["by_reason"] = serde_json::json!({"forbidden":1});
+    text.clear();
+    details::metric_hints(&mut text, &report, &mut Unbounded).unwrap();
+    assert!(text.contains("separate credentials"));
+    assert!(!text.contains("nodes/proxy"));
+    report["query"]["utilization"] = false.into();
+    text.clear();
+    details::metric_hints(&mut text, &report, &mut Unbounded).unwrap();
+    assert!(text.is_empty());
+    report["query"]["utilization"] = true.into();
+    assert!(
+        details::metric_hints(
+            &mut text,
+            &report,
+            &mut Budget {
+                remaining: 0,
+                steps: 0
+            }
+        )
+        .is_err()
+    );
+}
+
+#[test]
 fn statistics_text_and_csv_expose_partial_values_growth_reasons_and_capacity_gaps() {
     use clap::Parser;
     let mut document: Value =
@@ -263,8 +400,12 @@ fn large_and_nested_rendering_work_is_interruptible() {
             &group,
             "",
             "",
-            &BTreeMap::new(),
-            true,
+            &TextContext {
+                records: BTreeMap::new(),
+                utilization: true,
+                units: Unit::Auto,
+                color: false
+            },
             &mut Budget {
                 remaining: 64,
                 steps: 0
@@ -283,7 +424,12 @@ fn large_and_nested_rendering_work_is_interruptible() {
             &mut group_table("GROUP", true),
             "ROOT",
             &totals,
-            true,
+            &TextContext {
+                records: BTreeMap::new(),
+                utilization: true,
+                units: Unit::Auto,
+                color: false
+            },
             &mut Budget {
                 remaining: 64,
                 steps: 0

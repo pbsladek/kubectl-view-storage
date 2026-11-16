@@ -1,5 +1,6 @@
 //! Render a complete report without fetching data or doing storage accounting.
 use crate::{
+    calculations::Unit,
     cli::{Color, Severity, View},
     pipeline::Report,
     work::{Checkpoint, Unbounded},
@@ -9,8 +10,47 @@ use std::{
     collections::BTreeMap,
     fmt::Write as _,
     io::{self, Write},
+    time::Duration,
 };
 use tokio_util::sync::CancellationToken;
+
+mod details;
+mod statistics;
+mod views;
+use statistics::statistics_text;
+use views::{issues_view, summary_view, table_view, tree_view};
+
+/// Presentation choices stay outside the machine-readable report.
+#[derive(Debug, Clone, Copy)]
+pub struct TextOptions {
+    pub view: View,
+    pub wide: bool,
+    pub color: bool,
+    pub units: Unit,
+    pub clear: bool,
+    pub collection_elapsed: Option<Duration>,
+    pub watch_interval: Option<Duration>,
+}
+impl TextOptions {
+    pub fn new(view: View, wide: bool, color: bool) -> Self {
+        Self {
+            view,
+            wide,
+            color,
+            units: Unit::Auto,
+            clear: false,
+            collection_elapsed: None,
+            watch_interval: None,
+        }
+    }
+}
+
+struct TextContext<'a> {
+    records: BTreeMap<&'a str, &'a Value>,
+    utilization: bool,
+    units: Unit,
+    color: bool,
+}
 
 fn check_cancel(cancel: &CancellationToken) -> io::Result<()> {
     if cancel.is_cancelled() {
@@ -52,7 +92,7 @@ pub fn write_text(
 }
 
 pub fn write_text_refresh(
-    mut writer: impl Write,
+    writer: impl Write,
     report: &Report,
     view: View,
     wide: bool,
@@ -60,19 +100,28 @@ pub fn write_text_refresh(
     cancel: &CancellationToken,
     clear: bool,
 ) -> io::Result<()> {
+    let mut options = TextOptions::new(view, wide, color);
+    options.clear = clear;
+    write_text_options(writer, report, options, cancel)
+}
+
+pub fn write_text_options(
+    mut writer: impl Write,
+    report: &Report,
+    options: TextOptions,
+    cancel: &CancellationToken,
+) -> io::Result<()> {
     check_cancel(cancel)?;
-    let rendered = text_checked(
+    let rendered = render_checked(
         report,
-        view,
-        wide,
-        color,
+        options,
         &mut WriterControl {
             cancel,
             remaining: crate::work::CHECK_INTERVAL,
         },
     )?;
     check_cancel(cancel)?;
-    if clear {
+    if options.clear {
         writer.write_all(b"\x1b[2J\x1b[H")?;
     }
     writer.write_all(rendered.as_bytes())?;
@@ -139,6 +188,21 @@ pub fn write_json(mut writer: impl Write, report: &Value) -> io::Result<()> {
     writer.flush()
 }
 
+pub fn metric_guidance(report: &Value, cancel: &CancellationToken) -> io::Result<String> {
+    check_cancel(cancel)?;
+    let mut hints = String::new();
+    details::metric_hints(
+        &mut hints,
+        report,
+        &mut WriterControl {
+            cancel,
+            remaining: crate::work::CHECK_INTERVAL,
+        },
+    )?;
+    check_cancel(cancel)?;
+    Ok(hints)
+}
+
 pub fn use_color(when: Color, is_terminal: bool, no_color: bool) -> bool {
     match when {
         Color::Always => true,
@@ -200,18 +264,26 @@ fn iec(value: &Value) -> String {
         format!("{}.{:01} {}", scaled / 10, scaled % 10, UNITS[index])
     }
 }
+fn amount(value: &Value, unit: Unit) -> String {
+    if unit == Unit::Auto {
+        iec(value)
+    } else {
+        calculated_amount(value, unit)
+    }
+}
+
 fn percent(value: &Value) -> String {
     value
         .as_f64()
         .map(|value| format!("{value:.1}%"))
         .unwrap_or_else(|| "--".into())
 }
-fn quantity(value: &Value) -> String {
+fn quantity(value: &Value, units: Unit) -> String {
     let formatted =
         if value["known_count"] == 0 && value["total_count"].as_u64().is_some_and(|n| n > 0) {
             "--".into()
         } else {
-            iec(&value["known_sum_bytes"])
+            amount(&value["known_sum_bytes"], units)
         };
     if value["complete"] == false {
         format!("{formatted}*")
@@ -293,14 +365,14 @@ fn inode_percent(metric: &Value) -> String {
         format!("{value} ({})", metric_status(metric).to_lowercase())
     }
 }
-fn metric_cells(metric: &Value) -> Vec<String> {
+fn metric_cells(metric: &Value, units: Unit) -> Vec<String> {
     if metric["status"] == "not_applicable" {
         return vec!["n/a".into(); 4];
     }
     vec![
-        iec(&metric["capacity_bytes"]),
-        iec(&metric["used_bytes"]),
-        iec(&metric["available_bytes"]),
+        amount(&metric["capacity_bytes"], units),
+        amount(&metric["used_bytes"], units),
+        amount(&metric["available_bytes"], units),
         percent(&metric["used_percent"]),
     ]
 }
@@ -325,14 +397,14 @@ fn metric_status(metric: &Value) -> String {
     };
     label.into()
 }
-fn inventory_cells(totals: &Value, metric: &Value, utilization: bool) -> Vec<String> {
+fn inventory_cells(totals: &Value, metric: &Value, context: &TextContext<'_>) -> Vec<String> {
     let mut row = vec![
         cell(&totals["record_count"]),
-        quantity(&totals["requested"]),
-        quantity(&totals["provisioned"]),
+        quantity(&totals["requested"], context.units),
+        quantity(&totals["provisioned"], context.units),
     ];
-    if utilization {
-        row.extend(metric_cells(metric));
+    if context.utilization {
+        row.extend(metric_cells(metric, context.units));
         row.push(metric_status(metric));
     }
     row
@@ -366,6 +438,25 @@ fn text_checked<C: Checkpoint>(
     color: bool,
     control: &mut C,
 ) -> Result<String, C::Error> {
+    render_checked(report, TextOptions::new(view, wide, color), control)
+}
+
+pub fn text_with_options(report: &Report, options: TextOptions) -> String {
+    render_checked(report, options, &mut Unbounded).unwrap_or_else(|never| match never {})
+}
+
+fn render_checked<C: Checkpoint>(
+    report: &Report,
+    options: TextOptions,
+    control: &mut C,
+) -> Result<String, C::Error> {
+    let TextOptions {
+        view,
+        wide,
+        color,
+        units,
+        ..
+    } = options;
     let value = &report.document;
     let utilization = value["query"]["utilization"] == true;
     let mut out = format!(
@@ -402,176 +493,42 @@ fn text_checked<C: Checkpoint>(
             records.insert(id, record);
         }
     }
-    match view {
-        View::Stats => statistics_text(&mut out, value, utilization, wide, control)?,
-        View::Tree => {
-            let mut table = group_table("STORAGE", utilization);
-            let groups: Vec<_> = items(&value["groups"]).collect();
-            for group in groups {
-                tree(&mut table, group, "", "", &records, utilization, control)?;
-            }
-            table.draw(&mut out, control)?;
-            if records.is_empty() {
-                empty(&mut out, value);
-            }
-        }
-        View::Table => {
-            let mut columns = vec![
-                (
-                    if value["query"]["kind"] == "pv" {
-                        "PV"
-                    } else {
-                        "PVC"
-                    },
-                    false,
-                ),
-                ("PHASE", false),
-                ("PODS", true),
-                ("REQUESTED", true),
-                ("PROVISIONED", true),
-            ];
-            if utilization {
-                columns.extend([
-                    ("FS SIZE", true),
-                    ("USED", true),
-                    ("AVAILABLE", true),
-                    ("USE%", true),
-                    ("INODE%", true),
-                    ("FS SAMPLE", false),
-                ]);
-            }
-            let mut table = TextTable::new(columns);
-            for record in items(&value["records"]) {
-                control.step()?;
-                let mut row = vec![
-                    if value["collection"]["scope"]["all_namespaces"] == true {
-                        record_identity(record)
-                    } else {
-                        cell(&record["name"])
-                    },
-                    cell(&record["phase"]),
-                    pod_count(record),
-                    iec(&record["requested_bytes"]),
-                    iec(&record["provisioned_bytes"]),
-                ];
-                if utilization {
-                    row.extend(metric_cells(&record["filesystem"]));
-                    row.push(inode_percent(&record["inodes"]));
-                    row.push(metric_status(&record["filesystem"]));
-                }
-                table.rows.push(row);
-            }
-            table.draw(&mut out, control)?;
-            if items(&value["records"]).any(|r| {
-                r["terminating_consumer_count"]
-                    .as_u64()
-                    .is_some_and(|n| n > 0)
-            }) {
-                out.push_str(
-                    "Pods: active + deleting (d); references do not multiply volume capacity.\n",
-                );
-            }
-            if records.is_empty() {
-                empty(&mut out, value);
-            }
-        }
-        View::Summary => {
-            let mut table = group_table("GROUP", utilization);
-            table.columns.push(("PHASES", false));
-            summary_row(&mut table, "TOTAL", &value["summary"], utilization, control)?;
-            for group in items(&value["groups"]) {
-                control.step()?;
-                summary_row(
-                    &mut table,
-                    &group_label(group),
-                    &group["totals"],
-                    utilization,
-                    control,
-                )?;
-            }
-            table.draw(&mut out, control)?;
-        }
-        View::Issues => {
-            for finding in items(&value["findings"]) {
-                control.step()?;
-                let record = finding["subject_id"]
-                    .as_str()
-                    .and_then(|id| records.get(id))
-                    .copied()
-                    .unwrap_or(&Value::Null);
-                let severity = cell(&finding["severity"]);
-                let severity = if color {
-                    format!(
-                        "\u{1b}[{}m{severity}\u{1b}[0m",
-                        if severity == "critical" {
-                            "31"
-                        } else if severity == "warning" {
-                            "33"
-                        } else {
-                            "36"
-                        }
-                    )
-                } else {
-                    severity
-                };
-                let _ = writeln!(
-                    out,
-                    "{severity}  {}: {} [{}]",
-                    record_identity(record),
-                    human_label(&finding["code"]),
-                    cell(&finding["code"])
-                );
-                let mut sources = BTreeMap::new();
-                for evidence in items(&finding["evidence"]) {
-                    control.step()?;
-                    let displayed = if evidence["unit"] == "bytes"
-                        || evidence["field"]
-                            .as_str()
-                            .is_some_and(|s| s.ends_with("_bytes"))
-                    {
-                        iec(&evidence["value"])
-                    } else if evidence["unit"] == "percent" || evidence["field"] == "used_percent" {
-                        if evidence["value"].is_string() {
-                            format!("{}%", cell(&evidence["value"]))
-                        } else {
-                            percent(&evidence["value"])
-                        }
-                    } else {
-                        cell(&evidence["value"])
-                    };
-                    let _ = writeln!(out, "  {}: {}", human_label(&evidence["field"]), displayed);
-                    if !evidence["observed_at"].is_null() {
-                        sources.insert(
-                            (
-                                cell(&evidence["observed_at"]),
-                                cell(&evidence["source"]["provider"]),
-                                cell(&evidence["source"]["node"]),
-                            ),
-                            (),
-                        );
-                    }
-                }
-                for ((timestamp, provider, node), ()) in sources {
-                    control.step()?;
-                    let _ = writeln!(out, "  Observed: {timestamp} via {provider} on {node}");
-                }
-                let _ = writeln!(out, "  Next: {}\n", cell(&finding["suggested_action"]));
-            }
-            if items(&value["findings"]).next().is_none() {
-                out.push_str(if value["selection"]["complete"] == true {
-                    "No observed findings in selected records.\n"
-                } else {
-                    "No observed findings among confirmed matches; selection is incomplete.\n"
-                });
-            }
-        }
-    }
+    let context = TextContext {
+        records,
+        utilization,
+        units,
+        color,
+    };
+    render_view(&mut out, report, view, wide, &context, control)?;
     if wide {
         declared(&mut out, value, control)?;
     }
     footer(&mut out, report, utilization, control)?;
+    if wide {
+        details::collection_cost(&mut out, value, control)?;
+    }
+    details::collection_timing(&mut out, options);
+    details::metric_hints(&mut out, value, control)?;
     Ok(out)
 }
+fn render_view<C: Checkpoint>(
+    out: &mut String,
+    report: &Report,
+    view: View,
+    wide: bool,
+    context: &TextContext<'_>,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    let value = &report.document;
+    match view {
+        View::Stats => statistics_text(out, value, context.utilization, wide, control),
+        View::Tree => tree_view(out, value, context, control),
+        View::Table => table_view(out, value, context, control),
+        View::Summary => summary_view(out, value, context, control),
+        View::Issues => issues_view(out, value, context, control),
+    }
+}
+
 fn human_label(value: &Value) -> String {
     let mut label = cell(value).replace(['_', '.'], " ");
     if let Some(first) = label.get_mut(..1) {
@@ -630,8 +587,7 @@ fn tree<C: Checkpoint>(
     group: &Value,
     prefix: &str,
     branch: &str,
-    records: &BTreeMap<&str, &Value>,
-    utilization: bool,
+    context: &TextContext<'_>,
     control: &mut C,
 ) -> Result<(), C::Error> {
     control.step()?;
@@ -639,7 +595,7 @@ fn tree<C: Checkpoint>(
     let mut members = vec![];
     for id in items(&group["member_ids"]) {
         control.step()?;
-        if let Some(record) = id.as_str().and_then(|id| records.get(id)).copied() {
+        if let Some(record) = id.as_str().and_then(|id| context.records.get(id)).copied() {
             members.push(record);
         }
     }
@@ -652,7 +608,7 @@ fn tree<C: Checkpoint>(
         &group["totals"]["filesystem"]
     };
     let mut row = vec![format!("{prefix}{branch}{}", group_label(group))];
-    row.extend(inventory_cells(&group["totals"], metric, utilization));
+    row.extend(inventory_cells(&group["totals"], metric, context));
     table.rows.push(row);
     let below = format!(
         "{prefix}{}",
@@ -678,11 +634,11 @@ fn tree<C: Checkpoint>(
                     record_identity(record)
                 ),
                 "1".into(),
-                iec(&record["requested_bytes"]),
-                iec(&record["provisioned_bytes"]),
+                amount(&record["requested_bytes"], context.units),
+                amount(&record["provisioned_bytes"], context.units),
             ];
-            if utilization {
-                row.extend(metric_cells(&record["filesystem"]));
+            if context.utilization {
+                row.extend(metric_cells(&record["filesystem"], context.units));
                 row.push(metric_status(&record["filesystem"]));
             }
             table.rows.push(row);
@@ -698,8 +654,7 @@ fn tree<C: Checkpoint>(
             } else {
                 "|- "
             },
-            records,
-            utilization,
+            context,
             control,
         )?;
     }
@@ -709,12 +664,12 @@ fn summary_row<C: Checkpoint>(
     table: &mut TextTable,
     label: &str,
     totals: &Value,
-    utilization: bool,
+    context: &TextContext<'_>,
     control: &mut C,
 ) -> Result<(), C::Error> {
     let mut row = vec![label.into()];
-    row.extend(inventory_cells(totals, &totals["filesystem"], utilization));
-    if utilization {
+    row.extend(inventory_cells(totals, &totals["filesystem"], context));
+    if context.utilization {
         let metric = &totals["filesystem"];
         if let Some(status) = row.last_mut() {
             *status = format!(
@@ -812,39 +767,7 @@ fn declared<C: Checkpoint>(
                     joined_cells(&edge["volume_names"], ", ", control)?
                 );
             }
-            for mount in items(&edge["mounts"]) {
-                control.step()?;
-                let container = match mount["container_kind"].as_str() {
-                    Some("init") => "Init container",
-                    Some("ephemeral") => "Ephemeral container",
-                    _ => "Container",
-                };
-                let path = if mount["kind"] == "block" {
-                    "Device"
-                } else {
-                    "Mount"
-                };
-                let _ = writeln!(
-                    out,
-                    "      {container}: {}  |  Volume: {}\n      {path}: {}  |  Read-only: {}",
-                    cell(&mount["container"]),
-                    cell(&mount["volume_name"]),
-                    cell(&mount["path"]),
-                    match mount["read_only"].as_bool() {
-                        Some(true) => "yes",
-                        Some(false) => "no",
-                        None => "--",
-                    }
-                );
-                for (field, label) in [
-                    ("sub_path", "Subpath"),
-                    ("sub_path_expr", "Subpath expression"),
-                ] {
-                    if !mount[field].is_null() {
-                        let _ = writeln!(out, "      {label}: {}", cell(&mount[field]));
-                    }
-                }
-            }
+            declared_mounts(out, edge, control)?;
         }
     }
     Ok(())
@@ -871,45 +794,7 @@ fn footer<C: Checkpoint>(
             cell(&value["selection"]["unknown_count"])
         );
     }
-    if utilization {
-        let fs = &value["summary"]["filesystem"];
-        let inodes = &value["summary"]["inodes"];
-        let _ = writeln!(
-            out,
-            "Metrics: {}/{} {} fresh and complete; inodes: {}/{}{}",
-            cell(&fs["coverage"]["fresh_complete"]),
-            cell(&fs["coverage"]["eligible"]),
-            if value["query"]["kind"] == "pv" {
-                "volumes"
-            } else {
-                "claims"
-            },
-            cell(&inodes["coverage"]["fresh_complete"]),
-            cell(&inodes["coverage"]["eligible"]),
-            if value["selection"]["complete"] == false {
-                " (confirmed matches only)"
-            } else {
-                ""
-            }
-        );
-        if !fs["newest_observed_at"].is_null() {
-            let _ = writeln!(out, "Latest sample: {}", cell(&fs["newest_observed_at"]));
-        }
-        for (family, label) in [(fs, "Bytes"), (inodes, "Inodes")] {
-            if let Some(reasons) = family["coverage"]["by_reason"].as_object() {
-                let mut unavailable = vec![];
-                for (reason, count) in reasons {
-                    control.step()?;
-                    unavailable.push(format!("{} {}", cell(count), reason.replace('_', " ")));
-                }
-                if !unavailable.is_empty() {
-                    let _ = writeln!(out, "{label} unavailable: {}", unavailable.join(", "));
-                }
-            }
-        }
-    } else {
-        out.push_str("Metrics: not requested (use -u to collect usage).\n");
-    }
+    metrics_footer(out, value, utilization, control)?;
     if value["selection"]["complete"] == false {
         out.push_str(
             if value["query"]["require_metrics"] == true || !value["query"]["fail_on"].is_null() {
@@ -971,35 +856,7 @@ fn footer<C: Checkpoint>(
             cell(&diagnostic["message"])
         );
     }
-    if utilization {
-        let mut overlapping = false;
-        let mut exceeds = 0;
-        for record in items(&value["records"]) {
-            control.step()?;
-            overlapping |= record["overlapping_filesystem"] == true;
-            let capacity = record["filesystem"]["capacity_bytes"]
-                .as_str()
-                .and_then(|s| s.parse::<u128>().ok());
-            let provisioned = record["provisioned_bytes"]
-                .as_str()
-                .and_then(|s| s.parse::<u128>().ok());
-            if let (Some(capacity), Some(provisioned)) = (capacity, provisioned)
-                && capacity > provisioned
-            {
-                exceeds += 1;
-            }
-        }
-        if overlapping {
-            out.push_str("Known shared filesystems are excluded from additive metrics coverage and totals; individual observations remain visible.\n");
-        }
-        if exceeds > 0 {
-            let _ = writeln!(
-                out,
-                "Note: filesystem size exceeds provisioned size on {exceeds} volume(s); the driver may report backing storage."
-            );
-        }
-        out.push_str("Filesystem totals are per claim, not physical storage totals.\n");
-    }
+    filesystem_caveats(out, value, utilization, control)?;
     Ok(())
 }
 fn has_overlap<C: Checkpoint>(groups: &Value, control: &mut C) -> Result<bool, C::Error> {
@@ -1102,246 +959,6 @@ fn calculated_amount(value: &Value, unit: crate::calculations::Unit) -> String {
         .and_then(|v| v.parse::<u128>().ok())
         .map(|v| unit.format(v, 1))
         .unwrap_or_else(|| "--".into())
-}
-fn statistics_text<C: Checkpoint>(
-    out: &mut String,
-    report: &Value,
-    utilization: bool,
-    wide: bool,
-    control: &mut C,
-) -> Result<(), C::Error> {
-    use crate::calculations::{Unit, format_seconds};
-    let calculations = &report["calculations"];
-    let unit = calculations["display_unit"]
-        .as_str()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(Unit::Auto);
-    let _ = writeln!(
-        out,
-        "Storage calculations (units: {unit}; logical capacity)\n"
-    );
-    let mut sums = TextTable::new(vec![
-        ("GROUP", false),
-        ("COUNT", true),
-        ("REQUESTED", true),
-        ("BOUND", true),
-        ("PROVISIONED", true),
-    ]);
-    for row in items(&calculations["rows"]) {
-        control.step()?;
-        let mut cells = vec![cell(&row["label"]), cell(&row["totals"]["record_count"])];
-        for measure in ["requested", "bound", "provisioned"] {
-            let stats = &row["statistics"][measure];
-            let amount = calculated_amount(&stats["sum_bytes"], unit);
-            cells.push(format!(
-                "{amount}{}",
-                if stats["complete"] == false { "*" } else { "" }
-            ));
-        }
-        sums.rows.push(cells);
-    }
-    sums.draw(out, control)?;
-    if utilization {
-        out.push_str("\nReported filesystem usage (per claim; not physical backend totals)\n\n");
-        let mut filesystems = TextTable::new(vec![
-            ("GROUP", false),
-            ("FS SIZE", true),
-            ("USED", true),
-            ("AVAILABLE", true),
-            ("USE%", true),
-            ("SAMPLES", true),
-        ]);
-        for row in items(&calculations["rows"]) {
-            control.step()?;
-            let mut cells = vec![cell(&row["label"])];
-            let fs = &row["totals"]["filesystem"];
-            for field in ["capacity_bytes", "used_bytes", "available_bytes"] {
-                cells.push(if fs["status"] == "not_applicable" {
-                    "n/a".into()
-                } else {
-                    calculated_amount(&fs[field], unit)
-                });
-            }
-            cells.push(percent(&fs["used_percent"]));
-            cells.push(format!(
-                "{}/{}",
-                cell(&fs["coverage"]["fresh_complete"]),
-                cell(&fs["coverage"]["eligible"])
-            ));
-            filesystems.rows.push(cells);
-        }
-        filesystems.draw(out, control)?;
-    }
-    out.push_str(if wide {
-        "\nSize distribution (known records; P95 uses nearest rank)\n\n"
-    } else {
-        "\nProvisioned volume sizes (known records; P95 uses nearest rank)\n\n"
-    });
-    let mut stats_table = TextTable::new(vec![
-        ("GROUP", false),
-        ("MEASURE", false),
-        ("KNOWN", true),
-        ("MIN", true),
-        ("MEAN", true),
-        ("MEDIAN", true),
-        ("P95", true),
-        ("MAX", true),
-    ]);
-    for row in items(&calculations["rows"]) {
-        control.step()?;
-        for &measure in if wide {
-            &["requested", "bound", "provisioned"][..]
-        } else {
-            &["provisioned"][..]
-        } {
-            statistics_row(
-                &mut stats_table,
-                &cell(&row["label"]),
-                measure,
-                &row["statistics"][measure],
-                unit,
-            );
-        }
-    }
-    stats_table.draw(out, control)?;
-    let _ = writeln!(
-        out,
-        "\nDistribution of named storage-class totals ({} classes)\n",
-        cell(&calculations["storage_classes"]["named_count"])
-    );
-    let mut classes = TextTable::new(stats_table.columns.clone());
-    for &measure in if wide {
-        &["requested", "bound", "provisioned"][..]
-    } else {
-        &["requested", "provisioned"][..]
-    } {
-        statistics_row(
-            &mut classes,
-            "CLASS TOTALS",
-            measure,
-            &calculations["storage_classes"]["statistics"][measure],
-            unit,
-        );
-    }
-    classes.draw(out, control)?;
-    let states = &calculations["storage_classes"]["record_counts_by_assignment"];
-    if states.get("classless").is_some()
-        || states.get("unassigned").is_some()
-        || states.get("unknown").is_some()
-    {
-        let _ = writeln!(
-            out,
-            "Class distributions exclude classless={}, unassigned={}, unknown={} record(s); TOTAL includes them.",
-            states["classless"].as_u64().unwrap_or(0),
-            states["unassigned"].as_u64().unwrap_or(0),
-            states["unknown"].as_u64().unwrap_or(0)
-        );
-    }
-    if !calculations["comparison"].is_null() {
-        out.push_str("\nObserved growth (paired samples; first full means earliest claim)\n\n");
-        let mut table = TextTable::new(vec![
-            ("GROUP", false),
-            ("GROWTH / HOUR", true),
-            ("FIRST FULL IN", true),
-            ("PAIRS", true),
-            ("STATUS", false),
-        ]);
-        for row in items(&calculations["rows"]) {
-            control.step()?;
-            let growth = &row["growth"];
-            table.rows.push(vec![
-                cell(&row["label"]),
-                crate::calculations::format_hourly_rate(&growth["growth_bytes_per_second"], unit),
-                format_seconds(&growth["first_full_seconds"]),
-                format!(
-                    "{}/{}",
-                    cell(&growth["matched_count"]),
-                    cell(&growth["eligible_count"])
-                ),
-                if growth["complete"] == true {
-                    "Complete".into()
-                } else {
-                    "Partial".into()
-                },
-            ]);
-        }
-        table.draw(out, control)?;
-        let mut reasons: BTreeMap<&str, usize> = BTreeMap::new();
-        for rate in items(&calculations["comparison"]["records"]) {
-            control.step()?;
-            if rate["status"] == "not_applicable" {
-                continue;
-            }
-            if let Some(reason) = rate["reason"].as_str() {
-                *reasons.entry(reason).or_default() += 1;
-            }
-        }
-        for (reason, count) in reasons {
-            let _ = writeln!(
-                out,
-                "Growth/projection note: {} ({count} record(s))",
-                escape(reason)
-            );
-        }
-        for row in items(&calculations["rows"]) {
-            control.step()?;
-            if row["growth"]["reason"] == "arithmetic_overflow" {
-                let _ = writeln!(
-                    out,
-                    "{}: growth/projection exceeds the supported arithmetic range.",
-                    cell(&row["label"])
-                );
-            }
-        }
-        out.push_str("Two-sample linear estimates assume unchanged growth; they are not forecasts of backend capacity.\n");
-    }
-    for row in items(&calculations["rows"]) {
-        control.step()?;
-        let gaps = &row["capacity_gaps"];
-        if gaps["requested_above_bound_bytes"]
-            .as_str()
-            .is_some_and(|v| v != "0")
-            || gaps["provisioned_above_requested_bytes"]
-                .as_str()
-                .is_some_and(|v| v != "0")
-        {
-            let _ = writeln!(
-                out,
-                "\n{}: requested above bound {}; provisioned above requested {} (paired {}/{}, complete={}).",
-                cell(&row["label"]),
-                calculated_amount(&gaps["requested_above_bound_bytes"], unit),
-                calculated_amount(&gaps["provisioned_above_requested_bytes"], unit),
-                cell(&gaps["known_count"]),
-                cell(&gaps["total_count"]),
-                cell(&gaps["complete"])
-            );
-        }
-    }
-    out.push_str("\n* Incomplete selection or quantities; statistics use known values.\nRequested, bound and provisioned are separate capacities; do not add them together.\n");
-    Ok(())
-}
-fn statistics_row(
-    table: &mut TextTable,
-    label: &str,
-    measure: &str,
-    stats: &Value,
-    unit: crate::calculations::Unit,
-) {
-    table.rows.push(vec![
-        label.into(),
-        measure.into(),
-        format!(
-            "{}/{}{}",
-            cell(&stats["known_count"]),
-            cell(&stats["total_count"]),
-            if stats["complete"] == false { "*" } else { "" }
-        ),
-        calculated_amount(&stats["min_bytes"], unit),
-        crate::calculations::format_fraction(&stats["mean_bytes"], unit),
-        crate::calculations::format_fraction(&stats["median_bytes"], unit),
-        calculated_amount(&stats["p95_bytes"], unit),
-        calculated_amount(&stats["max_bytes"], unit),
-    ]);
 }
 
 pub const CALCULATION_CSV_HEADER: [&str; 26] = [
@@ -1504,6 +1121,133 @@ fn csv_cell(value: &Value) -> String {
     } else {
         value.to_string()
     }
+}
+
+fn declared_mounts<C: Checkpoint>(
+    out: &mut String,
+    edge: &Value,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    for mount in items(&edge["mounts"]) {
+        control.step()?;
+        let container = match mount["container_kind"].as_str() {
+            Some("init") => "Init container",
+            Some("ephemeral") => "Ephemeral container",
+            _ => "Container",
+        };
+        let path = if mount["kind"] == "block" {
+            "Device"
+        } else {
+            "Mount"
+        };
+        let _ = writeln!(
+            out,
+            "      {container}: {}  |  Volume: {}\n      {path}: {}  |  Read-only: {}",
+            cell(&mount["container"]),
+            cell(&mount["volume_name"]),
+            cell(&mount["path"]),
+            match mount["read_only"].as_bool() {
+                Some(true) => "yes",
+                Some(false) => "no",
+                None => "--",
+            }
+        );
+        for (field, label) in [
+            ("sub_path", "Subpath"),
+            ("sub_path_expr", "Subpath expression"),
+        ] {
+            if !mount[field].is_null() {
+                let _ = writeln!(out, "      {label}: {}", cell(&mount[field]));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn metrics_footer<C: Checkpoint>(
+    out: &mut String,
+    value: &Value,
+    utilization: bool,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    if utilization {
+        let fs = &value["summary"]["filesystem"];
+        let inodes = &value["summary"]["inodes"];
+        let _ = writeln!(
+            out,
+            "Metrics: {}/{} {} fresh and complete; inodes: {}/{}{}",
+            cell(&fs["coverage"]["fresh_complete"]),
+            cell(&fs["coverage"]["eligible"]),
+            if value["query"]["kind"] == "pv" {
+                "volumes"
+            } else {
+                "claims"
+            },
+            cell(&inodes["coverage"]["fresh_complete"]),
+            cell(&inodes["coverage"]["eligible"]),
+            if value["selection"]["complete"] == false {
+                " (confirmed matches only)"
+            } else {
+                ""
+            }
+        );
+        if !fs["newest_observed_at"].is_null() {
+            let _ = writeln!(out, "Latest sample: {}", cell(&fs["newest_observed_at"]));
+        }
+        for (family, label) in [(fs, "Bytes"), (inodes, "Inodes")] {
+            if let Some(reasons) = family["coverage"]["by_reason"].as_object() {
+                let mut unavailable = vec![];
+                for (reason, count) in reasons {
+                    control.step()?;
+                    unavailable.push(format!("{} {}", cell(count), reason.replace('_', " ")));
+                }
+                if !unavailable.is_empty() {
+                    let _ = writeln!(out, "{label} unavailable: {}", unavailable.join(", "));
+                }
+            }
+        }
+    } else {
+        out.push_str("Metrics: not requested (use -u to collect usage).\n");
+    }
+    Ok(())
+}
+
+fn filesystem_caveats<C: Checkpoint>(
+    out: &mut String,
+    value: &Value,
+    utilization: bool,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    if utilization {
+        let mut overlapping = false;
+        let mut exceeds = 0;
+        for record in items(&value["records"]) {
+            control.step()?;
+            overlapping |= record["overlapping_filesystem"] == true;
+            let capacity = record["filesystem"]["capacity_bytes"]
+                .as_str()
+                .and_then(|s| s.parse::<u128>().ok());
+            let provisioned = record["provisioned_bytes"]
+                .as_str()
+                .and_then(|s| s.parse::<u128>().ok());
+            if let (Some(capacity), Some(provisioned)) = (capacity, provisioned)
+                && capacity > provisioned
+            {
+                exceeds += 1;
+            }
+        }
+        if overlapping {
+            out.push_str("Known shared filesystems are excluded from additive metrics coverage and totals; individual observations remain visible.\n");
+        }
+        if exceeds > 0 {
+            let _ = writeln!(
+                out,
+                "Note: filesystem size exceeds provisioned size on {exceeds} volume(s); the driver may report backing storage."
+            );
+        }
+        out.push_str("Filesystem totals are per claim, not physical storage totals.\n");
+    }
+    Ok(())
 }
 
 #[cfg(test)]

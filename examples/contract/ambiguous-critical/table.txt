@@ -23,3 +23,4 @@ Strict critical check inconclusive: conflicting fresh candidates report critical
 Findings: 1 warning (details: --view issues)
 Shared references: do not add sibling totals; the root counts each volume once.
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 6 requests (base 1, enrichment 3/256, kubelet 2, Prometheus 0); 3001 bytes read.

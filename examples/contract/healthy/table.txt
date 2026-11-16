@@ -21,3 +21,4 @@ Selection: complete (1 matched)
 Metrics: 1/1 claims fresh and complete; inodes: 1/1
 Latest sample: 2026-11-06T19:59:50Z
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 5 requests (base 1, enrichment 3/256, kubelet 1, Prometheus 0); 1780 bytes read.

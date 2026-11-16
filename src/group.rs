@@ -249,52 +249,7 @@ fn metric_total_checked<T: Counter, C: Checkpoint>(
             }
         }
     }
-    if !utilization {
-        return Ok(total);
-    }
-    if total.coverage.eligible == 0 && total.coverage.not_applicable > 0 {
-        total.status = "not_applicable";
-        return Ok(total);
-    }
-    if total
-        .oldest
-        .zip(total.newest)
-        .is_some_and(|(old, new)| new.as_nanosecond() - old.as_nanosecond() > 60_000_000_000)
-    {
-        total.reason = Some("time_skew".into());
-        return Ok(total);
-    }
-    if total
-        .coverage
-        .by_reason
-        .contains_key("overlapping_filesystem")
-    {
-        total.reason = Some("overlapping_filesystem".into());
-    }
-    if total.coverage.fresh_complete == 0 {
-        total.reason.get_or_insert("no_usable_samples".into());
-        return Ok(total);
-    }
-    if sums.iter().any(Option::is_none) {
-        total.reason = Some("aggregate_overflow".into());
-        return Ok(total);
-    }
-    total.status = if total.coverage.fresh_complete == total.coverage.eligible {
-        "ok"
-    } else {
-        "partial"
-    };
-    if total.status == "partial" {
-        total.reason.get_or_insert("incomplete_coverage".into());
-    }
-    total.capacity = sums[0];
-    total.used = sums[1];
-    total.available = sums[2];
-    total.ratio = total
-        .used
-        .zip(total.capacity)
-        .and_then(|(used, capacity)| ExactRatio::new(used, capacity).ok());
-    Ok(total)
+    Ok(finish_metric_total(total, sums, utilization))
 }
 
 pub fn build(
@@ -327,24 +282,7 @@ pub(crate) fn build_checked<C: Checkpoint>(
     let mut paths: BTreeSet<PathEntry> = BTreeSet::new();
     for record in &graph.records {
         control.step()?;
-        let mut contexts = vec![];
-        if references {
-            for id in &record.consumers {
-                control.step()?;
-                if let Some(&consumer) = consumers.get(id)
-                    && consumer.state.live()
-                {
-                    contexts.push(Some(consumer));
-                }
-            }
-        } else {
-            contexts.push(None);
-        }
-        if contexts.is_empty()
-            || references && !matches!(record.consumer_visibility, ConsumerVisibility::Complete)
-        {
-            contexts.push(None);
-        }
+        let contexts = reference_contexts(record, &consumers, references, control)?;
         for consumer in contexts {
             control.step()?;
             let mut path = vec![];
@@ -412,34 +350,8 @@ fn dimension_value(
                 MetadataValue::Known(modes.into_iter().collect::<Vec<_>>().join("+"))
             }
         }
-        Dimension::Statefulset => match consumer {
-            Some(consumer) => match &consumer.statefulset {
-                MetadataValue::Known(owner) => MetadataValue::Known(format!(
-                    "{}/{}@{}",
-                    consumer.namespace, owner.name, owner.uid
-                )),
-                MetadataValue::Unknown => MetadataValue::Unknown,
-                _ => MetadataValue::Absent,
-            },
-            None if matches!(record.consumer_visibility, ConsumerVisibility::Complete) => {
-                MetadataValue::Absent
-            }
-            None => MetadataValue::Unknown,
-        },
-        Dimension::Workload => match consumer {
-            Some(consumer) => match &consumer.workload {
-                MetadataValue::Known(owner) => MetadataValue::Known(format!(
-                    "{}/{}/{}@{}",
-                    consumer.namespace, owner.kind, owner.name, owner.uid
-                )),
-                MetadataValue::Unknown => MetadataValue::Unknown,
-                _ => MetadataValue::Absent,
-            },
-            None if matches!(record.consumer_visibility, ConsumerVisibility::Complete) => {
-                MetadataValue::Absent
-            }
-            None => MetadataValue::Unknown,
-        },
+        Dimension::Statefulset => statefulset_dimension(record, consumer),
+        Dimension::Workload => workload_dimension(record, consumer),
         Dimension::Pod => consumer
             .map(|c| MetadataValue::Known(format!("{}/{}@{}", c.namespace, c.name, c.uid)))
             .unwrap_or_else(|| {
@@ -492,17 +404,7 @@ impl<'a, C: Checkpoint> GroupBuilder<'a, '_, C> {
                 3 => MetadataValue::Unassigned,
                 _ => MetadataValue::Unknown,
             };
-            let encoded = match &value {
-                MetadataValue::Known(value) => percent_escape_checked(value, self.control)?,
-                MetadataValue::Absent => "~absent".into(),
-                MetadataValue::Unassigned => "~unassigned".into(),
-                MetadataValue::Unknown => "~unknown".into(),
-            };
-            let id = if parent.is_empty() {
-                format!("group:{dimension}={encoded}")
-            } else {
-                format!("{parent}/{dimension}={encoded}")
-            };
+            let id = group_identity(parent, dimension, &value, self.control)?;
             let mut members = BTreeSet::new();
             for (_, id) in &entries {
                 self.control.step()?;
@@ -569,6 +471,140 @@ fn percent_escape_checked<C: Checkpoint>(input: &str, control: &mut C) -> Result
         }
     }
     Ok(result)
+}
+
+fn finish_metric_total(
+    mut total: MetricTotal,
+    sums: [Option<u128>; 3],
+    utilization: bool,
+) -> MetricTotal {
+    if !utilization {
+        return total;
+    }
+    if total.coverage.eligible == 0 && total.coverage.not_applicable > 0 {
+        total.status = "not_applicable";
+        return total;
+    }
+    if total
+        .oldest
+        .zip(total.newest)
+        .is_some_and(|(old, new)| new.as_nanosecond() - old.as_nanosecond() > 60_000_000_000)
+    {
+        total.reason = Some("time_skew".into());
+        return total;
+    }
+    if total
+        .coverage
+        .by_reason
+        .contains_key("overlapping_filesystem")
+    {
+        total.reason = Some("overlapping_filesystem".into());
+    }
+    if total.coverage.fresh_complete == 0 {
+        total.reason.get_or_insert("no_usable_samples".into());
+        return total;
+    }
+    if sums.iter().any(Option::is_none) {
+        total.reason = Some("aggregate_overflow".into());
+        return total;
+    }
+    total.status = if total.coverage.fresh_complete == total.coverage.eligible {
+        "ok"
+    } else {
+        "partial"
+    };
+    if total.status == "partial" {
+        total.reason.get_or_insert("incomplete_coverage".into());
+    }
+    total.capacity = sums[0];
+    total.used = sums[1];
+    total.available = sums[2];
+    total.ratio = total
+        .used
+        .zip(total.capacity)
+        .and_then(|(used, capacity)| ExactRatio::new(used, capacity).ok());
+    total
+}
+
+fn reference_contexts<'a, C: Checkpoint>(
+    record: &Record,
+    consumers: &BTreeMap<&ConsumerId, &'a Consumer>,
+    references: bool,
+    control: &mut C,
+) -> Result<Vec<Option<&'a Consumer>>, C::Error> {
+    let mut contexts = vec![];
+    if references {
+        for id in &record.consumers {
+            control.step()?;
+            if let Some(&consumer) = consumers.get(id)
+                && consumer.state.live()
+            {
+                contexts.push(Some(consumer));
+            }
+        }
+    } else {
+        contexts.push(None);
+    }
+    if contexts.is_empty()
+        || references && !matches!(record.consumer_visibility, ConsumerVisibility::Complete)
+    {
+        contexts.push(None);
+    }
+    Ok(contexts)
+}
+
+fn statefulset_dimension(record: &Record, consumer: Option<&Consumer>) -> MetadataValue<String> {
+    match consumer {
+        Some(consumer) => match &consumer.statefulset {
+            MetadataValue::Known(owner) => MetadataValue::Known(format!(
+                "{}/{}@{}",
+                consumer.namespace, owner.name, owner.uid
+            )),
+            MetadataValue::Unknown => MetadataValue::Unknown,
+            _ => MetadataValue::Absent,
+        },
+        None if matches!(record.consumer_visibility, ConsumerVisibility::Complete) => {
+            MetadataValue::Absent
+        }
+        None => MetadataValue::Unknown,
+    }
+}
+
+fn workload_dimension(record: &Record, consumer: Option<&Consumer>) -> MetadataValue<String> {
+    match consumer {
+        Some(consumer) => match &consumer.workload {
+            MetadataValue::Known(owner) => MetadataValue::Known(format!(
+                "{}/{}/{}@{}",
+                consumer.namespace, owner.kind, owner.name, owner.uid
+            )),
+            MetadataValue::Unknown => MetadataValue::Unknown,
+            _ => MetadataValue::Absent,
+        },
+        None if matches!(record.consumer_visibility, ConsumerVisibility::Complete) => {
+            MetadataValue::Absent
+        }
+        None => MetadataValue::Unknown,
+    }
+}
+
+fn group_identity<C: Checkpoint>(
+    parent: &str,
+    dimension: Dimension,
+    value: &MetadataValue<String>,
+    control: &mut C,
+) -> Result<String, C::Error> {
+    let encoded = match value {
+        MetadataValue::Known(value) => percent_escape_checked(value, control)?,
+        MetadataValue::Absent => "~absent".into(),
+        MetadataValue::Unassigned => "~unassigned".into(),
+        MetadataValue::Unknown => "~unknown".into(),
+    };
+    let id = if parent.is_empty() {
+        format!("group:{dimension}={encoded}")
+    } else {
+        format!("{parent}/{dimension}={encoded}")
+    };
+    Ok(id)
 }
 
 #[cfg(test)]

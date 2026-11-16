@@ -75,11 +75,23 @@ async fn watch_redirected_text_appends_and_strict_failure_stops_after_its_report
     let server = MockServer::start().await;
     let config = Kubeconfig::new(&server);
     mount_bundle(&server, bundle("healthy")).await;
+    Mock::given(method("GET"))
+        .and(path("/api/v1/namespaces/demo/persistentvolumeclaims"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"metadata":{"resourceVersion":"100"},"items":bundle("healthy")["kubernetes"]["pvcs"]})).set_delay(std::time::Duration::from_millis(20)))
+        .with_priority(1)
+        .mount(&server)
+        .await;
     let output = config.run(&["--watch", "1ms", "--watch-count", "2"]);
     assert!(output.status.success());
     let text = String::from_utf8(output.stdout).unwrap();
     assert!(text.contains("Collection cycle 1:") && text.contains("Collection cycle 2:"));
     assert!(!text.contains('\x1b'));
+    assert_eq!(text.matches("Collection duration:").count(), 2);
+    assert_eq!(
+        text.matches("longer than the 0.001s refresh interval")
+            .count(),
+        2
+    );
     server.reset().await;
     mount_bundle(&server, bundle("missing-stale")).await;
     let output = config.run(&[

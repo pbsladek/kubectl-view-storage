@@ -418,32 +418,7 @@ pub async fn supervise(timeout: Duration, cancel: CancellationToken) -> Result<E
     let startup =
         StartupDirectory::new().map_err(|_| "Cannot create private worker coordination")?;
     let mut terminal = Terminal::capture().map_err(|_| "Cannot preserve foreground terminal")?;
-    #[cfg(target_os = "macos")]
-    let observer = Kqueue::new().map_err(|_| "Cannot create non-reaping worker observer")?;
-    let child =
-        Command::new(std::env::current_exe().map_err(|_| "Cannot locate command executable")?)
-            .args(std::env::args_os().skip(1))
-            .env(PARENT, std::process::id().to_string())
-            .env(READY, startup.ready())
-            .env(DEADLINE, shared_deadline.to_string())
-            .process_group(0)
-            .spawn()
-            .map_err(|_| "Cannot start credential-helper worker")?;
-    let raw_pid =
-        i32::try_from(child.id()).map_err(|_| "Invalid credential-helper worker identity")?;
-    let mut worker = Worker {
-        child,
-        group: Pid::from_raw(raw_pid),
-        joined: false,
-        #[cfg(target_os = "macos")]
-        observer,
-        #[cfg(target_os = "macos")]
-        observed_exit: false,
-    };
-    #[cfg(target_os = "macos")]
-    worker
-        .register_exit()
-        .map_err(|_| "Cannot register non-reaping worker observation")?;
+    let mut worker = start_worker(&startup, shared_deadline)?;
     terminal
         .give_to(worker.group)
         .map_err(|_| "Cannot hand off foreground terminal")?;
@@ -451,6 +426,36 @@ pub async fn supervise(timeout: Duration, cancel: CancellationToken) -> Result<E
         .release()
         .map_err(|_| "Cannot release credential-helper worker")?;
     let _ = killpg(worker.group, Signal::SIGCONT);
+    let stopped = observe_worker(&mut worker, &startup, deadline, &cancel).await?;
+    if stopped.is_some() && startup.stopping().is_ok() {
+        let _ = killpg(worker.group, Signal::SIGINT);
+        let drain = Instant::now() + Duration::from_secs(1);
+        while Instant::now() < drain
+            && !worker
+                .exited()
+                .map_err(|_| "Cannot drain credential-helper worker")?
+        {
+            tokio::time::sleep(POLL).await;
+        }
+    }
+    let status = worker.finish().map_err(|error| {
+        format!(
+            "Cannot join credential-helper worker and descendants (OS status {:?})",
+            error.raw_os_error()
+        )
+    })?;
+    terminal
+        .restore()
+        .map_err(|_| "Cannot restore foreground terminal")?;
+    worker_exit(status, stopped)
+}
+
+async fn observe_worker(
+    worker: &mut Worker,
+    startup: &StartupDirectory,
+    deadline: Instant,
+    cancel: &CancellationToken,
+) -> Result<Option<Exit>, String> {
     let mut stopped = None;
     loop {
         if cancel.is_cancelled() {
@@ -478,26 +483,42 @@ pub async fn supervise(timeout: Duration, cancel: CancellationToken) -> Result<E
             _ = tokio::time::sleep(POLL) => {},
         }
     }
-    if stopped.is_some() && startup.stopping().is_ok() {
-        let _ = killpg(worker.group, Signal::SIGINT);
-        let drain = Instant::now() + Duration::from_secs(1);
-        while Instant::now() < drain
-            && !worker
-                .exited()
-                .map_err(|_| "Cannot drain credential-helper worker")?
-        {
-            tokio::time::sleep(POLL).await;
-        }
-    }
-    let status = worker.finish().map_err(|error| {
-        format!(
-            "Cannot join credential-helper worker and descendants (OS status {:?})",
-            error.raw_os_error()
-        )
-    })?;
-    terminal
-        .restore()
-        .map_err(|_| "Cannot restore foreground terminal")?;
+    Ok(stopped)
+}
+
+fn start_worker(startup: &StartupDirectory, shared_deadline: u128) -> Result<Worker, String> {
+    #[cfg(target_os = "macos")]
+    let observer = Kqueue::new().map_err(|_| "Cannot create non-reaping worker observer")?;
+    let child =
+        Command::new(std::env::current_exe().map_err(|_| "Cannot locate command executable")?)
+            .args(std::env::args_os().skip(1))
+            .env(PARENT, std::process::id().to_string())
+            .env(READY, startup.ready())
+            .env(DEADLINE, shared_deadline.to_string())
+            .process_group(0)
+            .spawn()
+            .map_err(|_| "Cannot start credential-helper worker")?;
+    let raw_pid =
+        i32::try_from(child.id()).map_err(|_| "Invalid credential-helper worker identity")?;
+    let worker = Worker {
+        child,
+        group: Pid::from_raw(raw_pid),
+        joined: false,
+        #[cfg(target_os = "macos")]
+        observer,
+        #[cfg(target_os = "macos")]
+        observed_exit: false,
+    };
+    #[cfg(target_os = "macos")]
+    let mut worker = worker;
+    #[cfg(target_os = "macos")]
+    worker
+        .register_exit()
+        .map_err(|_| "Cannot register non-reaping worker observation")?;
+    Ok(worker)
+}
+
+fn worker_exit(status: ExitStatus, stopped: Option<Exit>) -> Result<Exit, String> {
     match stopped {
         Some(Exit::Fatal) => {
             Err("Credential-helper execution exceeded the command deadline".into())

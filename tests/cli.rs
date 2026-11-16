@@ -19,6 +19,37 @@ fn help_and_version_succeed_without_configuration_or_network() {
         assert!(output.stderr.is_empty());
     }
 }
+
+#[test]
+fn build_information_and_completions_are_available_without_configuration() {
+    let output = command().arg("--build-info").output().unwrap();
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let text = String::from_utf8(output.stdout).unwrap();
+    assert!(text.starts_with(concat!(
+        "kubectl-view-storage ",
+        env!("CARGO_PKG_VERSION"),
+        "\n"
+    )));
+    assert!(text.contains("Revision: ") && text.contains("Compiler: rustc "));
+    assert!(text.contains(kubectl_view_storage::report::SCHEMA_VERSION));
+    for (shell, expected) in [
+        (
+            "bash",
+            include_str!("../completions/kubectl-view_storage.bash"),
+        ),
+        ("zsh", include_str!("../completions/_kubectl-view_storage")),
+        (
+            "fish",
+            include_str!("../completions/kubectl-view_storage.fish"),
+        ),
+    ] {
+        let output = command().args(["--completions", shell]).output().unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert_eq!(output.stdout, expected.as_bytes());
+    }
+}
 #[test]
 fn invalid_invocations_fail_before_configuration() {
     for args in [
@@ -28,7 +59,7 @@ fn invalid_invocations_fail_before_configuration() {
         vec!["--pvc", "one", "--pvc", "two"],
         vec!["--concurrency", "0"],
         vec!["--metrics-source", "prometheus"],
-        vec!["--units", "GB"],
+        vec!["--units", "not-a-unit"],
         vec!["--view", "stats", "--units", "not-a-unit"],
         vec!["--compare", "/nonexistent/report.json"],
         vec!["--view", "stats", "--compare", "/nonexistent/report.json"],

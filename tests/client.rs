@@ -445,8 +445,33 @@ async fn real_denied_proxy_retains_inventory_and_required_metrics_exit_four() {
         assert_eq!(report["records"][0]["filesystem"]["status"], "forbidden");
         let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(stderr.contains("forbidden"));
+        assert!(stderr.contains("Check get access to nodes/proxy"));
         assert!(!stderr.contains("secret-payload-marker"));
     }
+}
+
+#[cfg(unix)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn healthy_machine_output_does_not_require_an_open_stderr() {
+    let server = MockServer::start().await;
+    let config = Kubeconfig::new(&server);
+    http_reports::mount_bundle(&server, http_reports::bundle("healthy")).await;
+    let output = Command::new("/bin/sh")
+        .args([
+            "-c",
+            "exec 2>&-; exec \"$@\"",
+            "sh",
+            env!("CARGO_BIN_EXE_kubectl-view_storage"),
+            "--kubeconfig",
+        ])
+        .arg(&config.path)
+        .args(["-o", "json"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let document: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(document["records"].as_array().unwrap().len(), 1);
+    assert!(document["diagnostics"].as_array().unwrap().is_empty());
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

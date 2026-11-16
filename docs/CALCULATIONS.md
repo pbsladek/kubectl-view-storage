@@ -87,3 +87,9 @@ Stats CSV uses its own header: `row_type`, `group`, `measure`, `unit`, coverage/
 Rust tests cover accounting, units, unknowns, distributions, ownership, comparisons, overflow, cancellation and real executable exports. [The independent validator](../scripts/validate-calculations.py) recomputes results with Python integers and `Fraction`; it runs over actual HTTP exports in existing CI jobs. The calculation module has the same 90% line-coverage floor as other arithmetic/core modules. The existing CSI kind gate now also validates a real write's growth and a two-replica StatefulSet sharing one claim, with owned cleanup. No extra GitHub Actions job is needed.
 
 See [captured calculation output](../examples/live/calculations/README.md) for real terminal, JSON and CSV examples.
+
+Explicit `--units` also formats byte quantities in tree, table, summary and issues
+views, including finding evidence. Their default `auto` keeps the existing IEC
+format with at most one decimal place; explicit units use the stats formatter's
+two/six-place precision. Raw JSON counters and ordinary CSV byte columns stay
+exact and unitless. `--compare` still requires `--view stats`.

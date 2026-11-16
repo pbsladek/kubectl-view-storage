@@ -49,32 +49,7 @@ pub(crate) fn decide_checked<C: Checkpoint>(
         }
     }
     for record in &graph.records {
-        control.step()?;
-        if strict
-            && (query.utilization
-                && matches!(
-                    record.volume_mode,
-                    VolumeMode::Unsupported(_) | VolumeMode::Invalid
-                )
-                || query.fail_on.is_some() && matches!(record.phase, Phase::Other(_)))
-        {
-            return Ok(Exit::Inconclusive);
-        }
-        if query.fail_on.is_some() {
-            for id in &record.consumers {
-                control.step()?;
-                if unknown_consumers.contains(id) {
-                    return Ok(Exit::Inconclusive);
-                }
-            }
-        }
-        if query.require_metrics
-            && record.volume_mode != VolumeMode::Block
-            && !record
-                .filesystem
-                .fresh_unambiguous()
-                .is_some_and(Candidate::complete)
-        {
+        if record_inconclusive(record, query, &unknown_consumers, control)? {
             return Ok(Exit::Inconclusive);
         }
     }
@@ -115,6 +90,40 @@ pub(crate) fn conflicts_reach_policy_checked<C: Checkpoint>(
         }
     }
     Ok(false)
+}
+
+fn record_inconclusive<C: Checkpoint>(
+    record: &Record,
+    query: &Query,
+    unknown_consumers: &BTreeSet<&ConsumerId>,
+    control: &mut C,
+) -> Result<bool, C::Error> {
+    let strict = query.require_metrics || query.fail_on.is_some();
+    control.step()?;
+    if strict
+        && (query.utilization
+            && matches!(
+                record.volume_mode,
+                VolumeMode::Unsupported(_) | VolumeMode::Invalid
+            )
+            || query.fail_on.is_some() && matches!(record.phase, Phase::Other(_)))
+    {
+        return Ok(true);
+    }
+    if query.fail_on.is_some() {
+        for id in &record.consumers {
+            control.step()?;
+            if unknown_consumers.contains(id) {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(query.require_metrics
+        && record.volume_mode != VolumeMode::Block
+        && !record
+            .filesystem
+            .fresh_unambiguous()
+            .is_some_and(Candidate::complete))
 }
 
 #[cfg(test)]

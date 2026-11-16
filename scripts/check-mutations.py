@@ -29,11 +29,14 @@ def main():
     with tempfile.TemporaryDirectory(prefix="view-storage-mutations-") as directory:
         work = Path(directory) / "source"
         work.mkdir()
-        for name in ("src", "tests", "examples"):
+        for name in ("src", "tests", "examples", "completions"):
             shutil.copytree(ROOT / name, work / name)
-        for name in ("Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "README.md", "LICENSE"):
+        for name in ("Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "README.md", "LICENSE", "build.rs"):
             if (ROOT / name).exists():
                 shutil.copy2(ROOT / name, work / name)
+        (work / "dev").mkdir()
+        shutil.copy2(ROOT / "dev/completions.rs", work / "dev/completions.rs")
+        shutil.copy2(ROOT / "dev/completion_generator.rs", work / "dev/completion_generator.rs")
         if args.harness:
             harness = Path(directory) / "harness"
             harness.mkdir()

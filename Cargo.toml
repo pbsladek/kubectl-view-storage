@@ -1,20 +1,25 @@
 [package]
 name = "kubectl-view-storage"
-version = "0.1.0-dev"
+version = "0.1.0"
 edition = "2024"
 autobins = false
-rust-version = "1.99.1"
+rust-version = "1.100.0"
 license = "Apache-2.0"
 description = "Inspect Kubernetes persistent storage inventory, consumers, and usage"
 readme = "README.md"
 include = [
-    "/Cargo.toml", "/Cargo.lock", "/LICENSE", "/README.md", "/rust-toolchain.toml",
+    "/Cargo.toml", "/Cargo.lock", "/LICENSE", "/README.md", "/rust-toolchain.toml", "/build.rs",
+    "/completions/**", "/dev/completion*.rs",
     "/src/**/*.rs", "/tests/**/*.rs", "/examples/README.md", "/examples/contract/**", "/examples/live/**", "/docs/**",
 ]
 
 [[bin]]
 name = "kubectl-view_storage"
 path = "src/main.rs"
+
+[[example]]
+name = "completions"
+path = "dev/completions.rs"
 
 [dependencies]
 clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
@@ -37,6 +42,7 @@ nix = { version = "0.31.3", default-features = false, features = ["fs", "process
 nix = { version = "0.31.3", default-features = false, features = ["event"] }
 
 [dev-dependencies]
+clap_complete = { version = "=4.6.11", default-features = false }
 proptest = { version = "1.12.0", default-features = false, features = ["std"] }
 wiremock = { version = "0.6.5", default-features = false }
 tokio = { version = "1.54.1", default-features = false, features = ["test-util"] }

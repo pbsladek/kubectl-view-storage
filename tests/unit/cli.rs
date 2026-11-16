@@ -48,6 +48,15 @@ fn defaults_and_scope() {
     assert_eq!(q.filters.storage_class.as_deref(), Some(""));
     assert_eq!(q.group_by[0], Dimension::Node);
 }
+
+#[test]
+fn all_text_views_accept_explicit_units_without_enabling_usage() {
+    for view in ["tree", "table", "summary", "issues", "stats"] {
+        let query = parse(&["--view", view, "--units", "GB"]).unwrap();
+        assert_eq!(query.units, crate::calculations::Unit::Gb);
+        assert!(!query.utilization);
+    }
+}
 #[test]
 fn invalid_invocations_fail_without_a_client() {
     for args in [

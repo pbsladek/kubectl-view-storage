@@ -36,7 +36,9 @@ def main():
     receipt_path = destination / f"{args.runner}.json"
     log_path = destination / f"{args.runner}-build.jsonl"
     source = hashlib.sha256()
-    for path in [ROOT/"Cargo.toml",ROOT/"Cargo.lock",ROOT/"rust-toolchain.toml",*sorted((ROOT/"src").rglob("*.rs"))]:
+    for path in [ROOT/"Cargo.toml",ROOT/"Cargo.lock",ROOT/"rust-toolchain.toml",ROOT/"build.rs",*sorted((ROOT/"completions").rglob("*")),*sorted((ROOT/"src").rglob("*.rs"))]:
+        if not path.is_file():
+            continue
         source.update(str(path.relative_to(ROOT)).encode()+b"\0"+path.read_bytes()+b"\0")
     revision = subprocess.run(["git","rev-parse","HEAD"],cwd=ROOT,text=True,capture_output=True,timeout=10)
     receipt = {

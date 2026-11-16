@@ -1,8 +1,39 @@
-.PHONY: check test contract coverage plugin-smoke release-verify release-smoke preflight inventory-create inventory-verify inventory-delete csi-create csi-verify csi-delete nfs-create nfs-verify nfs-delete storage-e2e
+.PHONY: verify check completions complexity test contract coverage plugin-smoke release-verify release-smoke preflight inventory-create inventory-verify inventory-delete csi-create csi-verify csi-delete nfs-create nfs-verify nfs-delete storage-e2e
 
-RELEASE_DIRECTORY ?= artifacts/release
+RELEASE_DIRECTORY ?= artifacts/release$(if $(VERSION),-$(VERSION))
+export RELEASE_DIRECTORY
+export RELEASE_VERSION = $(VERSION)
+export RELEASE_RUN_ID = $(RUN_ID)
+export RELEASE_DRAFT = $(DRAFT)
+.DEFAULT_GOAL := check
+
+.PHONY: release-help release-prepare release release-build release-publish
+
+release-help:
+	python3 scripts/release.py help
+
+release-prepare:
+	python3 scripts/release.py prepare
+
+release: release-build
+
+release-build:
+	python3 scripts/release.py build
+
+release-publish:
+	python3 scripts/release.py publish
+
+verify:
+	python3 scripts/verify.py
+
+completions:
+	cargo run --locked --example completions
 
 check:
+	python3 scripts/test-release.py
+	python3 scripts/test-verify.py
+	uv run scripts/test-complexity.py
+	uv run scripts/check-complexity.py
 	python3 scripts/test-ci-scope.py
 	python3 scripts/test-toolchain-check.py
 	python3 scripts/test-ci-timings.py
@@ -24,6 +55,9 @@ check:
 test:
 	cargo test --locked --all-targets
 
+complexity:
+	uv run scripts/check-complexity.py
+
 contract:
 	uv run scripts/validate-contract.py
 
@@ -34,10 +68,10 @@ plugin-smoke:
 	python3 scripts/check-plugin.py
 
 release-verify:
-	python3 scripts/package-release.py verify --directory "$(RELEASE_DIRECTORY)"
+	python3 scripts/package-release.py verify --directory "$$RELEASE_DIRECTORY"
 
 release-smoke:
-	python3 scripts/package-release.py smoke --directory "$(RELEASE_DIRECTORY)"
+	python3 scripts/package-release.py smoke --directory "$$RELEASE_DIRECTORY"
 
 preflight:
 	python3 scripts/dev-cluster.py preflight inventory

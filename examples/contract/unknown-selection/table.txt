@@ -13,3 +13,4 @@ Counts are lower bounds; strict check inconclusive.
 * Partial capacity: sum of known values; unknown values are excluded.
 Collection note [consumers_forbidden]: Pod list denied; node filter membership is unknown.
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 2 requests (base 1, enrichment 1/256, kubelet 0, Prometheus 0); 906 bytes read.

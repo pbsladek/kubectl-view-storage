@@ -752,6 +752,18 @@ pub(crate) fn attach_checked<C: Checkpoint>(
         control,
     )
     .map_err(CheckedError::Interrupted)?;
+    let storage_classes = storage_class_statistics(report, &records, control)?;
+    let result = json!({"version":"view-storage/calculations/v1alpha1","display_unit":query.units.to_string(),"physical_total":false,"rows":rows,
+        "storage_classes":storage_classes,"comparison":comparison});
+    report["calculations"] = result;
+    Ok(())
+}
+
+fn storage_class_statistics<C: Checkpoint>(
+    report: &Value,
+    records: &BTreeMap<&str, &Value>,
+    control: &mut C,
+) -> Result<Value, CheckedError<C::Error>> {
     let mut classes: BTreeMap<&str, Vec<&Value>> = BTreeMap::new();
     let mut class_states = BTreeMap::<&str, usize>::new();
     for &record in records.values() {
@@ -795,10 +807,9 @@ pub(crate) fn attach_checked<C: Checkpoint>(
                 .map_err(CheckedError::Interrupted)?,
         );
     }
-    let result = json!({"version":"view-storage/calculations/v1alpha1","display_unit":query.units.to_string(),"physical_total":false,"rows":rows,
-        "storage_classes":{"named_count":classes.len(),"record_counts_by_assignment":class_states,"statistics":class_stats},"comparison":comparison});
-    report["calculations"] = result;
-    Ok(())
+    Ok(
+        json!({"named_count":classes.len(),"record_counts_by_assignment":class_states,"statistics":class_stats}),
+    )
 }
 
 #[cfg(test)]

@@ -16,9 +16,11 @@ Start with [usage examples](../examples/README.md) or `kubectl view-storage --he
 ## Development and installation
 
 - [Development](DEVELOPMENT.md): toolchain, dependency policy, disposable clusters, tests, coverage, and fuzzing.
+- [Rust code quality](CODE_QUALITY.md): complexity ceiling, design rules, and refactoring boundaries.
 - [CI performance](CI_PERFORMANCE.md): measured runner/build/test costs, caching, parallel checks, and repeatable comparisons.
 - [Dependency review](DEPENDENCY_REVIEW.md): runtime dependency choices, maintenance, features, and costs.
-- [Distribution](DISTRIBUTION.md): source installation, release archives, checksums, and local Krew validation.
+- [Shell completions](COMPLETIONS.md): offline Bash, Zsh and Fish generation and installation.
+- [Distribution](DISTRIBUTION.md): Makefile release preparation/publication, source installation, checksums, and local Krew validation.
 - [Krew readiness](KREW_READINESS.md): audited prerequisites, candidate preparation and the remaining publication/submission steps.
 
 - [Disposable storage E2E tests](STORAGE_E2E.md): shared local/CI fixtures for local-path, CSI hostpath and cross-node NFS CSI.

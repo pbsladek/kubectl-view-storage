@@ -2,7 +2,7 @@
 use super::*;
 use clap::Parser;
 use std::collections::BTreeMap;
-fn run(input: &str, args: &[&str], complete: bool) -> Exit {
+fn fixture(input: &str, args: &[&str]) -> (Graph, Query) {
     let input: serde_json::Value = serde_json::from_str(input).unwrap();
     let query = crate::cli::Cli::try_parse_from(std::iter::once("cmd").chain(args.iter().copied()))
         .unwrap()
@@ -21,6 +21,11 @@ fn run(input: &str, args: &[&str], complete: bool) -> Exit {
         &query,
         input["clock"].as_str().unwrap().parse().unwrap(),
     );
+    (graph, query)
+}
+fn run(input: &str, args: &[&str], complete: bool) -> Exit {
+    let (graph, query) = fixture(input, args);
+    let input: serde_json::Value = serde_json::from_str(input).unwrap();
     decide(
         complete,
         &graph,
@@ -31,6 +36,30 @@ fn run(input: &str, args: &[&str], complete: bool) -> Exit {
         ),
         &query,
     )
+}
+
+#[test]
+fn public_conflict_check_respects_the_requested_finding_policy() {
+    let input = include_str!("../../examples/contract/ambiguous-critical/input.json");
+    let (graph, query) = fixture(input, &["-u", "--fail-on", "critical"]);
+    assert!(conflicts_reach_policy(&graph, &query));
+    let (graph, query) = fixture(input, &["--require-metrics"]);
+    assert!(!conflicts_reach_policy(&graph, &query));
+    let (graph, query) = fixture(input, &["--fail-on", "critical"]);
+    assert!(!conflicts_reach_policy(&graph, &query));
+}
+
+#[test]
+fn only_unknown_consumers_linked_to_selected_records_make_a_finding_check_inconclusive() {
+    let (mut graph, query) = fixture(
+        include_str!("../../examples/contract/healthy/input.json"),
+        &["-u", "--fail-on", "warning"],
+    );
+    assert_eq!(decide(true, &graph, &[], &query), Exit::Success);
+    graph.consumers[0].state = ReferenceState::Unknown;
+    assert_eq!(decide(true, &graph, &[], &query), Exit::Inconclusive);
+    graph.records[0].consumers.clear();
+    assert_eq!(decide(true, &graph, &[], &query), Exit::Success);
 }
 #[test]
 fn incomplete_selection_precedes_findings_and_empty_can_succeed() {

@@ -1,0 +1,81 @@
+#compdef kubectl-view_storage
+
+autoload -U is-at-least
+
+_kubectl-view_storage() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'--completions=[Print shell completions without reading kubeconfig or contacting a cluster]:COMPLETIONS:(bash zsh fish)' \
+'(-A --all-namespaces)-n+[]:NAMESPACE:_default' \
+'(-A --all-namespaces)--namespace=[]:NAMESPACE:_default' \
+'--context=[]:CONTEXT:_default' \
+'--kubeconfig=[]:KUBECONFIG:_files' \
+'--metrics-source=[]:METRICS_SOURCE:(kubelet prometheus)' \
+'--prometheus-url=[Explicit Prometheus base URL; Kubernetes credentials are never reused]:PROMETHEUS_URL:_default' \
+'--prometheus-token-file=[]:PROMETHEUS_TOKEN_FILE:_files' \
+'--prometheus-ca-file=[]:PROMETHEUS_CA_FILE:_files' \
+'--prometheus-cluster=[Exact cluster label selector, e.g. cluster=production]:PROMETHEUS_CLUSTER:_default' \
+'--view=[]:VIEW:(tree table summary issues stats)' \
+'-o+[]:OUTPUT:(text json csv)' \
+'--output=[]:OUTPUT:(text json csv)' \
+'--kind=[]:KIND:(pvc pv)' \
+'-l+[]:SELECTOR:_default' \
+'--selector=[]:SELECTOR:_default' \
+'--pvc=[]:PVC:_default' \
+'--pv=[]:PV:_default' \
+'--storage-class=[]:STORAGE_CLASS:_default' \
+'--driver=[]:DRIVER:_default' \
+'--node=[]:NODE:_default' \
+'--statefulset=[Select claims referenced by live pods controlled by this StatefulSet]:STATEFULSET:_default' \
+'--workload=[Select live claims by verified controller, e.g. deployment/api or cronjob/backup]:WORKLOAD:_default' \
+'--compare=[Earlier JSON report used to calculate observed growth and time to full]:REPORT.json:_files' \
+'--watch=[Refresh after each completed collection; stats keeps the preceding sample]:WATCH:_default' \
+'--watch-count=[Stop after this many watch cycles (otherwise continue until interrupted)]:WATCH_COUNT:_default' \
+'--request-timeout=[]:REQUEST_TIMEOUT:_default' \
+'--timeout=[]:TIMEOUT:_default' \
+'--concurrency=[]:CONCURRENCY:_default' \
+'--max-metrics-age=[]:MAX_METRICS_AGE:_default' \
+'--warn-used=[]:WARN_USED:_default' \
+'--critical-used=[]:CRITICAL_USED:_default' \
+'--fail-on=[]:FAIL_ON:_default' \
+'--color=[]:COLOR:(auto always never)' \
+'*-g+[]:GROUP_BY:(storageclass namespace pvc pv driver pod node accessmode volumemode phase statefulset workload)' \
+'*--group-by=[]:GROUP_BY:(storageclass namespace pvc pv driver pod node accessmode volumemode phase statefulset workload)' \
+'--units=[Units for text views and stats CSV\: auto, B, KB..PB, or KiB..PiB (case insensitive)]:UNITS:(auto B KB MB GB TB PB KiB MiB GiB TiB PiB)' \
+'--sort=[]:SORT:(name requested provisioned used available used-percent inode-percent severity name\:asc name\:desc requested\:asc requested\:desc provisioned\:asc provisioned\:desc used\:asc used\:desc available\:asc available\:desc used-percent\:asc used-percent\:desc inode-percent\:asc inode-percent\:desc severity\:asc severity\:desc)' \
+'--build-info[Print package version, build revision, compiler, and report schema, then exit]' \
+'-A[]' \
+'--all-namespaces[]' \
+'-u[]' \
+'--utilization[]' \
+'(--prometheus-cluster)--prometheus-single-cluster[Assert that the endpoint contains only the selected Kubernetes cluster]' \
+'--wide[]' \
+'--require-metrics[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
+&& ret=0
+}
+
+(( $+functions[_kubectl-view_storage_commands] )) ||
+_kubectl-view_storage_commands() {
+    local commands; commands=()
+    _describe -t commands 'kubectl-view_storage commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_kubectl-view_storage" ]; then
+    _kubectl-view_storage "$@"
+else
+    compdef _kubectl-view_storage kubectl-view_storage
+fi

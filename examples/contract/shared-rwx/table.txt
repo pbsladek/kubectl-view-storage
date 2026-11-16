@@ -24,3 +24,4 @@ Metrics: 1/1 claims fresh and complete; inodes: 1/1
 Latest sample: 2026-11-06T19:59:50Z
 Shared references: do not add sibling totals; the root counts each volume once.
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 6 requests (base 1, enrichment 3/256, kubelet 2, Prometheus 0); 3001 bytes read.

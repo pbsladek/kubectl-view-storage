@@ -62,7 +62,11 @@ pub(crate) fn apply_checked<C: Checkpoint>(
     if !query.utilization {
         return Ok(());
     }
-    let samples = sample_index_checked(responses, control)?;
+    let sample_context = SummaryContext {
+        samples: sample_index_checked(responses, control)?,
+        query,
+        now,
+    };
     let mut consumers = BTreeMap::new();
     for consumer in &graph.consumers {
         control.step()?;
@@ -78,32 +82,10 @@ pub(crate) fn apply_checked<C: Checkpoint>(
     };
     for record in &mut graph.records {
         control.step()?;
-        if record.volume_mode == VolumeMode::Block {
-            record.filesystem = MetricFamily::NotApplicable;
-            record.inodes = MetricFamily::NotApplicable;
+        if !crate::metrics::prepare_filesystem_metrics(record) {
             continue;
         }
-        if matches!(
-            record.volume_mode,
-            VolumeMode::Unsupported(_) | VolumeMode::Invalid
-        ) {
-            let reason = if record.volume_mode == VolumeMode::Invalid {
-                "invalid_volume_mode"
-            } else {
-                "unsupported_volume_mode"
-            };
-            record.filesystem = MetricFamily::Unavailable {
-                status: "invalid".into(),
-                reason: reason.into(),
-            };
-            record.inodes = MetricFamily::Unavailable {
-                status: "invalid".into(),
-                reason: reason.into(),
-            };
-            continue;
-        }
-        let mut bytes = vec![];
-        let mut inodes = vec![];
+        let mut candidates = MetricCandidates::default();
         let mut live = false;
         let mut failure = None;
         for edge in edges.get(&record.id).into_iter().flatten() {
@@ -121,91 +103,19 @@ pub(crate) fn apply_checked<C: Checkpoint>(
             if let Some(reason) = failures.get(node) {
                 failure = Some(reason.clone());
             }
-            for volume in &edge.volume_names {
-                control.step()?;
-                let key = (
-                    node.as_str(),
-                    consumer.uid.as_str(),
-                    consumer.namespace.as_str(),
-                    consumer.name.as_str(),
-                    volume.as_str(),
-                );
-                for sample in samples.get(&key).into_iter().flatten() {
-                    control.step()?;
-                    if sample.pointer("/pvcRef/name").and_then(Value::as_str)
-                        != record.pvc_name.known().map(String::as_str)
-                        || sample.pointer("/pvcRef/namespace").and_then(Value::as_str)
-                            != record.namespace.known().map(String::as_str)
-                    {
-                        continue;
-                    }
-                    let source = Source {
-                        provider: crate::cli::MetricsSource::Kubelet,
-                        node: node.clone(),
-                        pod_id: Some(consumer.id.clone()),
-                        volume_name: volume.clone(),
-                        claim: None,
-                    };
-                    let timestamp = sample.get("time").and_then(Value::as_str);
-                    let observed_at = timestamp.and_then(|s| s.parse::<Timestamp>().ok());
-                    let eligibility = if record.binding_conflict
-                        || record.claim_created_at.is_none()
-                        || observed_at
-                            .zip(record.claim_created_at)
-                            .is_some_and(|(sample, created)| sample < created)
-                    {
-                        Eligibility::IdentityUncertain
-                    } else if sample.get("time").is_none()
-                        || sample.get("time") == Some(&Value::Null)
-                    {
-                        Eligibility::TimestampUnknown
-                    } else if observed_at.is_none() {
-                        Eligibility::InvalidTimestamp
-                    } else if observed_at
-                        .is_some_and(|t| t.as_nanosecond() - now.as_nanosecond() > 30_000_000_000)
-                    {
-                        Eligibility::ClockSkew
-                    } else if observed_at.is_some_and(|t| {
-                        now.as_nanosecond() - t.as_nanosecond()
-                            > query.max_metrics_age.as_nanos() as i128
-                    }) {
-                        Eligibility::Stale
-                    } else {
-                        Eligibility::Fresh
-                    };
-                    bytes.push(normalize_candidate::<Bytes>(
-                        sample,
-                        ["capacityBytes", "usedBytes", "availableBytes"],
-                        source.clone(),
-                        observed_at,
-                        eligibility,
-                        &record.id,
-                        &mut graph.diagnostics,
-                    ));
-                    control.step()?;
-                    inodes.push(normalize_candidate::<Inodes>(
-                        sample,
-                        ["inodes", "inodesUsed", "inodesFree"],
-                        source,
-                        observed_at,
-                        eligibility,
-                        &record.id,
-                        &mut graph.diagnostics,
-                    ));
-                }
-            }
+            edge_candidates(
+                record,
+                consumer,
+                edge,
+                &sample_context,
+                &mut candidates,
+                &mut graph.diagnostics,
+                control,
+            )?;
         }
-        let reason = if let Some(reason) = failure {
-            reason
-        } else if let ConsumerVisibility::Unknown(reason) = &record.consumer_visibility {
-            reason.clone()
-        } else if !live {
-            "no_live_consumer".into()
-        } else {
-            "no_sample".into()
-        };
-        record.filesystem = select_checked(bytes, &reason, control)?;
-        record.inodes = select_checked(inodes, &reason, control)?;
+        let reason = missing_sample_reason(record, failure, live);
+        record.filesystem = select_checked(candidates.bytes, &reason, control)?;
+        record.inodes = select_checked(candidates.inodes, &reason, control)?;
     }
     Ok(())
 }
@@ -372,8 +282,20 @@ pub(crate) fn select_checked<T: Counter, C: Checkpoint>(
             break;
         }
     }
+    let disagreement = candidate_disagreement(&candidates, control)?;
+    Ok(MetricFamily::Observed {
+        selected,
+        candidates,
+        disagreement,
+    })
+}
+
+fn candidate_disagreement<T: Counter, C: Checkpoint>(
+    candidates: &[Candidate<T>],
+    control: &mut C,
+) -> Result<Option<(ExactRatio, ExactRatio)>, C::Error> {
     let mut complete = vec![];
-    for candidate in &candidates {
+    for candidate in candidates {
         control.step()?;
         if candidate.eligibility == Eligibility::Fresh
             && candidate.complete()
@@ -426,11 +348,148 @@ pub(crate) fn select_checked<T: Counter, C: Checkpoint>(
             }
         }
     }
-    Ok(MetricFamily::Observed {
-        selected,
-        candidates,
-        disagreement,
-    })
+    Ok(disagreement)
+}
+
+fn sample_eligibility(
+    record: &Record,
+    sample: &Value,
+    query: &Query,
+    now: Timestamp,
+) -> (Option<Timestamp>, Eligibility) {
+    let timestamp = sample.get("time").and_then(Value::as_str);
+    let observed_at = timestamp.and_then(|s| s.parse::<Timestamp>().ok());
+    let eligibility = if record.binding_conflict
+        || record.claim_created_at.is_none()
+        || observed_at
+            .zip(record.claim_created_at)
+            .is_some_and(|(sample, created)| sample < created)
+    {
+        Eligibility::IdentityUncertain
+    } else if sample.get("time").is_none() || sample.get("time") == Some(&Value::Null) {
+        Eligibility::TimestampUnknown
+    } else if observed_at.is_none() {
+        Eligibility::InvalidTimestamp
+    } else if observed_at.is_some_and(|t| t.as_nanosecond() - now.as_nanosecond() > 30_000_000_000)
+    {
+        Eligibility::ClockSkew
+    } else if observed_at.is_some_and(|t| {
+        now.as_nanosecond() - t.as_nanosecond() > query.max_metrics_age.as_nanos() as i128
+    }) {
+        Eligibility::Stale
+    } else {
+        Eligibility::Fresh
+    };
+    (observed_at, eligibility)
+}
+
+/// Classify non-filesystem records identically for every telemetry provider.
+/// Returns true only when filesystem observations can be attributed.
+pub(crate) fn prepare_filesystem_metrics(record: &mut Record) -> bool {
+    let reason = match record.volume_mode {
+        VolumeMode::Filesystem => return true,
+        VolumeMode::Block => {
+            record.filesystem = MetricFamily::NotApplicable;
+            record.inodes = MetricFamily::NotApplicable;
+            return false;
+        }
+        VolumeMode::Invalid => "invalid_volume_mode",
+        VolumeMode::Unsupported(_) => "unsupported_volume_mode",
+    };
+    record.filesystem = MetricFamily::Unavailable {
+        status: "invalid".into(),
+        reason: reason.into(),
+    };
+    record.inodes = MetricFamily::Unavailable {
+        status: "invalid".into(),
+        reason: reason.into(),
+    };
+    false
+}
+
+struct SummaryContext<'a> {
+    samples: BTreeMap<SampleKey<'a>, Vec<&'a Value>>,
+    query: &'a Query,
+    now: Timestamp,
+}
+#[derive(Default)]
+struct MetricCandidates {
+    bytes: Vec<Candidate<Bytes>>,
+    inodes: Vec<Candidate<Inodes>>,
+}
+fn edge_candidates<C: Checkpoint>(
+    record: &Record,
+    consumer: &Consumer,
+    edge: &Relationship,
+    context: &SummaryContext<'_>,
+    candidates: &mut MetricCandidates,
+    diagnostics: &mut Vec<Diagnostic>,
+    control: &mut C,
+) -> Result<(), C::Error> {
+    let Some(node) = &consumer.node else {
+        return Ok(());
+    };
+    for volume in &edge.volume_names {
+        control.step()?;
+        let key = (
+            node.as_str(),
+            consumer.uid.as_str(),
+            consumer.namespace.as_str(),
+            consumer.name.as_str(),
+            volume.as_str(),
+        );
+        for sample in context.samples.get(&key).into_iter().flatten() {
+            control.step()?;
+            if sample.pointer("/pvcRef/name").and_then(Value::as_str)
+                != record.pvc_name.known().map(String::as_str)
+                || sample.pointer("/pvcRef/namespace").and_then(Value::as_str)
+                    != record.namespace.known().map(String::as_str)
+            {
+                continue;
+            }
+            let source = Source {
+                provider: crate::cli::MetricsSource::Kubelet,
+                node: node.clone(),
+                pod_id: Some(consumer.id.clone()),
+                volume_name: volume.clone(),
+                claim: None,
+            };
+            let (observed_at, eligibility) =
+                sample_eligibility(record, sample, context.query, context.now);
+            candidates.bytes.push(normalize_candidate::<Bytes>(
+                sample,
+                ["capacityBytes", "usedBytes", "availableBytes"],
+                source.clone(),
+                observed_at,
+                eligibility,
+                &record.id,
+                diagnostics,
+            ));
+            control.step()?;
+            candidates.inodes.push(normalize_candidate::<Inodes>(
+                sample,
+                ["inodes", "inodesUsed", "inodesFree"],
+                source,
+                observed_at,
+                eligibility,
+                &record.id,
+                diagnostics,
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn missing_sample_reason(record: &Record, failure: Option<String>, live: bool) -> String {
+    if let Some(reason) = failure {
+        reason
+    } else if let ConsumerVisibility::Unknown(reason) = &record.consumer_visibility {
+        reason.clone()
+    } else if !live {
+        "no_live_consumer".into()
+    } else {
+        "no_sample".into()
+    }
 }
 
 #[cfg(test)]

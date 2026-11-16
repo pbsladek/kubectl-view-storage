@@ -1,6 +1,6 @@
 # Implementation evidence
 
-Updated 2026-11-11. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A65 and every [phase exit](IMPLEMENTATION_PLAN.md). No release has been published.
+Updated 2026-11-15. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A65 and every [phase exit](IMPLEMENTATION_PLAN.md). Release v0.1.0 is being prepared; dated evidence below retains its original source and platform scope.
 
 | Phase | Evidence available | Remaining exit work |
 | --- | --- | --- |
@@ -10,6 +10,51 @@ Updated 2026-11-11. The phases 0–5 objective remains in final validation. The 
 | 3 | Four views, 36 goldens, JSON/CSV, independent reports, configured kubectl discovery and pipe/terminal handling | Complete per-case audit and native installation matrix |
 | 4 | Real CSI byte/inode observations and shared 16 MiB write; HTTP pressure/conflict/partial/Block/cap cases | Final negative-live-telemetry acceptance reconciliation |
 | 5 | Locked tests, coverage, controlled faults, scale fixtures, fuzz smoke, owned credential supervision and local Krew installation | Remaining A01–A58 scopes, final source-package install and native CI |
+
+## v0.1.0 release preparation (2026-11-15)
+
+The package and both lockfiles select 0.1.0. Release preparation now has Makefile
+wrappers for version/lock/completion updates, native builds and verified artifact
+downloads, plus a separate explicit publication target. Offline tests exercise
+rollback, tag/source/run identity, failed builds, altered artifacts, draft
+publication and reviewed release notes without touching GitHub.
+
+The compiler pin and recorded Cargo bundle advance to Rust 1.100.0 after checking
+the official stable channel. The reviewed Linux validation image and native
+manifest digests are pinned to that release. Two Clippy boolean simplifications
+preserve the previous short-circuit behavior. Native macOS ARM64 passes the full
+232-test suite, formatting, Clippy, complexity, independent reports and fresh
+cargo-deny advisory/license/source checks. Coverage with the matching LLVM tools
+is 8662/9772 production lines (88.64%); all six 90% core-module floors pass,
+including 92% for policy. Hosted native builds and installation
+checks must pass before publication; they remain separate from live-driver
+compatibility receipts.
+
+## Local usability and quality checkpoint (2026-11-14)
+
+This checkpoint added `make verify`, explicit units in every text
+view, collection request/byte counts in wide output, monotonic duration in wide
+and watch output, refresh-overrun notices, and provider-specific next steps for
+confirmed unavailable usage. `--build-info` reports the version, available Git
+revision, compiler and unchanged report schema without kubeconfig. Offline
+`--completions bash|zsh|fish` emits assets for the standalone executable; the
+Clap generator is dev-only and asset freshness is tested. JSON already used
+compact newline-terminated documents; a regression now preserves that behavior.
+
+Native macOS ARM64 with Rust 1.99.1 passes `make verify`: 230 Rust tests,
+formatting, Clippy, Python harness/policy checks, workflow protocol regressions,
+checked-in contracts and independent validators for fresh pipeline/HTTP,
+calculation, watch, Prometheus and workload reports. Production line coverage is
+8952/9473 (94.50%), with all core floors passing. The complexity gate measures
+464 production functions, none above 20. Real kubectl discovery/configured-query
+and credential PTY checks pass. Source-package file selection includes the new
+build script, completion assets and dev generator. All four controlled faults
+are detected by their targeted regressions. No runtime dependency was
+added. Local logs and the verification receipt remain under ignored `artifacts/`.
+
+Earlier native, installed-Krew, fuzz and storage receipts below keep their dated
+source scopes. This local checkpoint does not certify those platforms or drivers
+for the current changes and does not publish a release.
 
 ## Operator calculation extension
 

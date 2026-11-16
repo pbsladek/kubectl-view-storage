@@ -12,6 +12,8 @@ use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub const SCHEMA_VERSION: &str = "view-storage/v1alpha1";
+
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct Cost {
     pub enrichment_strategy: BTreeMap<String, String>,
@@ -197,41 +199,12 @@ pub(crate) fn build_checked<C: Checkpoint>(
     let mut consumers = vec![];
     for consumer in &graph.consumers {
         control.checked()?;
-        let mut rendered = json!({"id":consumer.id.as_str(),"uid":consumer.uid,"namespace":consumer.namespace,"name":consumer.name,"phase":consumer.phase,"deletion_timestamp":timestamp(consumer.deletion_timestamp),"node":consumer.node,"active":(consumer.state!=ReferenceState::Unknown).then_some(consumer.state==ReferenceState::Active),"reference_state":consumer.state.as_str()});
-        if let Some(owner) = consumer.statefulset.known() {
-            rendered["statefulset"] = json!({"name":owner.name,"uid":owner.uid});
-        } else if matches!(consumer.statefulset, MetadataValue::Unknown) {
-            rendered["statefulset_state"] = json!("unknown");
-        }
-        if let Some(owner) = consumer.workload.known() {
-            rendered["workload"] = json!(owner);
-        } else if matches!(consumer.workload, MetadataValue::Unknown) {
-            rendered["workload_state"] = json!("unknown");
-        }
-        if !consumer.workload_chain.is_empty() {
-            let mut chain = vec![];
-            for owner in &consumer.workload_chain {
-                control.checked()?;
-                chain.push(json!(owner));
-            }
-            rendered["workload_chain"] = Value::Array(chain);
-        }
-        consumers.push(rendered);
+        consumers.push(consumer_checked(consumer, control)?);
     }
     let mut relationships = vec![];
     for edge in &graph.relationships {
         control.checked()?;
-        let mut value = json!({"id":format!("edge:{}:{}", edge.record_id.as_str().split_once(':').map(|(_,uid)|uid).unwrap_or(""),edge.consumer_id.as_str().split_once(':').map(|(_,uid)|uid).unwrap_or("")),"record_id":edge.record_id.as_str(),"consumer_id":edge.consumer_id.as_str(),"runtime_state":"unverified"});
-        value["volume_names"] =
-            strings_checked(edge.volume_names.iter().map(String::as_str), control)
-                .map_err(CheckedError::Interrupted)?;
-        let mut mounts = vec![];
-        for declared in &edge.mounts {
-            control.checked()?;
-            mounts.push(mount(declared));
-        }
-        value["mounts"] = Value::Array(mounts);
-        relationships.push(value);
+        relationships.push(relationship_checked(edge, control)?);
     }
     let total = group::totals_checked(
         &refs,
@@ -244,26 +217,15 @@ pub(crate) fn build_checked<C: Checkpoint>(
     let mut summary = totals_checked(&total, control).map_err(CheckedError::Interrupted)?;
     summary["overlapping_children"] =
         Value::Bool(group::overlap_checked(groups, control).map_err(CheckedError::Interrupted)?);
-    let mut rendered_groups = vec![];
-    for group in groups {
-        control.checked()?;
-        rendered_groups.push(group_checked(group, control).map_err(CheckedError::Interrupted)?);
-    }
-    let mut rendered_findings = vec![];
-    for finding in findings {
-        control.checked()?;
-        rendered_findings
-            .push(finding_checked(finding, control).map_err(CheckedError::Interrupted)?);
-    }
-    let mut diagnostics = vec![];
-    for diagnostic in &graph.diagnostics {
-        control.checked()?;
-        diagnostics
-            .push(diagnostic_checked(diagnostic, control).map_err(CheckedError::Interrupted)?);
-    }
+    let rendered_groups =
+        render_values_checked(groups, control, group_checked).map_err(CheckedError::Interrupted)?;
+    let rendered_findings = render_values_checked(findings, control, finding_checked)
+        .map_err(CheckedError::Interrupted)?;
+    let diagnostics = render_values_checked(&graph.diagnostics, control, diagnostic_checked)
+        .map_err(CheckedError::Interrupted)?;
     // Move completed containers into the DOM. Feeding a large Vec<Value> back
     // through json! would recursively clone it without processing checkpoints.
-    let mut result = json!({"schema_version":"view-storage/v1alpha1", "query":{"kind":query.kind,"group_by":query.group_by,"filters":query.filters,"utilization":query.utilization,"metrics_source":if query.utilization {Some(query.metrics_source.as_str())} else {None},"max_metrics_age_seconds":duration_seconds(query.max_metrics_age),"warn_used_percent":query.warn_used.to_string(),"critical_used_percent":query.critical_used.to_string(),"require_metrics":query.require_metrics,"fail_on":query.fail_on,"sort":query.sort.to_string()}});
+    let mut result = json!({"schema_version":SCHEMA_VERSION, "query":{"kind":query.kind,"group_by":query.group_by,"filters":query.filters,"utilization":query.utilization,"metrics_source":if query.utilization {Some(query.metrics_source.as_str())} else {None},"max_metrics_age_seconds":duration_seconds(query.max_metrics_age),"warn_used_percent":query.warn_used.to_string(),"critical_used_percent":query.critical_used.to_string(),"require_metrics":query.require_metrics,"fail_on":query.fail_on,"sort":query.sort.to_string()}});
     if query.metrics_source == crate::cli::MetricsSource::Prometheus {
         result["query"]["prometheus_cluster"] = json!(query.prometheus_cluster);
     }
@@ -576,6 +538,61 @@ fn selection_checked<C: Checkpoint>(
     }
     result["unknown_records"] = Value::Array(unknown);
     Ok(result)
+}
+
+fn consumer_checked<C: Checkpoint>(
+    consumer: &Consumer,
+    control: &mut C,
+) -> Result<Value, CheckedError<C::Error>> {
+    let mut rendered = json!({"id":consumer.id.as_str(),"uid":consumer.uid,"namespace":consumer.namespace,"name":consumer.name,"phase":consumer.phase,"deletion_timestamp":timestamp(consumer.deletion_timestamp),"node":consumer.node,"active":(consumer.state!=ReferenceState::Unknown).then_some(consumer.state==ReferenceState::Active),"reference_state":consumer.state.as_str()});
+    if let Some(owner) = consumer.statefulset.known() {
+        rendered["statefulset"] = json!({"name":owner.name,"uid":owner.uid});
+    } else if matches!(consumer.statefulset, MetadataValue::Unknown) {
+        rendered["statefulset_state"] = json!("unknown");
+    }
+    if let Some(owner) = consumer.workload.known() {
+        rendered["workload"] = json!(owner);
+    } else if matches!(consumer.workload, MetadataValue::Unknown) {
+        rendered["workload_state"] = json!("unknown");
+    }
+    if !consumer.workload_chain.is_empty() {
+        let mut chain = vec![];
+        for owner in &consumer.workload_chain {
+            control.checked()?;
+            chain.push(json!(owner));
+        }
+        rendered["workload_chain"] = Value::Array(chain);
+    }
+    Ok(rendered)
+}
+
+fn relationship_checked<C: Checkpoint>(
+    edge: &Relationship,
+    control: &mut C,
+) -> Result<Value, CheckedError<C::Error>> {
+    let mut value = json!({"id":format!("edge:{}:{}", edge.record_id.as_str().split_once(':').map(|(_,uid)|uid).unwrap_or(""),edge.consumer_id.as_str().split_once(':').map(|(_,uid)|uid).unwrap_or("")),"record_id":edge.record_id.as_str(),"consumer_id":edge.consumer_id.as_str(),"runtime_state":"unverified"});
+    value["volume_names"] = strings_checked(edge.volume_names.iter().map(String::as_str), control)
+        .map_err(CheckedError::Interrupted)?;
+    let mut mounts = vec![];
+    for declared in &edge.mounts {
+        control.checked()?;
+        mounts.push(mount(declared));
+    }
+    value["mounts"] = Value::Array(mounts);
+    Ok(value)
+}
+
+fn render_values_checked<T, C: Checkpoint>(
+    values: &[T],
+    control: &mut C,
+    render: impl Fn(&T, &mut C) -> Result<Value, C::Error>,
+) -> Result<Vec<Value>, C::Error> {
+    let mut rendered = vec![];
+    for value in values {
+        control.step()?;
+        rendered.push(render(value, control)?);
+    }
+    Ok(rendered)
 }
 
 #[cfg(test)]

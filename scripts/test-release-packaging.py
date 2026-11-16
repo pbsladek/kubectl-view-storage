@@ -53,7 +53,9 @@ class PackagingTests(unittest.TestCase):
         source.mkdir()
         include = tomllib.loads((release.ROOT / "Cargo.toml").read_text())["package"]["include"]
         (source / "Cargo.toml").write_text('[package]\nname="package-selection-probe"\nversion="0.1.0"\nedition="2024"\ninclude=' + json.dumps(include) + '\n')
-        expected = {"Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "LICENSE", "README.md", "src/main.rs", "rust-toolchain.toml"}
+        expected = {"Cargo.lock", "Cargo.toml", "Cargo.toml.orig", "LICENSE", "README.md", "src/main.rs", "rust-toolchain.toml",
+                    "build.rs", "dev/completions.rs", "dev/completion_generator.rs", "src/build_info.rs", "src/completions.rs",
+                    "completions/kubectl-view_storage.bash", "completions/_kubectl-view_storage", "completions/kubectl-view_storage.fish"}
         for name in expected - {"Cargo.lock", "Cargo.toml", "Cargo.toml.orig"}:
             path = source / name
             path.parent.mkdir(parents=True, exist_ok=True)

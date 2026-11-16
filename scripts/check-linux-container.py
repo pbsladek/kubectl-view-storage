@@ -32,7 +32,9 @@ def main():
     if existing.stdout.strip():
         parser.exit(1, f"Inspect the existing {name} container before retrying.\n")
     source = hashlib.sha256()
-    for path in [ROOT / "Cargo.toml", ROOT / "Cargo.lock", *sorted((ROOT / "src").rglob("*.rs")), *sorted((ROOT / "tests").rglob("*.rs"))]:
+    for path in [ROOT / "Cargo.toml", ROOT / "Cargo.lock", ROOT / "build.rs", *sorted((ROOT / "completions").rglob("*")), *sorted((ROOT / "src").rglob("*.rs")), *sorted((ROOT / "tests").rglob("*.rs"))]:
+        if not path.is_file():
+            continue
         source.update(str(path.relative_to(ROOT)).encode())
         source.update(path.read_bytes())
     receipt = {

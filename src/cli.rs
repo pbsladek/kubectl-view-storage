@@ -208,6 +208,12 @@ pub struct Filters {
     about = "Inspect persistent storage inventory, consumers, and usage"
 )]
 pub struct Cli {
+    /// Print package version, build revision, compiler, and report schema, then exit.
+    #[arg(long)]
+    pub build_info: bool,
+    /// Print shell completions without reading kubeconfig or contacting a cluster.
+    #[arg(long, value_enum)]
+    pub completions: Option<CompletionShell>,
     #[arg(short = 'n', long, conflicts_with = "all_namespaces")]
     pub namespace: Option<String>,
     #[arg(short = 'A', long)]
@@ -261,7 +267,7 @@ pub struct Cli {
     /// Select live claims by verified controller, e.g. deployment/api or cronjob/backup.
     #[arg(long, value_parser=crate::workloads::selector)]
     pub workload: Option<String>,
-    /// Units for the stats view: auto, B, KB..PB, or KiB..PiB (case insensitive).
+    /// Units for text views and stats CSV: auto, B, KB..PB, or KiB..PiB (case insensitive).
     #[arg(long, alias = "unit", default_value = "auto")]
     pub units: crate::calculations::Unit,
     /// Earlier JSON report used to calculate observed growth and time to full.
@@ -293,6 +299,13 @@ pub struct Cli {
     pub fail_on: Option<Severity>,
     #[arg(long, value_enum, default_value = "auto")]
     pub color: Color,
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum CompletionShell {
+    Bash,
+    Zsh,
+    Fish,
 }
 
 #[derive(Debug, Clone)]
@@ -331,11 +344,27 @@ impl Cli {
                 "--watch supports text and newline-delimited JSON; CSV is unavailable".into(),
             );
         }
-        if self.view != View::Stats
-            && (self.compare.is_some() || self.units != crate::calculations::Unit::Auto)
-        {
-            return Err("--units and --compare require --view stats".into());
+        if self.view != View::Stats && self.compare.is_some() {
+            return Err("--compare requires --view stats".into());
         }
+        self.validate_scope()?;
+        if self.warn_used >= self.critical_used {
+            return Err("thresholds must satisfy 0 < warning < critical <= 100".into());
+        }
+        if let Some(dimensions) = &self.group_by
+            && (dimensions.is_empty()
+                || dimensions
+                    .iter()
+                    .collect::<std::collections::BTreeSet<_>>()
+                    .len()
+                    != dimensions.len())
+        {
+            return Err("grouping requires at least one dimension and no duplicates".into());
+        }
+        self.validate_filter_values()
+    }
+
+    fn validate_scope(&self) -> Result<(), String> {
         if self.workload.is_some() && (self.all_namespaces || self.kind == Kind::Pv) {
             return Err("--workload requires PVC mode in a single namespace".into());
         }
@@ -350,19 +379,10 @@ impl Cli {
         {
             return Err("--kind pv requires -A and rejects --namespace and --pvc".into());
         }
-        if self.warn_used >= self.critical_used {
-            return Err("thresholds must satisfy 0 < warning < critical <= 100".into());
-        }
-        if let Some(dimensions) = &self.group_by
-            && (dimensions.is_empty()
-                || dimensions
-                    .iter()
-                    .collect::<std::collections::BTreeSet<_>>()
-                    .len()
-                    != dimensions.len())
-        {
-            return Err("grouping requires at least one dimension and no duplicates".into());
-        }
+        Ok(())
+    }
+
+    fn validate_filter_values(&self) -> Result<(), String> {
         for (flag, value) in [
             ("namespace", &self.namespace),
             ("context", &self.context),

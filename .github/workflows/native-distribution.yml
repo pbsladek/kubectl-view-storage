@@ -1,12 +1,20 @@
 name: Release
+run-name: ${{ inputs.release_id || format('Native release validation {0}', github.ref_name) }}
 on:
   workflow_call:
     inputs:
+      release_id:
+        type: string
+        default: ''
       cold_build:
         type: boolean
         default: false
   workflow_dispatch:
     inputs:
+      release_id:
+        description: Optional identifier used by make release to find this exact run.
+        type: string
+        default: ''
       cold_build:
         description: Disable Rust dependency caches and require a fresh release profile.
         type: boolean

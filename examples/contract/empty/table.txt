@@ -10,3 +10,4 @@ Declared consumers (runtime unverified)
 Selection: complete (0 matched)
 Metrics: 0/0 claims fresh and complete; inodes: 0/0
 Filesystem totals are per claim, not physical storage totals.
+Collection cost: 2 requests (base 1, enrichment 1/256, kubelet 0, Prometheus 0); 124 bytes read.

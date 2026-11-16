@@ -1,6 +1,6 @@
 # Local development and disposable clusters
 
-Status: Draft 0.8, 2026-11-07. This guide defines the local and CI environment for the [implementation phases](IMPLEMENTATION_PLAN.md). Cluster configurations and version selections exist; automated workload/CSI installation and the Rust executable are phase deliverables.
+Updated 2026-11-14. The Rust executable, library, disposable workload/CSI harnesses, and CI gates are implemented. This guide describes their current entrypoints; the [implementation evidence](IMPLEMENTATION_STATUS.md) and [compatibility record](COMPATIBILITY.md) distinguish local checkpoints from native CI and live-driver receipts.
 
 ## Selected tools
 
@@ -10,11 +10,11 @@ Use [wiremock](https://docs.rs/wiremock/latest/wiremock/) for HTTP failures, pag
 
 Use [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) for disposable Kubernetes nodes. Select kind 0.33.0 and baseline Kubernetes 1.37.0, with 1.36.4/1.35.8 for compatibility runs. The [kind release](https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0) supplies the digest-pinned amd64/arm64 images in [dev/versions.json](../dev/versions.json). Use native host architecture.
 
-The workstation has kind 0.33.0, kubectl 1.37.2, Rust/Cargo 1.99.1 and Docker Desktop 29.9.2. The production suite and inventory/CSI baseline profiles pass on macOS ARM64. Docker and registry commands work through reviewed execution outside the session sandbox. The runs used four Docker CPUs and 3.825 GiB assigned memory serially; this is observed capacity, not a verified minimum. Compatibility jobs must use kubectl matching each cluster minor.
+The recorded 2026-11-07 workstation checkpoint used kind 0.33.0, kubectl 1.37.2, Rust/Cargo 1.99.1 and Docker Desktop 29.9.2. The production suite and inventory/CSI baseline profiles pass on macOS ARM64. Docker and registry commands work through reviewed execution outside the session sandbox. The runs used four Docker CPUs and 3.825 GiB assigned memory serially; this is observed capacity, not a verified minimum. Compatibility jobs must use kubectl matching each cluster minor.
 
 ## Current toolchain and lightweight dependencies
 
-Use the latest stable Rust release and the Cargo shipped with that toolchain. On 2026-11-07, the [official release list](https://blog.rust-lang.org/releases/) identifies 1.99.1 as latest stable; [rust-toolchain.toml](../rust-toolchain.toml) pins it with a minimal profile plus rustfmt/Clippy. The current Homebrew compiler/Cargo already match; rustup-managed local/CI builds use the checked-in pin. Phase 0 records that compiler baseline in Cargo.toml rust-version and uses edition 2024. P0 targets the current stable baseline, not an additional older MSRV. Fuzz-only nightly does not become the normal build toolchain.
+Use the Rust release and bundled Cargo pinned in [rust-toolchain.toml](../rust-toolchain.toml), currently 1.100.0 with a minimal profile plus rustfmt/Clippy. Do not assume the system compiler matches: check `rustc --version` and `cargo --version` in the environment used for checks. Cargo.toml records the same rust-version baseline and edition 2024. P0 targets the current stable baseline, not an additional older MSRV. Fuzz-only nightly does not become the normal build toolchain.
 
 Recheck stable releases weekly and before publishing. A tested update changes the exact toolchain pin, rust-version baseline, environment record, matching coverage components, and lockfile when resolution changes. Run an additional current-stable CI check to detect a newer release while pinned builds remain reproducible. Compiler updates pass formatting, Clippy, tests, coverage, and advertised-target checks before becoming the release baseline. Record any necessary temporary delay and its resolution in the update PR.
 
@@ -96,7 +96,7 @@ Use [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) and the matching
 
 Percentages are weighted by instrumented line counts, not averaged across files. Include renderers, provider code, error paths, and the CLI in the overall denominator. Dependencies, test/fuzz harnesses, and generated code are outside production-source coverage; record generated-code exclusions explicitly. Keep any other uncovered source visible in reports and close required behavior gaps even if thresholds pass.
 
-Publish LCOV for machine consumption, HTML with uncovered lines for review, and LLVM JSON for a per-module gate. The overall command's threshold does not enforce the separate core-module floors: phase 0 adds a checker over the JSON file/path counts and fails when an implemented required module is omitted. Before Rust source exists, coverage is unmeasured. During incremental phases, check implemented modules; all six core modules, including calculations, are required at phase 5.
+Publish LCOV for machine consumption, HTML with uncovered lines for review, and LLVM JSON for a per-module gate. The overall command's threshold does not enforce the separate core-module floors. The implemented checker reads JSON file/path counts and fails when any required production module is omitted. All six core modules, including calculations, are required.
 
 Once the Cargo package and coverage tooling exist, the standard collection/report workflow is:
 
@@ -135,7 +135,7 @@ If this provisioner returns metrics on a particular version, validate them. Miss
 
 Use [dev/kind/csi.yaml](../dev/kind/csi.yaml): one control-plane node, with the [CSI hostpath driver](https://github.com/kubernetes-csi/csi-driver-host-path) release [v1.19.0](https://github.com/kubernetes-csi/csi-driver-host-path/releases/tag/v1.19.0).
 
-Phase 0 reviews and vendors its deployment and required snapshot CRDs/controller, records exact source revisions and multi-platform image digests in [dev/csi/lock.json](../dev/csi/README.md), and pins the completed lock file SHA-256 in [dev/versions.json](../dev/versions.json). The reviewed lock and checksum now exist. The [CSI lock guide](../dev/csi/README.md) defines required resources, licenses, deployment ordering and workload image selection. Do not apply a moving master branch or fetch an unreviewed latest deployment during tests.
+The repository vendors its reviewed deployment and required snapshot CRDs/controller, records exact source revisions and multi-platform image digests in [dev/csi/lock.json](../dev/csi/README.md), and pins the completed lock file SHA-256 in [dev/versions.json](../dev/versions.json). The reviewed lock and checksum now exist. The [CSI lock guide](../dev/csi/README.md) defines required resources, licenses, deployment ordering and workload image selection. Do not apply a moving master branch or fetch an unreviewed latest deployment during tests.
 
 The upstream driver is a single-node demo for testing and implements [NodeGetVolumeStats](https://github.com/kubernetes-csi/csi-driver-host-path/blob/master/pkg/hostpath/nodeserver.go). This profile validates API/CSI/kubelet integration, not production-backend behavior or cross-node RWX.
 
@@ -143,7 +143,7 @@ Filesystem statistics can describe backing storage rather than a quota equal to 
 
 Readiness requires a bound/mounted filesystem claim and a fresh attributable byte tuple from the node Summary API; record inode coverage separately. Wait for observation timestamps to advance after writes. A missing required tuple fails the CSI gate; it is not an automatic skip or success.
 
-Raw block live tests require driver/node support and must still report filesystem metrics n/a. Same-node multiple consumers validate deduplication; actual cross-node RWX remains in mocks until a dedicated file-storage profile exists.
+Raw block live tests require driver/node support and must still report filesystem metrics n/a. Same-node multiple consumers validate deduplication; actual cross-node RWX has a separate NFS CSI profile and separately recorded live receipts.
 
 ## Cluster lifecycle
 
@@ -161,7 +161,7 @@ Cleanup validates the recorded container identity before deleting a live kind pr
 
 The harness records ownership/run ID, confirms the generated context, and passes explicit kubeconfig on every kubectl/plugin operation. It must not change the user's current context, use Docker Desktop's built-in cluster, delete unnamed/unowned clusters, or clean up an arbitrary kubeconfig.
 
-Start with 4 Docker CPUs and 8 GiB memory, plus disk for pinned images. Run one profile at a time on a smaller workstation. Measure these initial allocations in phase 0; they are not verified minimums.
+Start with 4 Docker CPUs and 8 GiB memory, plus disk for pinned images. Run one profile at a time on a smaller workstation. The smaller allocation observed above is separate evidence; these starting allocations are not verified minimums.
 
 ## Evidence and CI
 
@@ -173,9 +173,11 @@ The contract check needs no container runtime:
 
     uv run scripts/validate-contract.py
 
-The [distribution guide](DISTRIBUTION.md) defines target builds, deterministic archive/manifest verification and make release-smoke with an isolated Krew root. Twelve packaging checks include a real Cargo file-selection regression; the other archive/subprocess cases use synthetic fixtures. The native macOS ARM64 release/archive exists. Remaining target archives and actual installation evidence are still required.
+The [distribution guide](DISTRIBUTION.md) defines target builds, deterministic archive/manifest verification and make release-smoke with an isolated Krew root. Packaging checks include a real Cargo file-selection regression; the other archive/subprocess cases use synthetic fixtures. The recorded four-target native distribution run includes archives and isolated Krew installations. A fresh run is still required for a new release revision.
 
-The Makefile exposes check/test/coverage/plugin-smoke and profile-specific create/verify/delete tasks. Cargo builds `target/debug/kubectl-view_storage`; `make plugin-smoke` checks real kubectl discovery and cluster-free help/version/flag forwarding. The production HTTP suite separately verifies configured context/namespace resolution. Locked Cargo checks use the resolved Cargo.lock. Real inventory/RBAC and locked CSI telemetry runs pass on the native Mac. The older-node/Linux storage matrix and fuzz smoke now pass; separate acceptance and installation evidence remains recorded in the implementation audit. Workspace-local coverage/advisory tools live in .local/tools/bin; add that directory to PATH when using them. The Homebrew Rust installation uses compatible LLVM 23 paths through LLVM_COV and LLVM_PROFDATA for coverage. See [implementation evidence](IMPLEMENTATION_STATUS.md) for the current scope. SPEC.md governs behavior and request budgets.
+Run `make verify` for formatting, Clippy, Rust unit/property/CLI/HTTP tests, completion freshness, Python harness/policy checks, workflow protocols, checked-in contracts and independent validation of reports generated by that same test run. Each invocation creates fresh `artifacts/verify-*` report directories and a `verification.json` receipt; it stops at the first failed check. It requires Python 3.12+, uv and the pinned Rust toolchain, but no cluster or Docker. Local socket/process support is needed for the HTTP/PTY tests. Coverage, controlled faults, advisories, fuzzing, plugin installation and live storage remain separate gates.
+
+The Makefile also exposes check/test/coverage/plugin-smoke, `make completions`, and profile-specific create/verify/delete tasks. Cargo builds `target/debug/kubectl-view_storage`; `make plugin-smoke` checks real kubectl discovery and cluster-free help/version/flag forwarding. The production HTTP suite separately verifies configured context/namespace resolution. Locked Cargo checks use the resolved Cargo.lock. Real inventory/RBAC and locked CSI telemetry runs pass on the native Mac. The older-node/Linux storage matrix and fuzz smoke now pass; separate acceptance and installation evidence remains recorded in the implementation audit. Workspace-local coverage/advisory tools live in .local/tools/bin; add that directory to PATH when using them. Coverage requires LLVM tools matching the selected compiler. Prefer its `llvm-tools-preview` component; set LLVM_COV and LLVM_PROFDATA only when using independently installed matching tools. See [implementation evidence](IMPLEMENTATION_STATUS.md) for the current scope. SPEC.md governs behavior and request budgets.
 
 ## Reproducing the current compatibility checks
 
@@ -190,10 +192,17 @@ The Linux compatibility workflow runs local-path/inventory, CSI hostpath and NFS
 
 `python3 scripts/check-linux-container.py --arch arm64` runs actual locked Rust tests and a static musl release build inside the digest-pinned official Rust image recorded in dev/versions.json. `--arch amd64` selects that actual platform; Docker Desktop may emulate it, so record the host and avoid claiming native amd64 certification. The source bind is read-only, writable build/registry/evidence directories stay in this workspace, and a named/labeled container is removed on completion. The command limits build jobs, CPUs and memory; run it separately from kind profiles on the current Docker VM. It supplements the native CI matrix.
 
-The quantity/statistics fuzz targets pass actual AddressSanitizer smoke on pinned nightly-2026-11-01 with cargo-fuzz 0.13.2. `scripts/fuzz-smoke.sh` uses a separate checked-in fuzz/Cargo.lock, locked Cargo prefetch, offline fuzz builds and an unchanged-lock check because cargo-fuzz has no `--locked` flag. Generated inputs go under ignored artifacts/fuzz-corpus; named checked-in seeds remain unchanged. The workspace-local Rustup/Cargo homes do not change the Homebrew production Rust/Cargo 1.99.1 bundle. Bounded smoke is not exhaustive fuzz coverage.
+The quantity/statistics fuzz targets pass actual AddressSanitizer smoke on pinned nightly-2026-11-01 with cargo-fuzz 0.13.2. `scripts/fuzz-smoke.sh` uses a separate checked-in fuzz/Cargo.lock, locked Cargo prefetch, offline fuzz builds and an unchanged-lock check because cargo-fuzz has no `--locked` flag. Generated inputs go under ignored artifacts/fuzz-corpus; named checked-in seeds remain unchanged. Workspace-local Rustup/Cargo homes keep fuzz toolchains separate from the normal production compiler. Bounded smoke is not exhaustive fuzz coverage.
 
 
 ## CI performance
+
+Production Rust functions must meet the cyclomatic complexity ceiling of 20;
+aim for 10 or less in new code. `make complexity` runs the pinned source analyzer,
+and `uv run scripts/test-complexity.py` checks its Rust parser and failure paths.
+Both run in `make check` and CI's always-run contracts job. See
+[Rust code quality](CODE_QUALITY.md) for the metric, private module boundaries,
+and design rules. This development tool adds no Rust runtime dependency.
 
 [CI performance](CI_PERFORMANCE.md) records measured build/test and runner costs. CI now uses compiler/target/profile-specific dependency caches, exact-version tool caches, a cumulative change selector, parallel lint/coverage/native jobs with the required fault checks inside Linux lint, and once-per-architecture compatibility binaries. Source compiler verification, native Cargo/Krew installations, coverage floors, parser fuzzing, and actual CSI gates remain required in their selected workflows. Pure documentation changes skip native compilation; known coverage/tool-only inputs retain Rust checks while skipping unrelated distribution jobs. Unknown paths/history run full checks. Latest-stable compatibility runs on both OSes in weekly/manual Maintenance. Use the final `required` aggregate as the branch-protection check when configuring protection. Local Docker CPU/memory limits are unchanged.
 

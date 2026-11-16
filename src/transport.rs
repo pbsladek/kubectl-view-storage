@@ -95,24 +95,7 @@ impl Object {
         if !valid_text(&self.metadata.name, control)? {
             return Ok(false);
         }
-        if resource == "pods"
-            && (self
-                .spec
-                .get("nodeName")
-                .is_some_and(|value| !value.is_string() && !value.is_null())
-                || self
-                    .status
-                    .get("phase")
-                    .is_some_and(|value| !value.is_string() && !value.is_null())
-                || self
-                    .metadata
-                    .deletion_timestamp
-                    .as_ref()
-                    .is_some_and(|value| value.parse::<jiff::Timestamp>().is_err()))
-        {
-            return Ok(false);
-        }
-        if resource == "pods" && !self.valid_pod_volumes_checked(control)? {
+        if resource == "pods" && !self.valid_pod_checked(control)? {
             return Ok(false);
         }
         let owner_resource = matches!(
@@ -133,14 +116,40 @@ impl Object {
             }
         }
         if namespaced {
-            let Some(namespace) = self.metadata.namespace.as_deref() else {
-                return Ok(false);
-            };
-            if !valid_text(namespace, control)? || !scope.accepts_namespace(namespace) {
-                return Ok(false);
-            }
+            return self.valid_namespace_checked(scope, control);
         }
         Ok(true)
+    }
+
+    fn valid_namespace_checked<C: Checkpoint>(
+        &self,
+        scope: &ApiScope,
+        control: &mut C,
+    ) -> Result<bool, C::Error> {
+        let Some(namespace) = self.metadata.namespace.as_deref() else {
+            return Ok(false);
+        };
+        Ok(valid_text(namespace, control)? && scope.accepts_namespace(namespace))
+    }
+
+    fn valid_pod_checked<C: Checkpoint>(&self, control: &mut C) -> Result<bool, C::Error> {
+        if self
+            .spec
+            .get("nodeName")
+            .is_some_and(|value| !value.is_string() && !value.is_null())
+            || self
+                .status
+                .get("phase")
+                .is_some_and(|value| !value.is_string() && !value.is_null())
+            || self
+                .metadata
+                .deletion_timestamp
+                .as_ref()
+                .is_some_and(|value| value.parse::<jiff::Timestamp>().is_err())
+        {
+            return Ok(false);
+        }
+        self.valid_pod_volumes_checked(control)
     }
 
     fn valid_pod_volumes_checked<C: Checkpoint>(&self, control: &mut C) -> Result<bool, C::Error> {
@@ -190,25 +199,10 @@ impl Object {
             .get("name")
             .and_then(Value::as_str)
             .ok_or("invalid_api_object")?;
-        let mut labels = BTreeMap::new();
-        if let Some(raw) = metadata.get("labels") {
-            for (key, value) in raw.as_object().ok_or("invalid_api_object")? {
-                control.checked()?;
-                let value = value.as_str().ok_or("invalid_api_object")?;
-                labels.insert(
-                    work::clone_string(key, control).map_err(CheckedError::Interrupted)?,
-                    work::clone_string(value, control).map_err(CheckedError::Interrupted)?,
-                );
-            }
-        }
-        let mut owner_references = vec![];
-        if let Some(raw) = metadata.get("ownerReferences") {
-            for owner in raw.as_array().ok_or("invalid_api_object")? {
-                control.checked()?;
-                owner_references
-                    .push(work::clone_json(owner, control).map_err(CheckedError::Interrupted)?);
-            }
-        }
+        let ProjectedCollections {
+            labels,
+            owner_references,
+        } = project_metadata_collections(metadata, control)?;
         Ok(Self {
             api_version: optional_string(object.get("apiVersion"), control)?,
             kind: optional_string(object.get("kind"), control)?,
@@ -415,6 +409,40 @@ pub fn strings_at(value: &Value, path: &str) -> Vec<String> {
         .filter_map(Value::as_str)
         .map(str::to_owned)
         .collect()
+}
+
+fn project_metadata_collections<C: Checkpoint>(
+    metadata: &serde_json::Map<String, Value>,
+    control: &mut C,
+) -> Result<ProjectedCollections, CheckedError<C::Error>> {
+    let mut labels = BTreeMap::new();
+    if let Some(raw) = metadata.get("labels") {
+        for (key, value) in raw.as_object().ok_or("invalid_api_object")? {
+            control.checked()?;
+            let value = value.as_str().ok_or("invalid_api_object")?;
+            labels.insert(
+                work::clone_string(key, control).map_err(CheckedError::Interrupted)?,
+                work::clone_string(value, control).map_err(CheckedError::Interrupted)?,
+            );
+        }
+    }
+    let mut owner_references = vec![];
+    if let Some(raw) = metadata.get("ownerReferences") {
+        for owner in raw.as_array().ok_or("invalid_api_object")? {
+            control.checked()?;
+            owner_references
+                .push(work::clone_json(owner, control).map_err(CheckedError::Interrupted)?);
+        }
+    }
+    Ok(ProjectedCollections {
+        labels,
+        owner_references,
+    })
+}
+
+struct ProjectedCollections {
+    labels: BTreeMap<String, String>,
+    owner_references: Vec<Value>,
 }
 
 #[cfg(test)]

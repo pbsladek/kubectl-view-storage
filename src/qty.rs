@@ -57,91 +57,13 @@ impl FromStr for Bytes {
             return Err(QuantityError::Negative);
         }
         let input = input.strip_prefix('+').unwrap_or(input);
-        let mut digits = Vec::with_capacity(input.len() + 20);
-        let mut point = false;
-        let mut fraction = 0i32;
-        let mut end = 0;
-        for (i, byte) in input.bytes().enumerate() {
-            match byte {
-                b'0'..=b'9' => {
-                    digits.push(byte - b'0');
-                    if point {
-                        fraction += 1;
-                    }
-                }
-                b'.' if !point => point = true,
-                _ => break,
-            }
-            end = i + 1;
-        }
-        if digits.is_empty() {
-            return Err(QuantityError::Syntax);
-        }
-        let suffix = &input[end..];
-        let (decimal, binary) = match suffix {
-            "n" => (-9, 0),
-            "u" => (-6, 0),
-            "m" => (-3, 0),
-            "" => (0, 0),
-            "k" | "K" => (3, 0),
-            "M" => (6, 0),
-            "G" => (9, 0),
-            "T" => (12, 0),
-            "P" => (15, 0),
-            "E" => (18, 0),
-            "Ki" => (0, 10),
-            "Mi" => (0, 20),
-            "Gi" => (0, 30),
-            "Ti" => (0, 40),
-            "Pi" => (0, 50),
-            "Ei" => (0, 60),
-            s if s.starts_with(['e', 'E']) => (bounded_exponent(&s[1..])?, 0),
-            _ => return Err(QuantityError::Syntax),
-        };
+        let (mut digits, fraction, suffix) = quantity_mantissa(input)?;
+        let (decimal, binary) = quantity_scale(suffix)?;
         if digits.iter().all(|d| *d == 0) {
             return Ok(Self(0));
         }
-        // Decimal long multiplication is bounded by the input length plus 19.
-        // Huge exponents never allocate huge zero/power-of-ten buffers.
-        for _ in 0..binary {
-            let mut carry = 0;
-            for digit in digits.iter_mut().rev() {
-                let value = *digit * 2 + carry;
-                *digit = value % 10;
-                carry = value / 10;
-            }
-            if carry != 0 {
-                digits.insert(0, carry);
-            }
-        }
-        let first = digits
-            .iter()
-            .position(|d| *d != 0)
-            .ok_or(QuantityError::Syntax)?;
-        let digits = &digits[first..];
-        let scale = decimal - fraction;
-        let integer_len = digits.len() as i32 + scale;
-        if integer_len > 20 {
-            return Err(QuantityError::OutOfRange);
-        }
-        if integer_len <= 0 {
-            return Ok(Self(1));
-        }
-        let count = integer_len as usize;
-        let mut value = 0u64;
-        for i in 0..count {
-            value = value
-                .checked_mul(10)
-                .and_then(|v| v.checked_add(u64::from(digits.get(i).copied().unwrap_or(0))))
-                .ok_or(QuantityError::OutOfRange)?;
-        }
-        if digits
-            .get(count..)
-            .is_some_and(|rest| rest.iter().any(|d| *d != 0))
-        {
-            value = value.checked_add(1).ok_or(QuantityError::OutOfRange)?;
-        }
-        Ok(Self(value))
+        multiply_binary_scale(&mut digits, binary);
+        round_quantity(&digits, decimal - fraction)
     }
 }
 
@@ -379,6 +301,99 @@ impl PartialOrd for Threshold {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
+}
+
+fn quantity_mantissa(input: &str) -> Result<(Vec<u8>, i32, &str), QuantityError> {
+    let mut digits = Vec::with_capacity(input.len() + 20);
+    let mut point = false;
+    let mut fraction = 0i32;
+    let mut end = 0;
+    for (i, byte) in input.bytes().enumerate() {
+        match byte {
+            b'0'..=b'9' => {
+                digits.push(byte - b'0');
+                if point {
+                    fraction += 1;
+                }
+            }
+            b'.' if !point => point = true,
+            _ => break,
+        }
+        end = i + 1;
+    }
+    if digits.is_empty() {
+        return Err(QuantityError::Syntax);
+    }
+    Ok((digits, fraction, &input[end..]))
+}
+
+fn quantity_scale(suffix: &str) -> Result<(i32, usize), QuantityError> {
+    Ok(match suffix {
+        "n" => (-9, 0),
+        "u" => (-6, 0),
+        "m" => (-3, 0),
+        "" => (0, 0),
+        "k" | "K" => (3, 0),
+        "M" => (6, 0),
+        "G" => (9, 0),
+        "T" => (12, 0),
+        "P" => (15, 0),
+        "E" => (18, 0),
+        "Ki" => (0, 10),
+        "Mi" => (0, 20),
+        "Gi" => (0, 30),
+        "Ti" => (0, 40),
+        "Pi" => (0, 50),
+        "Ei" => (0, 60),
+        s if s.starts_with(['e', 'E']) => (bounded_exponent(&s[1..])?, 0),
+        _ => return Err(QuantityError::Syntax),
+    })
+}
+
+fn multiply_binary_scale(digits: &mut Vec<u8>, binary: usize) {
+    // Decimal long multiplication is bounded by the input length plus 19.
+    // Huge exponents never allocate huge zero/power-of-ten buffers.
+    for _ in 0..binary {
+        let mut carry = 0;
+        for digit in digits.iter_mut().rev() {
+            let value = *digit * 2 + carry;
+            *digit = value % 10;
+            carry = value / 10;
+        }
+        if carry != 0 {
+            digits.insert(0, carry);
+        }
+    }
+}
+
+fn round_quantity(digits: &[u8], scale: i32) -> Result<Bytes, QuantityError> {
+    let first = digits
+        .iter()
+        .position(|d| *d != 0)
+        .ok_or(QuantityError::Syntax)?;
+    let digits = &digits[first..];
+    let integer_len = digits.len() as i32 + scale;
+    if integer_len > 20 {
+        return Err(QuantityError::OutOfRange);
+    }
+    if integer_len <= 0 {
+        return Ok(Bytes(1));
+    }
+    let count = integer_len as usize;
+    let mut value = 0u64;
+    for i in 0..count {
+        value = value
+            .checked_mul(10)
+            .and_then(|v| v.checked_add(u64::from(digits.get(i).copied().unwrap_or(0))))
+            .ok_or(QuantityError::OutOfRange)?;
+    }
+    if digits
+        .get(count..)
+        .is_some_and(|rest| rest.iter().any(|d| *d != 0))
+    {
+        value = value.checked_add(1).ok_or(QuantityError::OutOfRange)?;
+    }
+    Ok(Bytes(value))
 }
 
 #[cfg(test)]

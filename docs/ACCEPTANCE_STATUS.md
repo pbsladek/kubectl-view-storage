@@ -31,7 +31,7 @@ Phase 5 now requires all A01–A65, including A30. Phase 6's publication work do
 
 ## Acceptance items
 
-`unit/` and property links now refer to the real locked production run. Twenty-six HTTP/executable tests now pass on native macOS and ARM64 Linux. Evidence for individual cases varies; the remaining column preserves scenarios not yet established through the required path or platform. Passing coverage does not close those gaps.
+`unit/` and property links refer to real locked production tests. The original audit checkpoint passed twenty-six HTTP/executable tests on native macOS and ARM64 Linux; the [current local checkpoint](IMPLEMENTATION_STATUS.md#local-usability-and-quality-checkpoint-2026-11-14) records newer counts without refreshing that Linux evidence. Evidence for individual cases varies; the remaining column preserves scenarios not yet established through the required path or platform. Passing coverage does not close those gaps.
 
 | ID | Evidence examined | Remaining verification/work |
 | --- | --- | --- |

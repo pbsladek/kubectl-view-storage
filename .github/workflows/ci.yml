@@ -39,10 +39,13 @@ jobs:
       - name: Policy, workflow selection, and contract checks
         run: |
           python3 -m pip install -r dev/requirements-ci.txt
+          python3 scripts/test-complexity.py
+          python3 scripts/check-complexity.py
           python3 scripts/test-ci-scope.py
           python3 scripts/test-toolchain-check.py
           python3 scripts/test-ci-timings.py
           python3 scripts/test-ci-workflows.py
+          python3 scripts/test-verify.py
           python3 scripts/check-dependencies.py
           python3 scripts/test-dependency-check.py
           python3 scripts/validate-contract.py
@@ -52,6 +55,7 @@ jobs:
           python3 scripts/test-dev-calculations.py
           python3 scripts/test-storage-e2e.py
           python3 scripts/test-release-packaging.py
+          python3 scripts/test-release.py
           python3 scripts/test-smoke-http.py
   lint:
     name: lint-${{ matrix.label }}

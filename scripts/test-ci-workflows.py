@@ -168,6 +168,16 @@ class WorkflowProtocols(unittest.TestCase):
             needs = jobs[name]['needs']
             self.assertIn(dependency, [needs] if isinstance(needs, str) else needs)
 
+    def test_release_dispatch_exposes_a_unique_run_identifier_without_publication_permissions(self):
+        workflow = yaml.safe_load((ROOT / '.github/workflows/native-distribution.yml').read_text())
+        # PyYAML's YAML 1.1 loader treats the unquoted Actions key "on" as True.
+        triggers = workflow.get('on', workflow.get(True))
+        for trigger in ('workflow_call', 'workflow_dispatch'):
+            self.assertEqual(triggers[trigger]['inputs']['release_id']['type'], 'string')
+            self.assertEqual(triggers[trigger]['inputs']['release_id']['default'], '')
+        self.assertIn('inputs.release_id', workflow['run-name'])
+        self.assertEqual(workflow['permissions'], {'contents': 'read'})
+
 
 if __name__ == '__main__':
     unittest.main()

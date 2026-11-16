@@ -700,7 +700,7 @@ dependencies = [
 
 [[package]]
 name = "kubectl-view-storage"
-version = "0.1.0-dev"
+version = "0.1.0"
 dependencies = [
  "clap",
  "csv",

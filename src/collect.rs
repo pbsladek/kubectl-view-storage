@@ -25,6 +25,13 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
+mod enrichment;
+mod telemetry;
+use enrichment::enrich_inventory;
+#[cfg(test)]
+use enrichment::{claim_plan, class_plan, driver_class_plan, volume_plan};
+use telemetry::{Observations, apply_observations, collect_node_samples, collect_prometheus};
+
 pub type ResponseFuture<'a> = Pin<Box<dyn Future<Output = Result<Response, Failure>> + Send + 'a>>;
 pub trait Transport: Send + Sync + 'static {
     /// Implementations enforce the body cap while streaming, including errors.
@@ -519,6 +526,17 @@ impl<T: Transport> Collector<T> {
                 return self.finish_objects(objects).await;
             }
         }
+        self.get_targeted_objects(resource, prefix, names, objects)
+            .await
+    }
+
+    async fn get_targeted_objects(
+        &mut self,
+        resource: &str,
+        prefix: &str,
+        names: Arc<BTreeSet<String>>,
+        mut objects: BTreeMap<String, Object>,
+    ) -> Result<Vec<Object>, Failure> {
         let resource_prefix = prefix.to_owned();
         let (restored, lookups) = work::run(
             RunControl::retained_inventory(
@@ -699,234 +717,17 @@ pub async fn collect<T: Transport>(
         sources: vec![],
         diagnostics: vec![],
     };
-    let scope = ApiScope::from_namespace(query.namespace.as_deref());
-    let base_path = if query.kind == Kind::Pv {
-        "/api/v1/persistentvolumes".into()
-    } else {
-        namespace_path(query.namespace.as_deref(), "persistentvolumeclaims")
-    };
-    let resource = if query.kind == Kind::Pv {
-        "persistentvolumes"
-    } else {
-        "persistentvolumeclaims"
-    };
-    let (base, complete) = collector
-        .list(
-            resource,
-            &scope,
-            &base_path,
-            query.filters.selector.as_deref(),
-        )
-        .await;
-    complete?;
-    let mut inventory = Inventory::default();
-    if query.kind == Kind::Pv {
-        inventory.pvs = base;
-    } else {
-        inventory.pvcs = base;
-    }
-    let mut inventory_query = query.clone();
-    // A CSI PV can already settle its driver predicate. Keep unresolved PVC
-    // drivers as candidates, but do not enrich a known inventory nonmatch.
-    inventory_query.filters.node = None;
-    inventory_query.filters.statefulset = None;
-    inventory_query.filters.workload = None;
-    let (restored, relevant) = candidates(
+    let inventory = collect_base_inventory(&mut collector, query).await?;
+    let (inventory, pods_complete) =
+        enrich_inventory(&mut collector, inventory, query, &cancel).await?;
+    let (mut graph, selection, targets, node_jobs) = prepare_graph(
         inventory,
-        &inventory_query,
-        false,
-        true,
+        query,
+        pods_complete,
         RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
     )
     .await?;
-    inventory = restored;
-    let mut relevant = Arc::new(relevant);
-    let remaining = overall.saturating_duration_since(clock.monotonic());
-    let allowance = Duration::from_secs(30).min(if query.utilization {
-        remaining / 2
-    } else {
-        remaining
-    });
-    collector.request.deadline = clock.monotonic() + allowance;
-    collector.enrichment = true;
-    // Resolve only driver prerequisites before consumer discovery. A known CSI
-    // driver does not need its class merely to decide query membership.
-    if query.filters.driver.is_some() {
-        enrich_pvs(&mut collector, &mut inventory, query, &relevant).await?;
-        let selected = relevant.clone();
-        let driver_query = query.clone();
-        let classes = inventory_job(
-            &mut inventory,
-            &collector.request,
-            move |inventory, control| {
-                driver_class_plan(inventory, &driver_query, &selected, control)
-            },
-        )
-        .await?;
-        inventory.storage_classes = collector
-            .get_objects(
-                "storageclasses",
-                "/apis/storage.k8s.io/v1/storageclasses",
-                Arc::new(classes),
-            )
-            .await?;
-        let mut driver_query = query.clone();
-        driver_query.filters.node = None;
-        driver_query.filters.statefulset = None;
-        driver_query.filters.workload = None;
-        let (restored, matches) = candidates(
-            inventory,
-            &driver_query,
-            false,
-            query.filters.node.is_some()
-                || query.filters.statefulset.is_some()
-                || query.filters.workload.is_some(),
-            RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
-        )
-        .await?;
-        inventory = restored;
-        relevant = Arc::new(matches);
-    }
-    if query.kind == Kind::Pv {
-        let selected = relevant.clone();
-        let claims = inventory_job(
-            &mut inventory,
-            &collector.request,
-            move |inventory, control| {
-                claim_plan(inventory, &selected, control).map_err(CheckedError::Interrupted)
-            },
-        )
-        .await?;
-        for (index, (namespace, name, path)) in claims.into_iter().enumerate() {
-            if index % work::CHECK_INTERVAL == 0 {
-                tokio::task::yield_now().await;
-                if cancel.is_cancelled() {
-                    return Err(Failure::Cancelled);
-                }
-            }
-            match collector
-                .object(
-                    "persistentvolumeclaims",
-                    &ApiScope::Namespace(namespace),
-                    &path,
-                )
-                .await
-            {
-                Ok(object) if object.metadata.name == name => {
-                    inventory.pvcs.push(object);
-                }
-                Ok(_) => collector.diagnose("persistentvolumeclaims", &path, &Failure::Invalid),
-                Err(error) => {
-                    if error.fatal() || matches!(error, Failure::Cancelled) {
-                        return Err(error);
-                    }
-                    collector.diagnose("persistentvolumeclaims", &path, &error);
-                }
-            }
-        }
-        // Claim verification may reveal a binding conflict that makes a class
-        // provisioner unsuitable as evidence for this PV's driver.
-        if query.filters.driver.is_some() {
-            let mut driver_query = query.clone();
-            driver_query.filters.node = None;
-            driver_query.filters.statefulset = None;
-            driver_query.filters.workload = None;
-            let (restored, matches) = candidates(
-                inventory,
-                &driver_query,
-                false,
-                query.filters.node.is_some()
-                    || query.filters.statefulset.is_some()
-                    || query.filters.workload.is_some(),
-                RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
-            )
-            .await?;
-            inventory = restored;
-            relevant = Arc::new(matches);
-        }
-    }
-    if let Some(error) = collector.fatal() {
-        return Err(error);
-    }
-    let pod_path = namespace_path(query.namespace.as_deref(), "pods");
-    let (pods, pods_complete) = if relevant.is_empty() {
-        (vec![], Ok(()))
-    } else {
-        collector.list("pods", &scope, &pod_path, None).await
-    };
-    inventory.pods = pods;
-    if let Err(error) = &pods_complete
-        && (error.fatal() || matches!(error, Failure::Cancelled))
-    {
-        return Err(error.clone());
-    }
-    if query.needs_workloads() {
-        enrich_workloads(
-            &mut collector,
-            &mut inventory,
-            query,
-            &relevant,
-            pods_complete.is_ok(),
-        )
-        .await?;
-    }
-    if query.filters.node.is_some()
-        || query.filters.statefulset.is_some()
-        || query.filters.workload.is_some()
-    {
-        let (restored, matches) = candidates(
-            inventory,
-            query,
-            pods_complete.is_ok(),
-            false,
-            RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
-        )
-        .await?;
-        inventory = restored;
-        relevant = Arc::new(matches);
-    }
-    if query.filters.driver.is_none() {
-        enrich_pvs(&mut collector, &mut inventory, query, &relevant).await?;
-    }
-    enrich_classes(&mut collector, &mut inventory, query, &relevant).await?;
-    if let Some(error) = collector.fatal() {
-        return Err(error);
-    }
-    if cancel.is_cancelled() {
-        return Err(Failure::Cancelled);
-    }
-    let cpu_query = query.clone();
-    let (mut graph, selection, targets, node_jobs) = work::run(
-        RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
-        move |control| {
-            let graph =
-                join::normalize_checked(&inventory, &cpu_query, pods_complete.is_ok(), control)?;
-            let (graph, selection) = crate::report::select_checked(graph, &cpu_query, control)
-                .map_err(CheckedError::Interrupted)?;
-            let targets = if cpu_query.utilization
-                && cpu_query.metrics_source == crate::cli::MetricsSource::Kubelet
-            {
-                metrics::node_targets_checked(&graph, control).map_err(CheckedError::Interrupted)?
-            } else {
-                BTreeSet::new()
-            };
-            let mut jobs = vec![];
-            for node in &targets {
-                control.checked()?;
-                let mut path = String::from("/api/v1/nodes/");
-                append_encoded(&mut path, node, control).map_err(CheckedError::Interrupted)?;
-                path.push_str("/proxy/stats/summary");
-                jobs.push((
-                    work::clone_string(node, control).map_err(CheckedError::Interrupted)?,
-                    path,
-                ));
-            }
-            Ok((graph, selection, targets, jobs))
-        },
-    )
-    .await
-    .map_err(processing_failure)?;
-    graph.diagnostics.extend(collector.diagnostics);
+    graph.diagnostics.append(&mut collector.diagnostics);
     let mut responses = BTreeMap::new();
     let mut failures: BTreeMap<String, String> = BTreeMap::new();
     let mut prometheus_response = None;
@@ -938,166 +739,29 @@ pub async fn collect<T: Transport>(
             .iter()
             .any(|record| record.volume_mode == VolumeMode::Filesystem)
     {
-        let request = RequestContext {
-            transport: Arc::new(PrometheusTransport(collector.request.transport.clone())),
-            clock: clock.clone(),
-            cancel: cancel.child_token(),
-            deadline: overall,
-            request_timeout: cli.request_timeout,
-            totals: Arc::new(AtomicAttempts::default()),
-        };
-        let cpu_query = query.clone();
-        let path = work::run(
-            RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
-            move |control| {
-                crate::prometheus::query_path(&cpu_query, control)
-                    .map_err(CheckedError::Interrupted)
-            },
-        )
-        .await
-        .map_err(processing_failure)?;
-        let (response, _) = node_request(&request, path).await;
-        let response = match response {
-            Ok(body) => decode_document(&request, body).await,
-            Err(error) => Err(error),
-        };
-        match response {
-            Ok(value) => prometheus_response = Some(value),
-            Err(error) => {
-                if matches!(error, Failure::Cancelled | Failure::Worker) {
-                    return Err(error);
-                }
-                prometheus_failure = error.reason().into();
-            }
-        }
-        collector.cost.prometheus_requests = request.totals.count.load(Ordering::Relaxed);
-        collector.cost.response_bytes += request.totals.bytes.load(Ordering::Relaxed);
-        collector.sources.push(SourceCollection {
-            resource: "prometheus/query".into(),
-            scope: query
-                .prometheus_cluster
-                .clone()
-                .unwrap_or_else(|| "single-cluster".into()),
-            verb: "get".into(),
-            status: if prometheus_response.is_some() {
-                "complete"
-            } else {
-                "unavailable"
-            }
-            .into(),
-            resource_version: None,
-        });
+        (prometheus_response, prometheus_failure) =
+            collect_prometheus(&mut collector, query, &cancel).await?;
     }
     if query.utilization && query.metrics_source == crate::cli::MetricsSource::Kubelet {
-        collector.cost.node_targets = targets.len();
-        let request = RequestContext {
-            deadline: collector.overall,
-            totals: Arc::new(AtomicAttempts::default()),
-            ..collector.request.clone()
-        };
-        let mut pending = node_jobs.into_iter();
-        let mut workers = JoinSet::new();
-        loop {
-            while workers.len() < usize::from(cli.concurrency)
-                && clock.monotonic() < overall
-                && !cancel.is_cancelled()
-            {
-                let Some((node, path)) = pending.next() else {
-                    break;
-                };
-                let context = request.clone();
-                workers.spawn(async move {
-                    let (result, counts) = node_request(&context, path).await;
-                    (node, result, counts)
-                });
-            }
-            if workers.is_empty() {
-                break;
-            }
-            let result = tokio::select! {biased;_ = cancel.cancelled()=>None,_ = tokio::time::sleep_until(overall)=>None,result = workers.join_next()=>result};
-            match result {
-                Some(Ok((node, result, _counts))) => match result {
-                    Ok(body) => {
-                        // Only the supervisor owns parsing work. Async HTTP
-                        // workers may be aborted after the shutdown allowance;
-                        // that must never drop an unjoined blocking parser.
-                        match decode_document(&request, body).await {
-                            Ok(value) if valid_summary(&value) => {
-                                responses.insert(node, value);
-                            }
-                            Ok(_) => {
-                                failures.insert(node, Failure::Invalid.reason().into());
-                            }
-                            Err(error) => {
-                                if error.fatal() || matches!(error, Failure::Cancelled) {
-                                    request.cancel.cancel();
-                                    shutdown(&mut workers, clock.as_ref()).await;
-                                    return Err(error);
-                                }
-                                failures.insert(node, error.reason().into());
-                            }
-                        }
-                    }
-                    Err(error) => {
-                        if error.fatal() {
-                            request.cancel.cancel();
-                            shutdown(&mut workers, clock.as_ref()).await;
-                            return Err(error);
-                        }
-                        failures.insert(node, error.reason().into());
-                    }
-                },
-                Some(Err(_)) => {
-                    request.cancel.cancel();
-                    shutdown(&mut workers, clock.as_ref()).await;
-                    return Err(Failure::Worker);
-                }
-                None => {
-                    request.cancel.cancel();
-                    shutdown(&mut workers, clock.as_ref()).await;
-                    break;
-                }
-            }
-        }
-        collector.cost.node_requests = request.totals.count.load(Ordering::Relaxed);
-        collector.cost.response_bytes += request.totals.bytes.load(Ordering::Relaxed);
-        // Cancellation due to the overall deadline retains completed inventory.
-        if cancel.is_cancelled() {
-            return Err(Failure::Cancelled);
-        }
+        (responses, failures) =
+            collect_node_samples(&mut collector, cli, &cancel, node_jobs, targets.len()).await?;
     }
     let finished_at = clock.utc();
-    let cpu_query = query.clone();
-    let (graph, valid_prometheus) = work::run(
+    let observations = Observations {
+        targets,
+        responses,
+        failures,
+        prometheus_response,
+        prometheus_failure,
+    };
+    let (graph, valid_prometheus) = apply_observations(
+        graph,
+        observations,
+        query,
+        finished_at,
         RunControl::retained_inventory(cancel.clone(), clock.clone(), overall),
-        move |control| {
-            for node in targets {
-                control.checked()?;
-                if !responses.contains_key(&node) && !failures.contains_key(&node) {
-                    failures.insert(node, "deadline_exceeded".into());
-                }
-            }
-            for (node, reason) in &failures {
-                control.checked()?;
-                graph.diagnostics.push(Diagnostic {
-                    code: "statistics_unavailable".into(),
-                    subject_id: None,
-                    source: format!("kubelet/{node}"),
-                    reason: reason.clone(),
-                    affected_fields: vec!["filesystem".into(), "inodes".into()],
-                    message: "Node statistics could not be collected; inspect proxy permissions, response validity, and timeouts.".into(),
-                });
-            }
-            let valid_prometheus = if cpu_query.metrics_source == crate::cli::MetricsSource::Prometheus {
-                crate::prometheus::apply_checked(&mut graph,prometheus_response.as_ref(),&prometheus_failure,&cpu_query,finished_at,control).map_err(CheckedError::Interrupted)?
-            } else {
-                metrics::apply_checked(&mut graph, &responses, &failures, &cpu_query, finished_at, control)
-                    .map_err(CheckedError::Interrupted)?;
-                true
-            };
-            Ok((graph, valid_prometheus))
-        },
-    ).await.map_err(processing_failure)?;
+    )
+    .await?;
     if !valid_prometheus {
         for source in &mut collector.sources {
             if source.resource == "prometheus/query" {
@@ -1146,340 +810,6 @@ async fn inventory_job<T: Transport, R: Send + 'static>(
     Ok(result)
 }
 
-async fn enrich_workloads<T: Transport>(
-    collector: &mut Collector<T>,
-    inventory: &mut Inventory,
-    query: &Query,
-    relevant: &Arc<BTreeSet<RecordId>>,
-    pods_complete: bool,
-) -> Result<(), Failure> {
-    let cpu_query = query.clone();
-    let selected = relevant.clone();
-    let planned = inventory_job(inventory, &collector.request, move |inventory, control| {
-        let graph = join::normalize_checked(inventory, &cpu_query, pods_complete, control)?;
-        let mut consumers = BTreeSet::new();
-        for record in &graph.records {
-            control.checked()?;
-            if selected.contains(&record.id) {
-                for consumer in &record.consumers {
-                    control.checked()?;
-                    consumers.insert(consumer.as_str());
-                }
-            }
-        }
-        let mut pending = BTreeSet::new();
-        for pod in &inventory.pods {
-            control.checked()?;
-            if !pod
-                .metadata
-                .uid
-                .as_ref()
-                .is_some_and(|uid| consumers.contains(format!("pod:{uid}").as_str()))
-                || matches!(pod.status["phase"].as_str(), Some("Succeeded" | "Failed"))
-            {
-                continue;
-            }
-            if let MetadataValue::Known(owner) =
-                crate::workloads::controller(pod, control).map_err(CheckedError::Interrupted)?
-            {
-                pending.insert((pod.metadata.namespace.clone().unwrap_or_default(), owner));
-            }
-        }
-        Ok(pending)
-    })
-    .await?;
-    let mut pending: std::collections::VecDeque<_> = planned.into_iter().collect();
-    let mut seen = BTreeSet::new();
-    while let Some((namespace, owner)) = pending.pop_front() {
-        tokio::task::yield_now().await;
-        if collector.request.cancel.is_cancelled() {
-            return Err(Failure::Cancelled);
-        }
-        if !seen.insert((namespace.clone(), owner.clone())) {
-            continue;
-        }
-        let Some((version, resource, kind)) = crate::workloads::resource(&owner.kind) else {
-            continue;
-        };
-        let ns = namespace.clone();
-        let name = owner.name.clone();
-        let path = work::run(
-            RunControl::retained_inventory(
-                collector.request.cancel.clone(),
-                collector.request.clock.clone(),
-                collector.overall,
-            ),
-            move |control| {
-                let mut path = format!("/apis/{version}/namespaces/");
-                append_encoded(&mut path, &ns, control).map_err(CheckedError::Interrupted)?;
-                path.push_str(&format!("/{resource}/"));
-                append_encoded(&mut path, &name, control).map_err(CheckedError::Interrupted)?;
-                Ok(path)
-            },
-        )
-        .await
-        .map_err(processing_failure)?;
-        let result = collector
-            .object(resource, &ApiScope::Namespace(namespace.clone()), &path)
-            .await;
-        match result {
-            Ok(object)
-                if object.metadata.name == owner.name
-                    && object.metadata.uid.as_deref() == Some(owner.uid.as_str())
-                    && object.api_version.as_deref() == Some(version)
-                    && object.kind.as_deref() == Some(kind) =>
-            {
-                let (object, parent) = work::run(
-                    RunControl::retained_inventory(
-                        collector.request.cancel.clone(),
-                        collector.request.clock.clone(),
-                        collector.overall,
-                    ),
-                    move |control| {
-                        let parent = crate::workloads::controller(&object, control)
-                            .map_err(CheckedError::Interrupted)?;
-                        Ok((object, parent))
-                    },
-                )
-                .await
-                .map_err(processing_failure)?;
-                if matches!(owner.kind.as_str(), "replicaset" | "job")
-                    && let MetadataValue::Known(parent) = parent
-                {
-                    pending.push_back((namespace, parent));
-                }
-                inventory.workloads.push(object);
-            }
-            Ok(_) => collector.diagnose(resource, &path, &Failure::Invalid),
-            Err(error) => {
-                if error.fatal() || matches!(error, Failure::Cancelled) {
-                    return Err(error);
-                }
-                collector.diagnose(resource, &path, &error);
-                if matches!(error, Failure::Budget | Failure::Deadline) {
-                    break;
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn selected_uids<'a, C: Checkpoint>(
-    relevant: &'a BTreeSet<RecordId>,
-    kind: Kind,
-    control: &mut C,
-) -> Result<BTreeSet<&'a str>, C::Error> {
-    let prefix = if kind == Kind::Pv { "pv:" } else { "pvc:" };
-    let mut selected = BTreeSet::new();
-    for id in relevant {
-        control.step()?;
-        if let Some(uid) = id.as_str().strip_prefix(prefix) {
-            selected.insert(uid);
-        }
-    }
-    Ok(selected)
-}
-fn selected_object(object: &Object, selected: &BTreeSet<&str>) -> bool {
-    object
-        .metadata
-        .uid
-        .as_deref()
-        .is_some_and(|uid| selected.contains(uid))
-}
-fn claim_plan<C: Checkpoint>(
-    inventory: &Inventory,
-    relevant: &BTreeSet<RecordId>,
-    control: &mut C,
-) -> Result<BTreeSet<(String, String, String)>, C::Error> {
-    let selected = selected_uids(relevant, Kind::Pv, control)?;
-    let mut claims = BTreeSet::new();
-    for pv in &inventory.pvs {
-        control.step()?;
-        if !selected_object(pv, &selected) {
-            continue;
-        }
-        if let (Some(namespace), Some(name)) = (
-            pv.spec
-                .pointer("/claimRef/namespace")
-                .and_then(Value::as_str),
-            pv.spec.pointer("/claimRef/name").and_then(Value::as_str),
-        ) {
-            let mut path = String::from("/api/v1/namespaces/");
-            append_encoded(&mut path, namespace, control)?;
-            path.push_str("/persistentvolumeclaims/");
-            append_encoded(&mut path, name, control)?;
-            claims.insert((
-                work::clone_string(namespace, control)?,
-                work::clone_string(name, control)?,
-                path,
-            ));
-        }
-    }
-    Ok(claims)
-}
-fn volume_plan<C: Checkpoint>(
-    inventory: &Inventory,
-    kind: Kind,
-    relevant: &BTreeSet<RecordId>,
-    control: &mut C,
-) -> Result<BTreeSet<String>, C::Error> {
-    let selected = selected_uids(relevant, Kind::Pvc, control)?;
-    let mut names = BTreeSet::new();
-    for pvc in &inventory.pvcs {
-        control.step()?;
-        if kind != Kind::Pv && !selected_object(pvc, &selected) {
-            continue;
-        }
-        if let Some(name) = pvc
-            .spec
-            .get("volumeName")
-            .and_then(Value::as_str)
-            .filter(|name| !name.is_empty())
-        {
-            names.insert(work::clone_string(name, control)?);
-        }
-    }
-    Ok(names)
-}
-fn class_plan<C: Checkpoint>(
-    inventory: &Inventory,
-    kind: Kind,
-    relevant: &BTreeSet<RecordId>,
-    volumes: &BTreeSet<String>,
-    control: &mut C,
-) -> Result<BTreeSet<String>, C::Error> {
-    let selected = selected_uids(relevant, kind, control)?;
-    let mut classes = BTreeSet::new();
-    // Keep PVC identities and PV names in their own resource scopes. A PVC
-    // named like a referenced PV must not add unrelated class prerequisites.
-    for (objects, pv_objects) in [(&inventory.pvcs, false), (&inventory.pvs, true)] {
-        for object in objects {
-            control.step()?;
-            let include = match (kind, pv_objects) {
-                (Kind::Pvc, false) | (Kind::Pv, true) => selected_object(object, &selected),
-                (Kind::Pvc, true) => volumes.contains(&object.metadata.name),
-                (Kind::Pv, false) => false,
-            };
-            if !include {
-                continue;
-            }
-            if let Some(class) = object
-                .spec
-                .get("storageClassName")
-                .and_then(Value::as_str)
-                .filter(|name| !name.is_empty())
-            {
-                classes.insert(work::clone_string(class, control)?);
-            }
-        }
-    }
-    Ok(classes)
-}
-fn driver_class_plan<C: Checkpoint>(
-    inventory: &Inventory,
-    query: &Query,
-    relevant: &BTreeSet<RecordId>,
-    control: &mut C,
-) -> Result<BTreeSet<String>, CheckedError<C::Error>> {
-    let graph = join::normalize_checked(inventory, query, false, control)?;
-    let mut volumes = BTreeSet::new();
-    for volume in &inventory.pvs {
-        control.checked()?;
-        volumes.insert(volume.metadata.name.as_str());
-    }
-    let mut classes = BTreeSet::new();
-    for record in graph.records {
-        control.checked()?;
-        if !relevant.contains(&record.id)
-            || !matches!(record.driver, MetadataValue::Unknown)
-            || record.binding_conflict
-            || record.kind == Kind::Pvc
-                && record
-                    .pv_name
-                    .as_deref()
-                    .is_some_and(|name| !volumes.contains(name))
-        {
-            continue;
-        }
-        if let MetadataValue::Known(class) = record.storage_class {
-            classes.insert(class);
-        }
-    }
-    Ok(classes)
-}
-
-async fn enrich_pvs<T: Transport>(
-    collector: &mut Collector<T>,
-    inventory: &mut Inventory,
-    query: &Query,
-    relevant: &Arc<BTreeSet<RecordId>>,
-) -> Result<(), Failure> {
-    if query.kind == Kind::Pv {
-        return Ok(());
-    }
-    let selected = relevant.clone();
-    let kind = query.kind;
-    let names = Arc::new(
-        inventory_job(inventory, &collector.request, move |inventory, control| {
-            volume_plan(inventory, kind, &selected, control).map_err(CheckedError::Interrupted)
-        })
-        .await?,
-    );
-    // allow_bulk is false for namespace scope, preserving targeted reads.
-    inventory.pvs = collector
-        .get_objects(
-            "persistentvolumes",
-            "/api/v1/persistentvolumes",
-            names.clone(),
-        )
-        .await?;
-    Ok(())
-}
-async fn enrich_classes<T: Transport>(
-    collector: &mut Collector<T>,
-    inventory: &mut Inventory,
-    query: &Query,
-    relevant: &Arc<BTreeSet<RecordId>>,
-) -> Result<(), Failure> {
-    let selected = relevant.clone();
-    let kind = query.kind;
-    let classes = inventory_job(inventory, &collector.request, move |inventory, control| {
-        let volumes = if kind == Kind::Pvc {
-            volume_plan(inventory, kind, &selected, control).map_err(CheckedError::Interrupted)?
-        } else {
-            BTreeSet::new()
-        };
-        let mut classes = class_plan(inventory, kind, &selected, &volumes, control)
-            .map_err(CheckedError::Interrupted)?;
-        for existing in &inventory.storage_classes {
-            control.checked()?;
-            classes.remove(&existing.metadata.name);
-        }
-        Ok(classes)
-    })
-    .await?;
-    if classes.is_empty() {
-        return Ok(());
-    }
-    let added = collector
-        .get_objects(
-            "storageclasses",
-            "/apis/storage.k8s.io/v1/storageclasses",
-            Arc::new(classes),
-        )
-        .await?;
-    inventory_job(inventory, &collector.request, move |inventory, control| {
-        for class in added {
-            control.checked()?;
-            inventory.storage_classes.push(class);
-        }
-        Ok(())
-    })
-    .await?;
-    Ok(())
-}
-
 fn processing_failure(error: RunError) -> Failure {
     match error {
         RunError::Invalid(_) => Failure::Invalid,
@@ -1487,40 +817,6 @@ fn processing_failure(error: RunError) -> Failure {
         RunError::Stopped(Stop::Deadline) => Failure::Deadline,
         RunError::Worker => Failure::Worker,
     }
-}
-async fn candidates(
-    input: Inventory,
-    query: &Query,
-    pods_complete: bool,
-    retain_unknown: bool,
-    control: RunControl,
-) -> Result<(Inventory, BTreeSet<RecordId>), Failure> {
-    let query = query.clone();
-    work::run(control, move |control| {
-        let graph = join::normalize_checked(&input, &query, pods_complete, control)?;
-        let mut consumers = BTreeMap::new();
-        for consumer in &graph.consumers {
-            control.checked()?;
-            consumers.insert(consumer.id.clone(), consumer);
-        }
-        let mut selected = BTreeSet::new();
-        for record in &graph.records {
-            control.checked()?;
-            let include = match join::matches_checked(record, &query, &consumers, control)
-                .map_err(CheckedError::Interrupted)?
-            {
-                Predicate::Match => true,
-                Predicate::Unknown(_) => retain_unknown,
-                Predicate::NoMatch => false,
-            };
-            if include {
-                selected.insert(record.id.clone());
-            }
-        }
-        Ok((input, selected))
-    })
-    .await
-    .map_err(processing_failure)
 }
 
 fn valid_summary(value: &Value) -> bool {
@@ -1593,6 +889,81 @@ fn append_encoded<C: Checkpoint>(
         }
     }
     Ok(())
+}
+
+async fn collect_base_inventory<T: Transport>(
+    collector: &mut Collector<T>,
+    query: &Query,
+) -> Result<Inventory, Failure> {
+    let scope = ApiScope::from_namespace(query.namespace.as_deref());
+    let base_path = if query.kind == Kind::Pv {
+        "/api/v1/persistentvolumes".into()
+    } else {
+        namespace_path(query.namespace.as_deref(), "persistentvolumeclaims")
+    };
+    let resource = if query.kind == Kind::Pv {
+        "persistentvolumes"
+    } else {
+        "persistentvolumeclaims"
+    };
+    let (base, complete) = collector
+        .list(
+            resource,
+            &scope,
+            &base_path,
+            query.filters.selector.as_deref(),
+        )
+        .await;
+    complete?;
+    let mut inventory = Inventory::default();
+    if query.kind == Kind::Pv {
+        inventory.pvs = base;
+    } else {
+        inventory.pvcs = base;
+    }
+    Ok(inventory)
+}
+
+type PreparedGraph = (
+    join::Graph,
+    Selection,
+    BTreeSet<String>,
+    Vec<(String, String)>,
+);
+async fn prepare_graph(
+    inventory: Inventory,
+    query: &Query,
+    pods_complete: bool,
+    control: RunControl,
+) -> Result<PreparedGraph, Failure> {
+    let cpu_query = query.clone();
+    let prepared = work::run(control, move |control| {
+        let graph = join::normalize_checked(&inventory, &cpu_query, pods_complete, control)?;
+        let (graph, selection) = crate::report::select_checked(graph, &cpu_query, control)
+            .map_err(CheckedError::Interrupted)?;
+        let targets = if cpu_query.utilization
+            && cpu_query.metrics_source == crate::cli::MetricsSource::Kubelet
+        {
+            metrics::node_targets_checked(&graph, control).map_err(CheckedError::Interrupted)?
+        } else {
+            BTreeSet::new()
+        };
+        let mut jobs = vec![];
+        for node in &targets {
+            control.checked()?;
+            let mut path = String::from("/api/v1/nodes/");
+            append_encoded(&mut path, node, control).map_err(CheckedError::Interrupted)?;
+            path.push_str("/proxy/stats/summary");
+            jobs.push((
+                work::clone_string(node, control).map_err(CheckedError::Interrupted)?,
+                path,
+            ));
+        }
+        Ok((graph, selection, targets, jobs))
+    })
+    .await
+    .map_err(processing_failure)?;
+    Ok(prepared)
 }
 
 #[cfg(test)]

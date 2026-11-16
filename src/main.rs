@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+mod completions;
 mod csv_output;
 mod exec_supervisor;
 mod kubernetes;
@@ -13,7 +14,7 @@ use kubectl_view_storage::{
     policy::Exit,
 };
 use std::{
-    io::{self, IsTerminal},
+    io::{self, IsTerminal, Write},
     process::ExitCode,
     sync::Arc,
 };
@@ -60,6 +61,12 @@ async fn run(cli: Cli) -> Exit {
 }
 
 async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
+    if cli.build_info {
+        return write_local_information(kubectl_view_storage::build_info::text(), cancel).await;
+    }
+    if let Some(shell) = cli.completions {
+        return write_local_information(completions::script(shell).to_owned(), cancel).await;
+    }
     let configured_timeout = cli.timeout;
     if exec_supervisor::worker_parent().is_some()
         && let Err(message) = exec_supervisor::wait_ready(&cancel).await
@@ -84,7 +91,7 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         let _ = error_message(cancel, &message).await;
         return Exit::Invalid;
     }
-    let mut baseline = if let Some(path) = cli.compare.clone() {
+    let baseline = if let Some(path) = cli.compare.clone() {
         match tokio::task::spawn_blocking(move || {
             kubectl_view_storage::calculations::Baseline::load(&path)
         })
@@ -139,20 +146,56 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         .await;
         return Exit::Fatal;
     }
-    let cycle_timeout = configured_timeout;
     let first_timeout = cli.timeout.saturating_sub(started.elapsed());
     if first_timeout.is_zero() {
         let _ = error_message(cancel, "collection deadline exceeded before inventory").await;
         return Exit::Fatal;
     }
-    let client = Arc::new(client);
+    run_cycles(
+        cli,
+        baseline,
+        Connection {
+            client: Arc::new(client),
+            namespace,
+            context,
+        },
+        cancel,
+        CycleTimeouts {
+            first: first_timeout,
+            repeat: configured_timeout,
+        },
+    )
+    .await
+}
+
+struct Connection {
+    client: Arc<kubernetes::Kubernetes>,
+    namespace: String,
+    context: String,
+}
+struct CycleTimeouts {
+    first: std::time::Duration,
+    repeat: std::time::Duration,
+}
+async fn run_cycles(
+    mut cli: Cli,
+    mut baseline: Option<Arc<kubectl_view_storage::calculations::Baseline>>,
+    connection: Connection,
+    cancel: CancellationToken,
+    timeouts: CycleTimeouts,
+) -> Exit {
+    let Connection {
+        client,
+        namespace,
+        context,
+    } = connection;
     let mut cycle = 0u64;
     loop {
         cycle += 1;
         cli.timeout = if cycle == 1 {
-            first_timeout
+            timeouts.first
         } else {
-            cycle_timeout
+            timeouts.repeat
         };
         let mut query = match cli.query(&namespace) {
             Ok(query) => query,
@@ -162,6 +205,7 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
             }
         };
         query.baseline = baseline.clone();
+        let cycle_started = Instant::now();
         let collected = match collect::collect(
             client.clone(),
             Arc::new(SystemClock),
@@ -179,6 +223,7 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
                 return Exit::Fatal;
             }
         };
+        let collection_elapsed = cycle_started.elapsed();
         let mut report = match pipeline::finish_cancellable(collected, &query, cancel.clone()).await
         {
             Ok(report) => report,
@@ -195,7 +240,7 @@ async fn run_command(mut cli: Cli, cancel: CancellationToken) -> Exit {
         let output_cli = cli.clone();
         let remember = cli.watch.is_some() && query.statistics;
         let result = tokio::task::spawn_blocking(move || {
-            let exit = write_report(&report, &output_cli, worker_cancel)?;
+            let exit = write_report(&report, &output_cli, worker_cancel, collection_elapsed)?;
             let next = if remember {
                 Some(
                     kubectl_view_storage::calculations::Baseline::from_document(report.document)
@@ -246,6 +291,7 @@ fn write_report(
     report: &pipeline::Report,
     cli: &Cli,
     cancel: CancellationToken,
+    collection_elapsed: std::time::Duration,
 ) -> io::Result<Exit> {
     let stdout = io::stdout();
     let color = output::use_color(
@@ -260,45 +306,35 @@ fn write_report(
         }
         Output::Json => output::write_json(writer, &report.document),
         Output::Csv => csv_output::write(writer, &report.document, &cancel),
-        Output::Text => output::write_text_refresh(
+        Output::Text => output::write_text_options(
             writer,
             report,
-            cli.view,
-            cli.wide,
-            color,
+            output::TextOptions {
+                view: cli.view,
+                wide: cli.wide,
+                color,
+                units: cli.units,
+                clear: cli.watch.is_some() && io::stdout().is_terminal(),
+                collection_elapsed: Some(collection_elapsed),
+                watch_interval: cli.watch,
+            },
             &cancel,
-            cli.watch.is_some() && io::stdout().is_terminal(),
         ),
     })?;
-    let has_diagnostics = report.document["diagnostics"]
-        .as_array()
-        .is_some_and(|items| !items.is_empty());
-    if cli.output != Output::Text
-        && (report.document["selection"]["complete"] == false || has_diagnostics)
-    {
-        stdio::with_writer(io::stderr(), cancel, |writer| {
-            if report.document["selection"]["complete"] == false {
-                writeln!(
-                    writer,
-                    "selection incomplete: query membership is unresolved; totals cover confirmed matches only"
-                )?;
-            }
-            if let Some(diagnostics) = report.document["diagnostics"].as_array() {
-                for diagnostic in diagnostics {
-                    writeln!(
-                        writer,
-                        "diagnostic {}: {}",
-                        output::escape(diagnostic["reason"].as_str().unwrap_or("unknown")),
-                        output::escape(
-                            diagnostic["message"]
-                                .as_str()
-                                .unwrap_or("collection incomplete")
-                        )
-                    )?;
-                }
-            }
-            Ok(())
-        })?;
+    if cli.output != Output::Text {
+        let guidance = output::metric_guidance(&report.document, &cancel)?;
+        let has_diagnostics = report.document["diagnostics"]
+            .as_array()
+            .is_some_and(|items| !items.is_empty());
+        if report.document["selection"]["complete"] == false
+            || has_diagnostics
+            || !guidance.is_empty()
+        {
+            stdio::with_writer(io::stderr(), cancel, |writer| {
+                write_machine_diagnostics(writer, report)?;
+                writer.write_all(guidance.as_bytes())
+            })?;
+        }
     }
     Ok(report.exit)
 }
@@ -312,4 +348,41 @@ async fn error_message(cancel: CancellationToken, message: &str) -> io::Result<(
     })
     .await
     .map_err(|_| io::Error::other("diagnostic worker failed"))?
+}
+
+async fn write_local_information(text: String, cancel: CancellationToken) -> Exit {
+    match tokio::task::spawn_blocking(move || {
+        stdio::with_writer(io::stdout(), cancel, |writer| {
+            writer.write_all(text.as_bytes())
+        })
+    })
+    .await
+    {
+        Ok(Ok(())) => Exit::Success,
+        _ => Exit::Fatal,
+    }
+}
+
+fn write_machine_diagnostics(writer: &mut dyn Write, report: &pipeline::Report) -> io::Result<()> {
+    if report.document["selection"]["complete"] == false {
+        writeln!(
+            writer,
+            "selection incomplete: query membership is unresolved; totals cover confirmed matches only"
+        )?;
+    }
+    if let Some(diagnostics) = report.document["diagnostics"].as_array() {
+        for diagnostic in diagnostics {
+            writeln!(
+                writer,
+                "diagnostic {}: {}",
+                output::escape(diagnostic["reason"].as_str().unwrap_or("unknown")),
+                output::escape(
+                    diagnostic["message"]
+                        .as_str()
+                        .unwrap_or("collection incomplete")
+                )
+            )?;
+        }
+    }
+    Ok(())
 }
