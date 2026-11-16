@@ -2,7 +2,7 @@
 
 Checked 2026-11-11 against Krew's [new-plugin checklist](https://krew.sigs.k8s.io/docs/developer-guide/release/new-plugin/), [naming guide](https://krew.sigs.k8s.io/docs/developer-guide/develop/naming-guide/), [best practices](https://krew.sigs.k8s.io/docs/developer-guide/develop/best-practices/) and [manifest contract](https://krew.sigs.k8s.io/docs/developer-guide/plugin-manifest/).
 
-The repository is prepared to build and validate a Krew release. It is not yet submission-ready: there is no published version, tag or downloadable release asset set. Publication and an index pull request are separate future actions. The native CI workflow does not publish. The explicit `make release-publish` wrapper can publish its verified artifacts; no command opens a Krew index PR.
+Updated 2026-11-15: [v0.1.0 is published](https://github.com/pbsladek/kubectl-view-storage/releases/tag/v0.1.0) from `3c4030a` with all four native archives, `SHA256SUMS` and the generated manifest. [Native build, source-install and Krew-install checks](https://github.com/pbsladek/kubectl-view-storage/actions/runs/43791911485) passed on all four platforms. Anonymous downloads of all six assets match the approved SHA-256 values; public-URL Krew installation and terminal-authentication checks also pass on native macOS ARM64. Other native public-URL installation modes and index submission remain separate. The native CI workflow does not publish; the explicit `make release-publish` wrapper publishes verified artifacts. No Krew index PR has been opened.
 
 ## Checklist
 
@@ -14,8 +14,8 @@ The repository is prepared to build and validate a Krew release. It is not yet s
 | License included and installed | Every archive contains the executable and exact project LICENSE. Krew's default file selection extracts both. The smoke gate verifies the installed license bytes as well as the executable hash. |
 | Platform packages | Linux and macOS, each amd64 and arm64. Native builds, source-package installation and real isolated Krew installation passed at `5f372dc` in [CI run 42975306322](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42975306322). Windows is outside the supported set. |
 | Manifest and checksums | [`.krew.yaml`](../.krew.yaml) is a template, not an installable manifest. The packaging tool generates `view-storage.yaml` and `SHA256SUMS` from all four actual archives. It checks selectors, architecture, executable layout, version, license and checksums. |
-| Tagged semantic version | Pending. Cargo and both lockfiles select `0.1.0`; tag `v0.1.0` at the exact validated release commit. |
-| Public downloads and installation from URLs | Pending publication. The manifest points to versioned GitHub release assets. The `smoke --download` gate is prepared; its success must be established after those assets exist. Local archive installation alone does not prove URL availability. |
+| Tagged semantic version | Published. Cargo and both lockfiles select `0.1.0`; tag `v0.1.0` identifies validated commit `3c4030a`. |
+| Public downloads and installation from URLs | Published v0.1.0 assets match the approved SHA-256 values. `smoke --download` passes on native macOS ARM64; public-URL native installation checks on the other three platforms remain separate. |
 | Final acceptance | Finish remaining release acceptance items in [the audit](ACCEPTANCE_STATUS.md) and [implementation plan](IMPLEMENTATION_PLAN.md). Packaging success does not close product acceptance. |
 | Krew index submission | Deferred. No index PR has been created. Kubernetes CLA acceptance is an upstream contribution prerequisite when submission is eventually requested. |
 

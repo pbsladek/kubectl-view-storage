@@ -7,7 +7,7 @@ Updated 2026-11-15. Actual tests, builds and live profiles below have different 
 | Native macOS ARM64 | Models, SDK/HTTP, reports, CLI, credential/process/terminal handling | 2026-11-14 checkpoint: 230 locked Rust tests; nineteen pipeline, nine HTTP, five calculation and nine watch/provider/workload reports independently verified; production line coverage 94.50%; formatting, Clippy, complexity, workflow, kubectl configured-query and PTY checks pass |
 | Linux ARM64 musl, native ARM64 container on Docker Desktop ARM64 VM | SDK/HTTP/executable/process/terminal handling and static release build | 169 locked Rust tests and three PTY cases pass; owned container removed |
 | Linux AMD64 musl, emulated on Docker Desktop ARM64 VM | Same container tests and static release build | 168 tests and three PTY cases pass before one test-only addition; native AMD64 tests/installations subsequently passed in the four-target CI run linked below |
-| Native macOS AMD64/ARM64 and Linux AMD64/ARM64 | Release artifacts and installed Krew checks | [Four-target native distribution run at `0695641`](https://github.com/pbsladek/kubectl-view-storage/actions/runs/42440998060) passed; separate from live storage compatibility |
+| Native macOS AMD64/ARM64 and Linux AMD64/ARM64 | Release artifacts and installed Krew checks | [v0.1.0 native distribution at `3c4030a`](https://github.com/pbsladek/kubectl-view-storage/actions/runs/43791911485) passes all four builds, source installs and Krew installs; six public asset hashes verified; public-URL Krew installation additionally passes on Mac ARM64. Separate from live storage compatibility |
 | kind 0.33.0, Kubernetes 1.37.0, local provisioner, Mac ARM64 | Inventory, consumers and restricted RBAC | Repeated complete create/verify/delete cycles, denied PV/class/proxy cases and unchanged user kubeconfigs; new bounded-write and pod-replacement persistence gates pass; unavailable filesystem metrics stay explicit |
 | kind 0.33.0, Kubernetes 1.36.4 and 1.35.8, Mac ARM64 | Older API/client/auth inventory compatibility | Inventory/RBAC lifecycles pass using separately selected matching kubectl clients; owned clusters deleted |
 | kind, Kubernetes 1.35.8/1.36.4/1.37.0, CSI hostpath 1.19.0 and snapshot-controller 8.7.0, Mac ARM64 | Filesystem byte/inode observations via proxy | Locked driver deployment, bound claim, two ready same-node consumers, fresh attributable tuples and compatible changed counters after a fsynced shared 16 MiB write pass; optimized baseline repeated; all profiles deleted |
@@ -24,8 +24,7 @@ channel. The v0.1.0 preparation passes 232 Rust tests on native macOS ARM64,
 formatting, Clippy, independent report oracles and a fresh dependency audit.
 Matching LLVM coverage is 8662/9772 lines (88.64%); all required core modules
 exceed their 90% floor. Earlier coverage/platform/driver results below keep their original compiler and
-source scopes. Native release archives and installed commands are checked by the
-Release workflow for the tagged commit before publication.
+source scopes. [Native release archives and installed commands](https://github.com/pbsladek/kubectl-view-storage/actions/runs/43791911485) pass on all four platforms for tag `v0.1.0` at `3c4030a`. All six published asset hashes match the approved set; macOS ARM64 public-URL Krew installation also passes.
 
 ## Local usability and code quality checkpoint (2026-11-14)
 

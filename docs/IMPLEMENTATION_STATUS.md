@@ -1,6 +1,6 @@
 # Implementation evidence
 
-Updated 2026-11-15. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A65 and every [phase exit](IMPLEMENTATION_PLAN.md). Release v0.1.0 is being prepared; dated evidence below retains its original source and platform scope.
+Updated 2026-11-15. The phases 0–5 objective remains in final validation. The executable and library are implemented; remaining work is acceptance reconciliation, current-source installation/live checks and native CI. The [acceptance audit](ACCEPTANCE_STATUS.md) retains A01–A65 and every [phase exit](IMPLEMENTATION_PLAN.md). [Release v0.1.0 is published](https://github.com/pbsladek/kubectl-view-storage/releases/tag/v0.1.0) from `3c4030a`; dated evidence below retains its original source and platform scope.
 
 | Phase | Evidence available | Remaining exit work |
 | --- | --- | --- |
@@ -11,7 +11,7 @@ Updated 2026-11-15. The phases 0–5 objective remains in final validation. The 
 | 4 | Real CSI byte/inode observations and shared 16 MiB write; HTTP pressure/conflict/partial/Block/cap cases | Final negative-live-telemetry acceptance reconciliation |
 | 5 | Locked tests, coverage, controlled faults, scale fixtures, fuzz smoke, owned credential supervision and local Krew installation | Remaining A01–A58 scopes, final source-package install and native CI |
 
-## v0.1.0 release preparation (2026-11-15)
+## v0.1.0 release (2026-11-15)
 
 The package and both lockfiles select 0.1.0. Release preparation now has Makefile
 wrappers for version/lock/completion updates, native builds and verified artifact
@@ -26,9 +26,7 @@ preserve the previous short-circuit behavior. Native macOS ARM64 passes the full
 232-test suite, formatting, Clippy, complexity, independent reports and fresh
 cargo-deny advisory/license/source checks. Coverage with the matching LLVM tools
 is 8662/9772 production lines (88.64%); all six 90% core-module floors pass,
-including 92% for policy. Hosted native builds and installation
-checks must pass before publication; they remain separate from live-driver
-compatibility receipts.
+including 92% for policy. [Hosted native builds and installation checks](https://github.com/pbsladek/kubectl-view-storage/actions/runs/43791911485) passed on Linux AMD64/ARM64 and macOS Intel/Apple Silicon. The main CI, fresh dependency audit and parser fuzz workflow also passed for `3c4030a`. All six published assets match the approved SHA-256 values, and native macOS ARM64 passes an actual public-URL Krew installation with configured-query and terminal-authentication checks. These results remain separate from the dated live-driver compatibility receipts.
 
 ## Local usability and quality checkpoint (2026-11-14)
 
