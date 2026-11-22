@@ -30,7 +30,7 @@ tokio-util = { version = "0.7.20", default-features = false, features = ["rt"] }
 serde = { version = "1.0.229", default-features = false, features = ["std", "derive"] }
 serde_json = { version = "1.0.154", default-features = false, features = ["std", "arbitrary_precision", "unbounded_depth"] }
 thiserror = { version = "2.0.21", default-features = false }
-jiff = { version = "0.2.40", default-features = false, features = ["std"] }
+jiff = { version = "1.0.1", default-features = false, features = ["std"] }
 http = { version = "1.5.0", default-features = false, features = ["std"] }
 http-body-util = { version = "0.1.5", default-features = false }
 csv = { version = "1.4.0", default-features = false }
